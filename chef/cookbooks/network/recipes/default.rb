@@ -15,7 +15,8 @@
 
 include_recipe 'utils'
 
-bond_list = []
+bond_list = {}
+$bond_count = 0
 team_mode = node["network"]["teaming"]["mode"]
 
 # Walk through a hash of interfaces, adding :order tags to each
@@ -25,14 +26,16 @@ def sort_interfaces(interfaces)
   seq=0
   i=interfaces.keys.sort.reject{|k| interfaces[k].has_key?(:order)}
   until i.empty?
+    Chef::Log.fatal("GREG: looping i = #{i.inspect}")
     i.each do |ifname|
       iface=interfaces[ifname]
       # If this interface has children, and any of its children have not
       # been given a sequence number, skip it.
-      next if iface[:interface_list] and not iface[:interface_list].empty? and not iface[:interface_list].all?{|j| interfaces[j].has_key?(:order)}
+      next if iface[:interface_list] and not iface[:interface_list].empty? and not iface[:interface_list].all?{|j| ifname == j || interfaces[j].has_key?(:order)}
       iface[:order] = seq
       seq=seq + 1
     end
+    Chef::Log.fatal("GREG: interfaces = #{interfaces.inspect}")
     i=interfaces.keys.sort.reject{|k| interfaces[k].has_key?(:order)}
   end
   interfaces
@@ -145,7 +148,7 @@ def local_redhat_interfaces
   sort_interfaces(res)
 end
 
-def crowbar_interfaces
+def crowbar_interfaces(bond_list)
   Chef::Log.fatal("GREG: starting crowbar_interfaces")
   intf_to_if_map = Barclamp::Inventory.build_node_map(node)
   Chef::Log.fatal("GREG: got a map: #{intf_to_if_map.inspect}")
@@ -153,6 +156,7 @@ def crowbar_interfaces
   node["crowbar"]["network"].each do |netname, network|
     next if netname == "bmc"
 
+    Chef::Log.fatal("GREG: network: #{netname} #{network.inspect}")
     conduit = network["conduit"]
     intf, interface_list = Barclamp::Inventory.lookup_interface_info(node, conduit, intf_to_if_map)
     if intf.nil?
@@ -161,15 +165,45 @@ def crowbar_interfaces
       raise ::RangeError.new("No conduit to interface map for #{conduit}")
     end
 
-    if intf =~ /^bond/
-      bond_list << intf unless bond_list.member?(intf)
+    if intf == "bond"
+      the_bond = nil
+      Chef::Log.fatal("GREG: bond map: #{bond_list.inspect} #{intf} #{interface_list.inspect}")
+      bond_list.each do |bond, map| 
+        the_bond = bond if map == interface_list
+        break if the_bond
+      end
+
+      if the_bond.nil?
+        the_bond = "bond#{$bond_count}"
+        $bond_count = $bond_count + 1
+        bond_list[the_bond] = interface_list
+
+        intf = the_bond
+        res[intf] = Hash.new unless res[intf]
+        res[intf][:interface_list] = interface_list
+        res[intf][:mode]="team"
+        # Since we are making a team out of these devices, blow away whatever
+        # config we may have had for the slaves.
+        res[intf][:interface_list].each do |i|
+          res[i]=Hash.new
+          res[i][:interface]=i
+          res[i][:auto]=false
+          res[i][:config]="manual"
+          res[i][:slave]=true
+          res[i][:master]=intf
+        end
+      end
+
+      intf = the_bond
+      interface_list = [ the_bond ]
     end
 
-    res[intf] = Hash.new unless res[intf]
-    res[intf][:interface] = intf
-    res[intf][:auto] = true
     # Handle vlans first.
     if network["use_vlan"]
+      intf = "#{intf}.#{network["vlan"]}"
+      res[intf] = Hash.new unless res[intf]
+      res[intf][:interface] = intf
+      res[intf][:auto] = true
       res[intf][:vlan] = network["vlan"]
       res[intf][:mode] = "vlan"
       res[intf][:interface_list] = interface_list
@@ -180,6 +214,10 @@ def crowbar_interfaces
           res[i][:auto] = true
         end
       end
+    else
+      res[intf] = Hash.new unless res[intf]
+      res[intf][:interface] = intf
+      res[intf][:auto] = true
     end
     # If we were asked to make a bridge, do it second.
     if network["add_bridge"]
@@ -198,21 +236,6 @@ def crowbar_interfaces
       res[intf][:interface_list] = [ base_if ]
       res[intf][:auto] = true
       res[intf][:mode]="bridge"
-    # If we were not asked to make a bridge and have a non-empty interface
-    # list, we must have been asked to make a team.
-    elsif node["network"]["mode"] == "team" and interface_list and not interface_list.empty?
-      res[intf][:interface_list] = interface_list
-      res[intf][:mode]="team"
-      # Since we are making a team out of these devices, blow away whatever
-      # config we may have had for the slaves.
-      res[intf][:interface_list].each do |i|
-        res[i]=Hash.new
-        res[i][:interface]=i
-        res[i][:auto]=false
-        res[i][:config]="manual"
-        res[i][:slave]=true
-        res[i][:master]=intf
-      end
     end
     if network["address"] and network["address"] != "0.0.0.0"
       res[intf][:config] = "static"
@@ -224,6 +247,7 @@ def crowbar_interfaces
       res[intf][:config] = "manual"
     end
   end
+  Chef::Log.fatal("GREG: done with ci; #{res.inspect}")
   sort_interfaces(res)
 end
 
@@ -258,7 +282,7 @@ when "centos","redhat"
   package "vconfig"
 
   if node["network"]["mode"] == "team"
-    bond_list.each do |bond|
+    bond_list.keys.each do |bond|
       utils_line "alias #{bond} bonding" do
         action :add
         file "/etc/modules.conf"
@@ -290,7 +314,7 @@ old_interfaces = case node[:platform]
                  when "centos","redhat"
                    local_redhat_interfaces
                  end
-new_interfaces = crowbar_interfaces
+new_interfaces = crowbar_interfaces(bond_list)
 interfaces_to_up={}
 
 def deorder(i)
@@ -368,6 +392,25 @@ else
       delay = true
     end
   }
+
+  # First, tear down any interfaces that are going to be deleted in 
+  # reverse order in which they appear in the current /etc/network/interfaces
+  (old_interfaces.keys - new_interfaces.keys).sort{|a,b| 
+    old_interfaces[b][:order] <=> old_interfaces[a][:order]}.each {|i|
+    next if i.nil? or i == ""
+    log("Removing #{old_interfaces[i]}\n") { level :debug }
+    bash "ifdown #{i} for removal" do
+      code "ifdown #{i}"
+    end
+    case node[:platform]
+    when "ubuntu","debian"
+      # No-op
+    when "centos","redhat"
+      file "/etc/sysconfig/network-scripts/ifcfg-#{i}" do
+        action :delete
+      end
+    end
+  }
   
   # Fourth, bring up any new or changed interfaces
   new_interfaces.values.sort{|a,b|a[:order] <=> b[:order]}.each {|i|
@@ -389,17 +432,6 @@ else
     end
   }
   
-  # First, tear down any interfaces that are going to be deleted in 
-  # reverse order in which they appear in the current /etc/network/interfaces
-  (old_interfaces.keys - new_interfaces.keys).sort{|a,b| 
-    old_interfaces[b][:order] <=> old_interfaces[a][:order]}.each {|i|
-    next if i.nil? or i == ""
-    log("Removing #{old_interfaces[i]}\n") { level :debug }
-    bash "ifdown #{i} for removal" do
-      code "ifdown #{i}"
-    end
-  }
-
   # If we need to sleep now, do it.
   if delay
     delay_time = node["network"]["start_up_delay"]
