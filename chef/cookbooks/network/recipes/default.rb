@@ -158,7 +158,7 @@ def crowbar_interfaces(bond_list)
 
     Chef::Log.fatal("GREG: network: #{netname} #{network.inspect}")
     conduit = network["conduit"]
-    intf, interface_list = Barclamp::Inventory.lookup_interface_info(node, conduit, intf_to_if_map)
+    intf, interface_list, tm = Barclamp::Inventory.lookup_interface_info(node, conduit, intf_to_if_map)
     if intf.nil?
       log("No conduit for interface: #{conduit}") { level :fatal }
       log("Refusing to do so.") { level :fatal }
@@ -179,9 +179,11 @@ def crowbar_interfaces(bond_list)
         bond_list[the_bond] = interface_list
 
         intf = the_bond
+        tm = team_mode if tm.nil? 
         res[intf] = Hash.new unless res[intf]
         res[intf][:interface_list] = interface_list
         res[intf][:mode]="team"
+        res[intf][:bond_opts] = "mode=#{tm} miimon=100"
         # Since we are making a team out of these devices, blow away whatever
         # config we may have had for the slaves.
         res[intf][:interface_list].each do |i|
@@ -277,6 +279,10 @@ when "ubuntu","debian"
       action :add
       file "/etc/modules"
     end
+    bash "load bonding module" do
+      code "/sbin/modprobe bonding mode=#{team_mode} miimon=100"
+      not_if { ::File.exists?("/sys/module/bonding") }
+    end
   end
 when "centos","redhat"
   package "vconfig"
@@ -285,12 +291,8 @@ when "centos","redhat"
     bond_list.keys.each do |bond|
       utils_line "alias #{bond} bonding" do
         action :add
-        file "/etc/modules.conf"
+        file "/etc/modprobe.conf"
       end
-    end
-    utils_line "bonding mode=#{team_mode} miimon=100" do
-      action :add
-      file "/etc/modules.conf"
     end
   end
 end
@@ -298,13 +300,6 @@ end
 bash "load 8021q module" do
   code "/sbin/modprobe 8021q"
   not_if { ::File.exists?("/sys/module/8021q") }
-end
-
-if node["network"]["mode"] == "team"
-  bash "load bonding module" do
-    code "/sbin/modprobe bonding mode=#{team_mode} miimon=100"
-    not_if { ::File.exists?("/sys/module/bonding") }
-  end
 end
 
 delay = false
