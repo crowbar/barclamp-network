@@ -32,3 +32,23 @@ locale_additions:
           attributes: Attributes
         edit_deployment: 
           deployment: Deployment
+
+rpms:
+  pkgs:
+    - bridge-utils
+    - vconfig
+    - dhcp
+    - tftp-server
+    - nfs-utils
+    - portmap
+
+debs:
+  pkgs:
+    - bridge-utils
+    - vlan
+    - ifenslave-2.6
+    - dhcp3-server
+    - tftpd-hpa
+    - nfs-common
+    - portmap
+    - nfs-kernel-server
