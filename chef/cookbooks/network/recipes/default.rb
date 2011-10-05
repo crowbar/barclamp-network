@@ -182,7 +182,8 @@ def crowbar_interfaces(bond_list)
         tm = team_mode if tm.nil? 
         res[intf] = Hash.new unless res[intf]
         res[intf][:interface_list] = interface_list
-        res[intf][:mode]="team"
+        res[intf][:mode] = "team"
+        res[intf][:interface] = intf
         res[intf][:bond_opts] = "mode=#{tm} miimon=100"
         # Since we are making a team out of these devices, blow away whatever
         # config we may have had for the slaves.
