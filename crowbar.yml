@@ -19,6 +19,8 @@ barclamp:
   name: network
   display: Network
   version: 0
+  member:
+    - crowbar
 
 crowbar:
   layout: 1
