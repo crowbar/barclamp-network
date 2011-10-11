@@ -165,39 +165,23 @@ def crowbar_interfaces(bond_list)
       raise ::RangeError.new("No conduit to interface map for #{conduit}")
     end
 
-    if intf == "bond"
-      the_bond = nil
-      Chef::Log.fatal("GREG: bond map: #{bond_list.inspect} #{intf} #{interface_list.inspect}")
-      bond_list.each do |bond, map| 
-        the_bond = bond if map == interface_list
-        break if the_bond
+    if intf =~ "^bond"
+      tm = team_mode if tm.nil? 
+      res[intf] = Hash.new unless res[intf]
+      res[intf][:interface_list] = interface_list
+      res[intf][:mode] = "team"
+      res[intf][:interface] = intf
+      res[intf][:bond_opts] = "mode=#{tm} miimon=100"
+      # Since we are making a team out of these devices, blow away whatever
+      # config we may have had for the slaves.
+      res[intf][:interface_list].each do |i|
+        res[i]=Hash.new
+        res[i][:interface]=i
+        res[i][:auto]=false
+        res[i][:config]="manual"
+        res[i][:slave]=true
+        res[i][:master]=intf
       end
-
-      if the_bond.nil?
-        the_bond = "bond#{$bond_count}"
-        $bond_count = $bond_count + 1
-        bond_list[the_bond] = interface_list
-
-        intf = the_bond
-        tm = team_mode if tm.nil? 
-        res[intf] = Hash.new unless res[intf]
-        res[intf][:interface_list] = interface_list
-        res[intf][:mode] = "team"
-        res[intf][:interface] = intf
-        res[intf][:bond_opts] = "mode=#{tm} miimon=100"
-        # Since we are making a team out of these devices, blow away whatever
-        # config we may have had for the slaves.
-        res[intf][:interface_list].each do |i|
-          res[i]=Hash.new
-          res[i][:interface]=i
-          res[i][:auto]=false
-          res[i][:config]="manual"
-          res[i][:slave]=true
-          res[i][:master]=intf
-        end
-      end
-
-      intf = the_bond
       interface_list = [ the_bond ]
     end
 
@@ -358,7 +342,7 @@ else
       # Kill any dhclients for this interface, and then take action
       # based on whether we are giving it an IP address or not.
       bash "kill dhclients" do
-        code "killall dhclient3"
+        code "killall dhclient3 ; rm -rf /etc/dhclient*"
         only_if "pidof dhclient3"
       end
       if new_interfaces[i][:config] == "static"
