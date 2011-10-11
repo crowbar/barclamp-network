@@ -165,7 +165,7 @@ def crowbar_interfaces(bond_list)
       raise ::RangeError.new("No conduit to interface map for #{conduit}")
     end
 
-    if intf =~ "^bond"
+    if intf =~ /^bond/
       tm = team_mode if tm.nil? 
       res[intf] = Hash.new unless res[intf]
       res[intf][:interface_list] = interface_list
@@ -182,7 +182,7 @@ def crowbar_interfaces(bond_list)
         res[i][:slave]=true
         res[i][:master]=intf
       end
-      interface_list = [ the_bond ]
+      interface_list = [ intf ]
     end
 
     # Handle vlans first.
