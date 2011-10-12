@@ -26,7 +26,6 @@ def sort_interfaces(interfaces)
   seq=0
   i=interfaces.keys.sort.reject{|k| interfaces[k].has_key?(:order)}
   until i.empty?
-    Chef::Log.fatal("GREG: looping i = #{i.inspect}")
     i.each do |ifname|
       iface=interfaces[ifname]
       # If this interface has children, and any of its children have not
@@ -35,7 +34,6 @@ def sort_interfaces(interfaces)
       iface[:order] = seq
       seq=seq + 1
     end
-    Chef::Log.fatal("GREG: interfaces = #{interfaces.inspect}")
     i=interfaces.keys.sort.reject{|k| interfaces[k].has_key?(:order)}
   end
   interfaces
@@ -149,14 +147,11 @@ def local_redhat_interfaces
 end
 
 def crowbar_interfaces(bond_list)
-  Chef::Log.fatal("GREG: starting crowbar_interfaces")
   intf_to_if_map = Barclamp::Inventory.build_node_map(node)
-  Chef::Log.fatal("GREG: got a map: #{intf_to_if_map.inspect}")
   res = Hash.new
   node["crowbar"]["network"].each do |netname, network|
     next if netname == "bmc"
 
-    Chef::Log.fatal("GREG: network: #{netname} #{network.inspect}")
     conduit = network["conduit"]
     intf, interface_list, tm = Barclamp::Inventory.lookup_interface_info(node, conduit, intf_to_if_map)
     if intf.nil?
@@ -234,7 +229,6 @@ def crowbar_interfaces(bond_list)
       res[intf][:config] = "manual"
     end
   end
-  Chef::Log.fatal("GREG: done with ci; #{res.inspect}")
   sort_interfaces(res)
 end
 
