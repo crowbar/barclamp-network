@@ -276,6 +276,18 @@ when "centos","redhat"
   end
 end
 
+## Make sure that ip6tables is off.
+#bash "Make sure ip6tables is off" do
+#  code "/sbin/chkconfig ip6tables off"
+#  only_if "/sbin/chkconfig --list ip6tables | grep -q on"
+#end
+#
+## Make sure that ip6tables service is off
+#bash "Make sure ip6tables service is off" do
+#  code "service ip6tables stop"
+#  not_if "service ip6tables status | grep -q stopped"
+#end
+
 bash "load 8021q module" do
   code "/sbin/modprobe 8021q"
   not_if { ::File.exists?("/sys/module/8021q") }
