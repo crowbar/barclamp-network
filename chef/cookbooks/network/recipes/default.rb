@@ -172,7 +172,7 @@ def crowbar_interfaces(bond_list)
       res[intf][:interface_list].each do |i|
         res[i]=Hash.new
         res[i][:interface]=i
-        res[i][:auto]=false
+        res[i][:auto]=true
         res[i][:config]="manual"
         res[i][:slave]=true
         res[i][:master]=intf
