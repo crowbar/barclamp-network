@@ -103,7 +103,7 @@ def local_redhat_interfaces
       next if line.nil? or ( line.length == 0 ) # skip blank lines
       parts = line.split('=',2)
       k=parts[0]
-      v=parts[1]
+      v=parts[1][/\A"(.*)"\z/m,1]  # Remove start/end quotes from the string
       case k
       when "DEVICE" then res[iface][:interface]=v
       when "ONBOOT" 
@@ -113,6 +113,7 @@ def local_redhat_interfaces
         res[iface][:ipaddress] = v
       when "NETMASK" then res[iface][:netmask] = v
       when "BROADCAST" then res[iface][:broadcast] = v
+      when "BONDING_OPTS" then res[ifact][:bond_opts] = v
       when "GATEWAY" then res[iface][:router] = v
       when "MASTER" 
         res[iface][:master] = v
