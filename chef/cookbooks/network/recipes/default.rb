@@ -113,7 +113,7 @@ def local_redhat_interfaces
         res[iface][:ipaddress] = v
       when "NETMASK" then res[iface][:netmask] = v
       when "BROADCAST" then res[iface][:broadcast] = v
-      when "BONDING_OPTS" then res[ifact][:bond_opts] = v
+      when "BONDING_OPTS" then res[iface][:bond_opts] = v
       when "GATEWAY" then res[iface][:router] = v
       when "MASTER" 
         res[iface][:master] = v
