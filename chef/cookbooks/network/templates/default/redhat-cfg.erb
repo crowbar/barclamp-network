@@ -1,6 +1,6 @@
 # Managed by Crowbar.
 # Do not edit.
-<%  @iface.keys.each do |k|
+<% @iface.keys.each do |k|
     v=@iface[k]
     next unless v
     next if v.class == Array and v.empty?
@@ -34,6 +34,7 @@
       k="VLAN"
       v="yes"
     end
-    next if k.class != String -%>
-<%= "#{k}=\"#{v}\"" %>
+    next if k.class != String 
+    quote = ((v.include? " ") ? "\"" : "") -%>
+<%= "#{k}=#{quote}#{v}#{quote}" %>
 <% end -%>
