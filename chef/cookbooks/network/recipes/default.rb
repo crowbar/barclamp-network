@@ -104,6 +104,7 @@ def local_redhat_interfaces
       parts = line.split('=',2)
       k=parts[0]
       v=parts[1][/\A"(.*)"\z/m,1]  # Remove start/end quotes from the string
+      v=parts[1] if v.nil?
       case k
       when "DEVICE" then res[iface][:interface]=v
       when "ONBOOT" 
