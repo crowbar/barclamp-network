@@ -365,6 +365,7 @@ else
         # schedule it to be ifup'ed based on whether or not :auto is true.
         bash "ifdown #{i} for crowbar capture" do
           code "ifdown #{i}"
+          ignore_failure true
         end
         interfaces_to_up[i] = "ifup #{i}" if new_interfaces[i][:auto]
         delay = true
@@ -375,6 +376,7 @@ else
       # the new config is set to :auto.
       bash "ifdown #{i} for reconfigure" do
         code "ifdown #{i}"
+        ignore_failure true
       end
       interfaces_to_up[i] = "ifup #{i}" if new_interfaces[i][:auto]
       delay = true
@@ -389,6 +391,7 @@ else
     log("Removing #{old_interfaces[i]}\n") { level :debug }
     bash "ifdown #{i} for removal" do
       code "ifdown #{i}"
+      ignore_failure true
     end
     case node[:platform]
     when "ubuntu","debian"
@@ -408,6 +411,7 @@ else
       # This is a new interface.  Ifup it if it should be auto ifuped.
       bash "ifup new #{i[:interface]}" do
         code "ifup #{i[:interface]}"
+        ignore_failure true
       end
       delay = true
     when interfaces_to_up[i[:interface]]
@@ -416,6 +420,7 @@ else
       # We need to bring it up according to the instructions left behind.
       bash "ifup reconfigured #{i[:interface]}" do
         code interfaces_to_up[i[:interface]]
+        ignore_failure true
       end
     end
   }
