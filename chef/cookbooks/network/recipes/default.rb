@@ -28,6 +28,7 @@ def sort_interfaces(interfaces)
   until i.empty?
     i.each do |ifname|
       iface=interfaces[ifname]
+      iface[:interface_list] = iface[:interface_list].sort if iface[:interface_list]
       # If this interface has children, and any of its children have not
       # been given a sequence number, skip it.
       next if iface[:interface_list] and not iface[:interface_list].empty? and not iface[:interface_list].all?{|j| ifname == j || interfaces[j].has_key?(:order)}
@@ -226,7 +227,7 @@ def crowbar_interfaces(bond_list)
       res[intf][:ipaddress] = network["address"]
       res[intf][:netmask] = network["netmask"]
       res[intf][:broadcast] = network["broadcast"]
-      res[intf][:router] = network["router"]
+      res[intf][:router] = network["router"] if network["router"]
     else
       res[intf][:config] = "manual"
     end
@@ -426,11 +427,11 @@ else
   }
   
   # If we need to sleep now, do it.
-  if delay
-    delay_time = node["network"]["start_up_delay"]
-    log "Sleeping for #{delay_time} seconds due new link coming up"
-    bash "network delay sleep" do
-      code "sleep #{delay_time}"
-    end
+  delay_time = delay ? node["network"]["start_up_delay"] : 0
+  log "Sleeping for #{delay_time} seconds due new link coming up"
+  bash "network delay sleep" do
+    code "sleep #{delay_time}"
+    only_if { delay != 0 }
   end
 end
+
