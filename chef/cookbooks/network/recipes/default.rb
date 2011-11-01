@@ -197,6 +197,7 @@ def crowbar_interfaces(bond_list)
           res[i] = Hash.new
           res[i][:interface] = i
           res[i][:auto] = true
+          res[i][:config] = "manual" if res[i][:ipaddress].nil?
         end
       end
     else
