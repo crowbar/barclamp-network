@@ -270,7 +270,7 @@ when "ubuntu","debian"
     team_mode = node["network"]["teaming"]["mode"]
     utils_line "bonding mode=#{team_mode} miimon=100" do
       action :add
-#      regexp_exclude "/^bonding mode=/"  - waiting for change in util_line.
+      regexp_exclude "bonding mode=.*"  
       file "/etc/modules"
     end
     bash "load bonding module" do
