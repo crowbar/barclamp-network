@@ -285,7 +285,6 @@ when "centos","redhat"
     bond_list.keys.each do |bond|
       utils_line "alias #{bond} bonding" do
         action :add
- mm   
         file "/etc/modprobe.conf"
       end
     end
