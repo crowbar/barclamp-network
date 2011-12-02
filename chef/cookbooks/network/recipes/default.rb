@@ -152,6 +152,7 @@ end
 def crowbar_interfaces(bond_list)
   intf_to_if_map = Barclamp::Inventory.build_node_map(node)
   res = Hash.new
+  machine_team_mode = nil # seems that we can only have 1 bonding mode is possible per machine
   node["crowbar"]["network"].each do |netname, network|
     next if netname == "bmc"
 
@@ -165,6 +166,11 @@ def crowbar_interfaces(bond_list)
 
     if intf =~ /^bond/
       tm = team_mode if tm.nil? 
+      machine_team_mode = tm if machine_team_mode.nil?
+      if (!machine_team_mode.nil? and !machine_team_mode == tm)
+          # once a bonding mode has been selected for the machine, don't let others...
+	  Chef::Provider::Log::ChefLog.log("CONFLICTING TEAM MODES: for conduit #{conduit}")
+      end
       res[intf] = Hash.new unless res[intf]
       res[intf][:interface_list] = interface_list
       res[intf][:mode] = "team"
@@ -232,7 +238,9 @@ def crowbar_interfaces(bond_list)
     else
       res[intf][:config] = "manual"
     end
-  end
+  end  ## crowbar/network loop
+  team_mode = machine_team_mode
+  node["network"]["teaming"]["mode"] = team_mode
   sort_interfaces(res)
 end
 
@@ -258,8 +266,11 @@ when "ubuntu","debian"
   end
 
   if node["network"]["mode"] == "team"
+    # make sure to pick up any updates
+    team_mode = node["network"]["teaming"]["mode"]
     utils_line "bonding mode=#{team_mode} miimon=100" do
       action :add
+#      regexp_exclude "/^bonding mode=/"  - waiting for change in util_line.
       file "/etc/modules"
     end
     bash "load bonding module" do
@@ -274,6 +285,7 @@ when "centos","redhat"
     bond_list.keys.each do |bond|
       utils_line "alias #{bond} bonding" do
         action :add
+ mm   
         file "/etc/modprobe.conf"
       end
     end
