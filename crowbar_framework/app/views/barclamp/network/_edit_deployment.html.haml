@@ -4,7 +4,7 @@
 
 :javascript
   $(document).ready(function(){
-    var constraints = { "network": { "unique": false, "count": -1 } };
+    var constraints = { "network": { "unique": false, "count": -1, "admin":true } };
     node_selector($('#drag_drop'), constraints);
   });
 
