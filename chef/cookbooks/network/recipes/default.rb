@@ -256,15 +256,6 @@ def crowbar_interfaces(bond_list)
   sort_interfaces(res)
 end
 
-# Make sure that the /etc/network/if-up.d/upstart file is gone
-# We manage apache2 (and others), it shouldn't
-case node[:platform]
-when "ubuntu","debian"
-  file "/etc/network/if-up.d/upstart" do
-    action :delete
-  end
-end
-
 package "bridge-utils"
 
 case node[:platform]
