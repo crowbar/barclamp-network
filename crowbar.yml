@@ -47,6 +47,12 @@ rpms:
     - portmap
 
 debs:
+  ubuntu-10.10:
+    pkgs:
+      - portmap
+  ubuntu-11.10:
+    pkgs:
+      - rpcbind
   pkgs:
     - bridge-utils
     - vlan
@@ -54,5 +60,4 @@ debs:
     - dhcp3-server
     - tftpd-hpa
     - nfs-common
-    - portmap
     - nfs-kernel-server
