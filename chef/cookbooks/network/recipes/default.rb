@@ -153,8 +153,20 @@ def crowbar_interfaces(bond_list)
   intf_to_if_map = Barclamp::Inventory.build_node_map(node)
   res = Hash.new
   machine_team_mode = nil # seems that we can only have 1 bonding mode is possible per machine
+  ## find most prefered network to use a default gw
+  max_pref = 10000
+  net_pref = nil  # name of network prefered as default route
+  node["crowbar"]["network"].each { |name, network | 
+    r_pref= integer(network["router_pref"]) rescue 10000
+    if (r_pref < max_pref)
+      max_pref = r_pref
+      net_pref = name
+    end
+  }
+
   node["crowbar"]["network"].each do |netname, network|
     next if netname == "bmc"
+    allow_gw = (netname == net_pref)
 
     conduit = network["conduit"]
     intf, interface_list, tm = Barclamp::Inventory.lookup_interface_info(node, conduit, intf_to_if_map)
@@ -234,7 +246,7 @@ def crowbar_interfaces(bond_list)
       res[intf][:ipaddress] = network["address"]
       res[intf][:netmask] = network["netmask"]
       res[intf][:broadcast] = network["broadcast"]
-      res[intf][:router] = network["router"] if network["router"]
+      res[intf][:router] = network["router"] if network["router"] && allow_gw
     else
       res[intf][:config] = "manual"
     end
