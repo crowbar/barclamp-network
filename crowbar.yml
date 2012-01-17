@@ -38,13 +38,21 @@ locale_additions:
           deployment: Deployment
 
 rpms:
+  redhat-5.6:
+    pkgs:
+      - portmap
+  redhat-5.7:
+    pkgs:
+      - portmap
+  redhat-6.2:
+    pkgs:
+      - rpcbind
   pkgs:
     - bridge-utils
     - vconfig
     - dhcp
     - tftp-server
     - nfs-utils
-    - portmap
 
 debs:
   ubuntu-10.10:
