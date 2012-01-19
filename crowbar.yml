@@ -44,7 +44,13 @@ rpms:
   redhat-5.7:
     pkgs:
       - portmap
+  centos-5.7:
+    pkgs:
+      - portmap
   redhat-6.2:
+    pkgs:
+      - rpcbind
+  centos-6.2:
     pkgs:
       - rpcbind
   pkgs:
