@@ -28,6 +28,10 @@ crowbar:
   run_order: 20
   chef_order: 20
 
+nav:
+  network:
+    switch: switch_path
+    
 locale_additions:
   en:
     barclamp:
@@ -36,6 +40,20 @@ locale_additions:
           attributes: Attributes
         edit_deployment: 
           deployment: Deployment
+    nav:
+      switches: Switches
+      vlan: VLANs
+    network:
+      switch:
+        title: Network Switches
+        switch_details: Switch Expanded Details
+        switch: Switch
+        port: Port
+        node: Node
+        nc: N/C
+        no_connection: No Connection
+      dense:
+        no_connection: No Connection
 
 rpms:
   pkgs:
