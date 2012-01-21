@@ -80,7 +80,7 @@ class NetworkController < BarclampController
   def vlan
     net_bc = RoleObject.find_role_by_name 'network-config-default'
     if net_bc.barclamp == 'network'
-      true
+      @vlans = net_bc.default_attributes['network']['networks']
     end 
   end
   
@@ -95,7 +95,7 @@ class NetworkController < BarclampController
         s_name = raw['switch_name'] || "-1"
         s_unit =  raw['switch_name'] || "-1"
         if s_name == "-1" or s_name = -1
-          s_name = I18n.t('virtual') + ":" + intf.split('.')[0]
+          s_name = I18n.t('network.controller.virtual') + ":" + intf.split('.')[0]
           s_unit = nil
         end
         s_name+= ":#{s_unit}" unless s_unit.nil?

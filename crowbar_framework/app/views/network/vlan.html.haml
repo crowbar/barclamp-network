@@ -1,0 +1,16 @@
+%h1= t('.title')
+
+%table
+  %thead
+    %tr
+      %th= t '.name'
+      %th= t '.id'
+      %th= t '.conduit'
+      %th= t '.nodes'
+  %tbody
+    - @vlans.sort.each do |vlan, details|
+      %tr
+        %td= vlan
+        %td= details['vlan']
+        %td= details['conduit']
+        %td TBD

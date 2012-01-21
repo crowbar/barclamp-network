@@ -44,6 +44,8 @@ locale_additions:
       switches: Switches
       vlan: VLANs
     network:
+      controller:
+        virtual: Virtual
       switch:
         title: Network Switches
         switch_details: Switch Expanded Details
@@ -54,6 +56,12 @@ locale_additions:
         no_connection: No Connection
       dense:
         no_connection: No Connection
+      vlan:
+        title: Available VLANs
+        name: Name
+        id: VLAN ID
+        conduit: Conduit
+        nodes: Nodes
 
 rpms:
   redhat-5.6:
