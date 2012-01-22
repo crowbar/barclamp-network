@@ -92,13 +92,13 @@ class NetworkController < BarclampController
       if_list = node["crowbar_ohai"]["detected"]["network"] 
       if_list.each do |intf, details|
         raw = node["crowbar_ohai"]["switch_config"][intf]
-        s_name = raw['switch_name'] || "-1"
-        s_unit =  raw['switch_name'] || "-1"
-        if s_name == "-1" or s_name = -1
+        s_name = raw['switch_name'] || -1
+        s_unit =  raw['switch_unit'] || -1
+        if s_name == -1
           s_name = I18n.t('network.controller.virtual') + ":" + intf.split('.')[0]
           s_unit = nil
         end
-        s_name+= ":#{s_unit}" unless s_unit.nil?
+        s_name= "#{s_name}:#{s_unit}" unless s_unit.nil?
         switches[s_name] = node["crowbar_ohai"]["switch_config"][intf]
       end
     rescue 
