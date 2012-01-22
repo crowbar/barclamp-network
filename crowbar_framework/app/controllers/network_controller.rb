@@ -66,7 +66,7 @@ class NetworkController < BarclampController
         port = if value['switch_port'] == -1 or value['switch_port'] == "-1"
           @vports[key] = 1 + (@vports[key] || 0)
         else
-          value['switch_port']
+          value['switch_port'].to_i
         end
         @switches[key][:max_port] = port if port>@switches[key][:max_port]
         @switches[key][:nodes][port] = node.handle

@@ -1,51 +1,64 @@
 %h1= t('.title')
 
 - @switches.sort.each do |switch, sw_details|
+  - max_port = (sw_details[:max_port]<25 ? 24 : 48)
   %table.data.switch.box{ :id=>switch }
     %thead
       %tr
-        %th
-        %th{:colspan=>"#{(sw_details[:max_port]-2)}" }
-          %a.toggle.with_label{:href => "#", :id => "#{switch.parameterize}_toggle", :rel => "#{switch.parameterize}_details"}
+        %th{ :style=>'width:10px' }
+        %th{:colspan=>"#{max_port}" }
+          %a.toggle.with_label{:href => "#", :id => "#{switch.parameterize}_toggle", :rel => "#{switch.parameterize}_details1, #{switch.parameterize}_details25"}
             = t('.switch') + " : " + switch
-        %th
+        %th{ :style=>'width:10px' }
     %tbody
       %tr
-        - 1.step(47, 2) do |port|
-          =render :partial => 'dense', :locals => { :switch=> switch, :sw_details=>sw_details, :port=>port } 
+        %td
+        - 1.step(max_port-1, 2) do |port|
+          =render :partial => 'dense', :locals => { :switch=> switch, :sw_details=>sw_details, :port=>port, :max_port=>max_port } 
+        %td
       %tr
-        - 2.step(48, 2) do |port|
-          =render :partial => 'dense', :locals => { :switch=> switch, :sw_details=>sw_details, :port=>port } 
+        %td
+        - 2.step(max_port, 2) do |port|
+          =render :partial => 'dense', :locals => { :switch=> switch, :sw_details=>sw_details, :port=>port, :max_port=>max_port } 
+        %td
 
-  %table.data.switch.box{ :id=>"#{switch.parameterize}_details", :style=>"display:none" }
+  %table.data.switch.box{ :id=>"#{switch.parameterize}_details1", :style=>"display:none" }
     %thead
       %tr
-        %th
-        %th{:colspan=>"#{(sw_details[:max_port]+1)/2}" }
+        %th{ :style=>'width:10px' }
+        %th{:colspan=>"24" }
           = t('.switch_details') + " : " + switch
-        %th
+        %th{ :style=>'width:10px' }
     %tbody
       %tr
+        %td
         - 1.step(23, 2) do |port|
           =render :partial => 'switch', :locals => { :switch=> switch, :sw_details=>sw_details, :port=>port } 
+        %td
       %tr
+        %td
         - 2.step(24, 2) do |port|
           =render :partial => 'switch', :locals => { :switch=> switch, :sw_details=>sw_details, :port=>port } 
-  -if sw_details[:max_port]>24
-    %table.data.switch.box{ :id=>"#{switch}_details" }
+        %td
+  -if max_port>24
+    %table.data.switch.box{ :id=>"#{switch.parameterize}_details25", :style=>"display:none" }
       %thead
         %tr
-          %th
-          %th{:colspan=>"#{(sw_details[:max_port]+1)/2}" }
-            = t('.switch') + " : " + switch
-          %th
+          %th{ :style=>'width:10px' }
+          %th{:colspan=>"24" }
+            = t('.switch_details') + " : " + switch
+          %th{ :style=>'width:10px' }
       %tbody
         %tr
-          - 25.step(47, 2) do |port|
-            =render :partial => 'index', :locals => { :switch=> switch, :sw_details=>sw_details, :port=>port } 
+          %td
+          - 25.step(max_port-1, 2) do |port|
+            =render :partial => 'switch', :locals => { :switch=> switch, :sw_details=>sw_details, :port=>port } 
+          %td
         %tr
-          - 26.step(48, 2) do |port|
-            =render :partial => 'index', :locals => { :switch=> switch, :sw_details=>sw_details, :port=>port } 
+          %td
+          - 26.step(max_port, 2) do |port|
+            =render :partial => 'switch', :locals => { :switch=> switch, :sw_details=>sw_details, :port=>port } 
+          %td
 
 .clear
 

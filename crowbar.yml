@@ -41,7 +41,7 @@ locale_additions:
         edit_deployment: 
           deployment: Deployment
     nav:
-      switches: Switches
+      switch: Switches
       vlan: VLANs
     network:
       controller:
@@ -61,6 +61,7 @@ locale_additions:
         name: Name
         id: VLAN ID
         conduit: Conduit
+        inuse: Active
         nodes: Nodes
 
 rpms:
