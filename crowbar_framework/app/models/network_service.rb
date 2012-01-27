@@ -52,21 +52,15 @@ class NetworkService < ServiceObject
       return [200, net_info]
     end
 
+    net_info={}
     found = false
     begin # Rescue block
       f = acquire_ip_lock
       db = ProposalObject.find_data_bag_item "crowbar/#{network}_network"
+      net_info = build_net_info(network)
 
-      subnet = db["network"]["subnet"]
-      vlan = db["network"]["vlan"]
-      use_vlan = db["network"]["use_vlan"]
-      add_bridge = db["network"]["add_bridge"]
-      broadcast = db["network"]["broadcast"]
-      router = db["network"]["router"]
-      netmask = db["network"]["netmask"]
       rangeH = db["network"]["ranges"][range]
       rangeH = db["network"]["ranges"]["host"] if rangeH.nil?
-      conduit = db["network"]["conduit"]
 
       index = IPAddr.new(rangeH["start"]) & ~IPAddr.new(netmask)
       index = index.to_i
@@ -92,6 +86,7 @@ class NetworkService < ServiceObject
       end
 
       if found
+	net_info["address"] = address.to_s
         db["allocated_by_name"][node.name] = { "machine" => node.name, "interface" => conduit, "address" => address.to_s }
         db["allocated"][address.to_s] = { "machine" => node.name, "interface" => conduit, "address" => address.to_s }
         db.save
@@ -106,7 +101,6 @@ class NetworkService < ServiceObject
     return [404, "No Address Available"] if !found
 
     # Save the information.
-    net_info = { "conduit" => conduit, "address" => address.to_s, "netmask" => netmask, "node" => name, "router" => router, "subnet" => subnet, "broadcast" => broadcast, "usage" => network, "use_vlan" => use_vlan, "vlan" => vlan, "add_bridge" => add_bridge }
     node.crowbar["crowbar"]["network"][network] = net_info
     node.save
 
@@ -176,30 +170,42 @@ class NetworkService < ServiceObject
       return [200, net_info]
     end
 
+    net_info={}
     begin # Rescue block
-      db = ProposalObject.find_data_bag_item "crowbar/#{network}_network"
-
-      subnet = db["network"]["subnet"]
-      vlan = db["network"]["vlan"]
-      use_vlan = db["network"]["use_vlan"]
-      add_bridge = db["network"]["add_bridge"]
-      broadcast = db["network"]["broadcast"]
-      router = db["network"]["router"]
-      netmask = db["network"]["netmask"]
-      conduit = db["network"]["conduit"]
-
+      net_info = build_net_info(network)
     rescue Exception => e
       @logger.error("Error finding address: #{e.message}")
     ensure
     end
 
     # Save the information.
-    net_info = { "conduit" => conduit, "netmask" => netmask, "node" => name, "router" => router, "subnet" => subnet, "broadcast" => broadcast, "usage" => network, "use_vlan" => use_vlan, "vlan" => vlan, "add_bridge" => add_bridge }
     node.crowbar["crowbar"]["network"][network] = net_info
     node.save
 
     @logger.info("Network enable_interface: Assigned: #{name} #{network}")
     [200, net_info]
+  end
+
+
+  def build_net_info(network)
+    db = ProposalObject.find_data_bag_item "crowbar/#{network}_network"
+
+    subnet = db["network"]["subnet"]
+    vlan = db["network"]["vlan"]
+    use_vlan = db["network"]["use_vlan"]
+    add_bridge = db["network"]["add_bridge"]
+    broadcast = db["network"]["broadcast"]
+    router = db["network"]["router"]
+    router_pref = db["network"]["router_pref"] unless db["network"]["router_pref"].nil?
+    netmask = db["network"]["netmask"]
+    conduit = db["network"]["conduit"]
+    net_info = { 
+      "conduit" => conduit, 
+      "netmask" => netmask, "node" => name, "router" => router,
+      "subnet" => subnet, "broadcast" => broadcast, "usage" => network, 
+      "use_vlan" => use_vlan, "vlan" => vlan, "add_bridge" => add_bridge }
+    net_info["router_pref"] = router_pref unless router_pref.nil?
+    net_info
   end
 
 end
