@@ -51,8 +51,7 @@ class NetworkController < BarclampController
     @groups = {}
     @switches = {}
     @nodes = {}
-    raw_nodes = NodeObject.all
-    raw_nodes.each do |node|
+    NodeObject.all.each do |node|
       @sum = @sum + node.name.hash
       @nodes[node.handle] = { :alias=>node.alias, :description=>node.description(false, true), :status=>node.status }
       #build groups
@@ -69,7 +68,7 @@ class NetworkController < BarclampController
           value['switch_port'].to_i
         end
         @switches[key][:max_port] = port if port>@switches[key][:max_port]
-        @switches[key][:nodes][port] = node.handle
+        @switches[key][:nodes][port] = { :handle=>node.handle, :intf=>value['interface'] }
         @switches[key][:status][node.status] = (@switches[key][:status][node.status] || 0).to_i + 1
       end
     end
@@ -81,25 +80,49 @@ class NetworkController < BarclampController
     net_bc = RoleObject.find_role_by_name 'network-config-default'
     if net_bc.barclamp == 'network'
       @vlans = net_bc.default_attributes['network']['networks']
-    end 
+    end
+    @nodes = {}
+    NodeObject.all.each do |node|
+      @nodes[node.handle] = { :alias=>node.alias, :description=>node.description(false, true), :vlans=>{} }
+      @nodes[node.handle][:vlans] = node_vlans(node)
+    end
+    
   end
   
   private 
   
+#  "network":{"bmc":{"address":"192.168.124.174","netmask":"255.255.255.0","add_bridge":false,"usage":"bmc","node":"d00-26-6c-f2-85-84.dell.com","router":null,"broadcast":"192.168.124.255","vlan":100,"subnet":"192.168.124.0","use_vlan":false,"conduit":"bmc"},"admin":{"add_bridge":false,"netmask":"255.255.255.0","address":"192.168.124.92","usage":"admin","router":"192.168.124.1","node":"d00-26-6c-f2-85-84.dell.com","broadcast":"192.168.124.255","vlan":100,"use_vlan":false,"subnet":"192.168.124.0","conduit":"intf0"}},
+  
+  def node_vlans(node)
+    nv = {}
+    vlans = node["crowbar"]["network"].each do |vlan, vdetails|
+      nv[vlan] = { :address => vdetails["address"], :active=>vdetails["use_vlan"] }
+    end
+    nv
+  end
+  
   def node_nics(node)
     switches = {}
     begin
+      # list the interfaces
       if_list = node["crowbar_ohai"]["detected"]["network"] 
+      # this is a virtual switch if ALL the interfaces are virtual
+      physical = if_list.map{ |intf, details| node["crowbar_ohai"]["switch_config"][intf]['switch_name'] != '-1' }.include? true
       if_list.each do |intf, details|
+        connected = !physical #if virtual, then all ports are connected
         raw = node["crowbar_ohai"]["switch_config"][intf]
         s_name = raw['switch_name'] || -1
         s_unit =  raw['switch_unit'] || -1
-        if s_name == -1
+        if s_name == -1 or s_name == "-1"
           s_name = I18n.t('network.controller.virtual') + ":" + intf.split('.')[0]
           s_unit = nil
+        else
+          connected = true
         end
-        s_name= "#{s_name}:#{s_unit}" unless s_unit.nil?
-        switches[s_name] = node["crowbar_ohai"]["switch_config"][intf]
+        if connected
+          s_name= "#{s_name}:#{s_unit}" unless s_unit.nil?
+          switches[s_name] = node["crowbar_ohai"]["switch_config"][intf]
+        end
       end
     rescue 
       Rails.logger.debug("could not build interface/switch list for #{node.name}")

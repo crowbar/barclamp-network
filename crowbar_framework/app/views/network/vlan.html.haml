@@ -1,18 +1,22 @@
 %h1= t('.title')
 
-%table
+%table{:border=>1}
   %thead
     %tr
-      %th= t '.name'
-      %th= t '.id'
-      %th= t '.conduit'
-      %th= t '.inuse'
       %th= t '.nodes'
+      - @vlans.sort.each do |vlan, vdetails|
+        %th{:title=>vdetails['vlan']}= vlan
   %tbody
-    - @vlans.sort.each do |vlan, details|
+    - @nodes.sort.each do |node, ndetails|
       %tr
-        %td= vlan
-        %td= details['vlan']
-        %td= details['conduit']
-        %td= details['use_vlan']
-        %td TBD
+        %th{:title=>ndetails[:description]}
+          = ndetails[:alias]
+          - @vlans.sort.each do |vlan, vdetails|
+            - if ndetails[:vlans].has_key? vlan
+              %td{:title=>ndetails[:vlans][vlan][:address]}
+                -if ndetails[:vlans][vlan][:active]
+                  = t('.inuse')
+                -else
+                  = t('.not_inuse')
+            -else
+              %td= '-'

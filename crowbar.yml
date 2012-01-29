@@ -31,6 +31,7 @@ crowbar:
 nav:
   network:
     switch: switch_path
+    vlan: vlan_path
     
 locale_additions:
   en:
@@ -62,6 +63,7 @@ locale_additions:
         id: VLAN ID
         conduit: Conduit
         inuse: Active
+        not_inuse: X
         nodes: Nodes
 
 rpms:
