@@ -57,20 +57,20 @@ class NetworkService < ServiceObject
     begin # Rescue block
       f = acquire_ip_lock
       db = ProposalObject.find_data_bag_item "crowbar/#{network}_network"
-      net_info = build_net_info(network)
+      net_info = build_net_info(network, name, db)
 
       rangeH = db["network"]["ranges"][range]
       rangeH = db["network"]["ranges"]["host"] if rangeH.nil?
 
-      index = IPAddr.new(rangeH["start"]) & ~IPAddr.new(netmask)
+      index = IPAddr.new(rangeH["start"]) & ~IPAddr.new(net_info["netmask"])
       index = index.to_i
-      stop_address = IPAddr.new(rangeH["end"]) & ~IPAddr.new(netmask)
-      stop_address = IPAddr.new(subnet) | (stop_address.to_i + 1)
-      address = IPAddr.new(subnet) | index
+      stop_address = IPAddr.new(rangeH["end"]) & ~IPAddr.new(net_info["netmask"])
+      stop_address = IPAddr.new(net_info["subnet"]) | (stop_address.to_i + 1)
+      address = IPAddr.new(net_info["subnet"]) | index
 
       # Did we already allocate this, but the node lose it?
       unless db["allocated_by_name"][node.name].nil?
-	found = true
+        found = true
         address = db["allocated_by_name"][node.name]["address"]
       end
 
@@ -81,14 +81,14 @@ class NetworkService < ServiceObject
           break
         end
         index = index + 1
-        address = IPAddr.new(subnet) | index
+        address = IPAddr.new(net_info["subnet"]) | index
         break if address == stop_address
       end
 
       if found
-	net_info["address"] = address.to_s
-        db["allocated_by_name"][node.name] = { "machine" => node.name, "interface" => conduit, "address" => address.to_s }
-        db["allocated"][address.to_s] = { "machine" => node.name, "interface" => conduit, "address" => address.to_s }
+        net_info["address"] = address.to_s
+        db["allocated_by_name"][node.name] = { "machine" => node.name, "interface" => net_info["conduit"], "address" => address.to_s }
+        db["allocated"][address.to_s] = { "machine" => node.name, "interface" => net_info["conduit"], "address" => address.to_s }
         db.save
       end
     rescue Exception => e
@@ -172,7 +172,7 @@ class NetworkService < ServiceObject
 
     net_info={}
     begin # Rescue block
-      net_info = build_net_info(network)
+      net_info = build_net_info(network, name)
     rescue Exception => e
       @logger.error("Error finding address: #{e.message}")
     ensure
@@ -187,8 +187,8 @@ class NetworkService < ServiceObject
   end
 
 
-  def build_net_info(network)
-    db = ProposalObject.find_data_bag_item "crowbar/#{network}_network"
+  def build_net_info(network, name, db = nil)
+    db = ProposalObject.find_data_bag_item "crowbar/#{network}_network" unless db
 
     subnet = db["network"]["subnet"]
     vlan = db["network"]["vlan"]
