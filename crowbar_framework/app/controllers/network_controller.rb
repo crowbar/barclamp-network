@@ -51,7 +51,7 @@ class NetworkController < BarclampController
     @groups = {}
     @switches = {}
     @nodes = {}
-    nodes = (params[:name] ? NodeObject.find_nodes_by_name(params[:name]) : NodeObject.all)
+    nodes = (params[:node] ? NodeObject.find_nodes_by_name(params[:node]) : NodeObject.all)
     nodes.each do |node|
       @sum = @sum + node.name.hash
       @nodes[node.handle] = { :alias=>node.alias, :description=>node.description(false, true), :status=>node.status }
