@@ -1,4 +1,8 @@
+%p{:style => 'float:right'}
+  -if params[:name]
+    = link_to t('.all'), switch_path, :class => 'button'
 %h1= t('.title')
+
 - @switches.sort.each do |switch, sw_details|
   - max_port = (sw_details[:max_port]<25 ? 24 : 48)
   %table.data.switch.box{ :id=>switch }

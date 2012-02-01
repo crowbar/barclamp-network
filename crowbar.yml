@@ -64,6 +64,7 @@ locale_additions:
         node: Node
         nc: N/C
         no_connection: No Connection
+        all: Show All
       dense:
         no_connection: No Connection
       vlan:
