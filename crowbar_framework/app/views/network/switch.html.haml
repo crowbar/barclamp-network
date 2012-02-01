@@ -1,11 +1,11 @@
 %h1= t('.title')
-
 - @switches.sort.each do |switch, sw_details|
   - max_port = (sw_details[:max_port]<25 ? 24 : 48)
   %table.data.switch.box{ :id=>switch }
     %thead
       %tr
         %th{ :style=>'width:10px' }
+          .inline_piechart= [sw_details[:status]["ready"], sw_details[:status]["failed"], sw_details[:status]["unknown"], sw_details[:status]["unready"]+sw_details[:status]["pending"]] * ","
         %th{:colspan=>"#{max_port}" }
           %a.toggle.with_label{:href => "#", :id => "#{switch.parameterize}_toggle", :rel => "#{switch.parameterize}_details1, #{switch.parameterize}_details25"}
             = t('.switch') + " : " + switch
