@@ -45,6 +45,15 @@ locale_additions:
       switch: Switches
       vlan: VLANs
     network:
+      vlan_names:
+        admin: Admin
+        bmc: Mgmt (BMC)
+        bmc_vlan: Mgmt Connect
+        nova_fixed: Nova Fixed
+        nova_floating: Nova Floating
+        public: Public
+        private: Private
+        storage: Storage
       controller:
         virtual: Virtual
       switch:
@@ -55,6 +64,7 @@ locale_additions:
         node: Node
         nc: N/C
         no_connection: No Connection
+        all: Show All
       dense:
         no_connection: No Connection
       vlan:
