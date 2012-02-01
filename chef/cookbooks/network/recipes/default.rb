@@ -24,17 +24,24 @@ team_mode = node["network"]["teaming"]["mode"]
 # They should be torn down in reverse order. 
 def sort_interfaces(interfaces)
   seq=0
-  i=interfaces.keys.sort.reject{|k| interfaces[k].has_key?(:order)}
+  i=interfaces.keys.sort
   until i.empty?
+    Chef::Log.debug("Processing interfaces #{i.inspect}")
     i.each do |ifname|
       iface=interfaces[ifname]
-      iface[:interface_list] = iface[:interface_list].sort if iface[:interface_list]
+      iface[:interface_list] ||= Array.new
+      iface[:interface_list] = iface[:interface_list].sort
+      Chef::Log.debug("#{ifname}: #{iface.inspect}")
       # If this interface has children, and any of its children have not
       # been given a sequence number, skip it.
-      next if iface[:interface_list] and not iface[:interface_list].empty? and not iface[:interface_list].all?{|j| ifname == j || interfaces[j].has_key?(:order)}
+      next if not iface[:interface_list].empty? and 
+          not iface[:interface_list].all? {|j| interfaces[j].has_key?(:order)}
       iface[:order] = seq
       seq=seq + 1
     end
+    unless i.any? {|j| interfaces[j][:order]}
+      raise ::RangeError.new("Interfaces #{i.inspect} touched, but no sequence numbers assigned!\nThis should never happen.")
+    end 
     i=interfaces.keys.sort.reject{|k| interfaces[k].has_key?(:order)}
   end
   interfaces
