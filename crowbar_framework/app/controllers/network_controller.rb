@@ -51,7 +51,8 @@ class NetworkController < BarclampController
     @groups = {}
     @switches = {}
     @nodes = {}
-    NodeObject.all.each do |node|
+    nodes = (params[:name] ? NodeObject.find_nodes_by_name(params[:name]) : NodeObject.all)
+    nodes.each do |node|
       @sum = @sum + node.name.hash
       @nodes[node.handle] = { :alias=>node.alias, :description=>node.description(false, true), :status=>node.status }
       #build groups
@@ -60,16 +61,19 @@ class NetworkController < BarclampController
       @groups[group][:nodes][node.group_order] = node.handle
       @groups[group][:status][node.status] = (@groups[group][:status][node.status] || 0).to_i + 1
       #build switches
-      node_nics(node).each do |key, value|
-        @switches[key] = { :status=>{"ready"=>0, "failed"=>0, "unknown"=>0, "unready"=>0, "pending"=>0}, :nodes=>{}, :max_port=>24} unless @switches.key? key
-        port = if value['switch_port'] == -1 or value['switch_port'] == "-1"
-          @vports[key] = 1 + (@vports[key] || 0)
-        else
-          value['switch_port'].to_i
+      node_nics(node).each do |switch|
+        key = switch[:switch]
+        if key
+          @switches[key] = { :status=>{"ready"=>0, "failed"=>0, "unknown"=>0, "unready"=>0, "pending"=>0}, :nodes=>{}, :max_port=>24} unless @switches.key? key
+          port = if switch['switch_port'] == -1 or switch['switch_port'] == "-1"
+            @vports[key] = 1 + (@vports[key] || 0)
+          else
+            switch[:port]
+          end
+          @switches[key][:max_port] = port if port>@switches[key][:max_port]
+          @switches[key][:nodes][port] = { :handle=>node.handle, :intf=>switch[:intf] }
+          @switches[key][:status][node.status] = (@switches[key][:status][node.status] || 0).to_i + 1
         end
-        @switches[key][:max_port] = port if port>@switches[key][:max_port]
-        @switches[key][:nodes][port] = { :handle=>node.handle, :intf=>value['interface'] }
-        @switches[key][:status][node.status] = (@switches[key][:status][node.status] || 0).to_i + 1
       end
     end
     #make sure port max is even
@@ -102,13 +106,13 @@ class NetworkController < BarclampController
   end
   
   def node_nics(node)
-    switches = {}
+    switches = []
     begin
       # list the interfaces
-      if_list = node["crowbar_ohai"]["detected"]["network"] 
+      if_list = node["crowbar_ohai"]["detected"]["network"].keys
       # this is a virtual switch if ALL the interfaces are virtual
-      physical = if_list.map{ |intf, details| node["crowbar_ohai"]["switch_config"][intf]['switch_name'] != '-1' }.include? true
-      if_list.each do |intf, details|
+      physical = if_list.map{ |intf| node["crowbar_ohai"]["switch_config"][intf]['switch_name'] != '-1' }.include? true
+      if_list.each do | intf |
         connected = !physical #if virtual, then all ports are connected
         raw = node["crowbar_ohai"]["switch_config"][intf]
         s_name = raw['switch_name'] || -1
@@ -121,11 +125,11 @@ class NetworkController < BarclampController
         end
         if connected
           s_name= "#{s_name}:#{s_unit}" unless s_unit.nil?
-          switches[s_name] = node["crowbar_ohai"]["switch_config"][intf]
+          switches << { :switch=>s_name, :intf=>intf, :port=>raw['switch_port'].to_i }
         end
       end
-    rescue 
-      Rails.logger.debug("could not build interface/switch list for #{node.name}")
+    rescue Exception=>e
+      Rails.logger.debug("could not build interface/switch list for #{node.name} due to #{e.message}")
     end
     switches
   end
