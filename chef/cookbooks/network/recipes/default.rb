@@ -195,7 +195,13 @@ def crowbar_interfaces(bond_list)
       res[intf][:interface_list] = interface_list
       res[intf][:mode] = "team"
       res[intf][:interface] = intf
-      res[intf][:bond_opts] = "mode=#{tm} miimon=100"
+      # Bond opts is only needed and built for redhat.
+      case node[:platform]
+      when "ubuntu","debian"
+        # No-op
+      when "centos","redhat"
+        res[intf][:bond_opts] = "mode=#{tm} miimon=100"
+      end
       # Since we are making a team out of these devices, blow away whatever
       # config we may have had for the slaves.
       res[intf][:interface_list].each do |i|
