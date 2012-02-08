@@ -109,12 +109,12 @@ class NetworkController < BarclampController
     switches = []
     begin
       # list the interfaces
-      if_list = node["crowbar_ohai"]["detected"]["network"].keys
+      if_list = node.crowbar_ohai["detected"]["network"].keys
       # this is a virtual switch if ALL the interfaces are virtual
-      physical = if_list.map{ |intf| node["crowbar_ohai"]["switch_config"][intf]['switch_name'] != '-1' }.include? true
+      physical = if_list.map{ |intf| node.crowbar_ohai["switch_config"][intf]['switch_name'] != '-1' }.include? true
       if_list.each do | intf |
         connected = !physical #if virtual, then all ports are connected
-        raw = node["crowbar_ohai"]["switch_config"][intf]
+        raw = node.crowbar_ohai["switch_config"][intf]
         s_name = raw['switch_name'] || -1
         s_unit =  raw['switch_unit'] || -1
         if s_name == -1 or s_name == "-1"
