@@ -232,6 +232,9 @@
   "deployment": {
     "network": {
       "crowbar-revision": 0,
+      "element_states": {
+        "network": [ "readying", "ready", "applying" ]
+      },
       "elements": {},
       "element_order": [
         [ "network" ]
