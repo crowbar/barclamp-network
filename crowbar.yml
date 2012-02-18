@@ -103,7 +103,13 @@ debs:
   ubuntu-10.10:
     pkgs:
       - portmap
+  ubuntu-11.04:
+    pkgs:
+      - portmap
   ubuntu-11.10:
+    pkgs:
+      - rpcbind
+  ubuntu-12.04:
     pkgs:
       - rpcbind
   pkgs:
