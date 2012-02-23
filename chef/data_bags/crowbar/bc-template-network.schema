@@ -82,6 +82,7 @@
                     "netmask": { "type": "str", "required": true, "name": "IpAddress" },
                     "broadcast": { "type": "str", "required": true, "name": "IpAddress" },
                     "router": { "type": "str", "name": "IpAddress" },
+                    "router_pref": { "type": "int", "required": false },
                     "ranges": {
                       "type": "map",
                       "required": true,
