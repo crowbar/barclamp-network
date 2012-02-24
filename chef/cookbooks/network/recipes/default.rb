@@ -175,6 +175,7 @@ def crowbar_interfaces(bond_list)
   log("will allow routers from #{net_pref}") { level :warn }
   node["crowbar"]["network"].each do |netname, network|
     next if netname == "bmc"
+    allow_gw = (netname == net_pref)
 
     conduit = network["conduit"]
     intf, interface_list, tm = Barclamp::Inventory.lookup_interface_info(node, conduit, intf_to_if_map)
@@ -260,7 +261,7 @@ def crowbar_interfaces(bond_list)
       res[intf][:ipaddress] = network["address"]
       res[intf][:netmask] = network["netmask"]
       res[intf][:broadcast] = network["broadcast"]
-      res[intf][:router] = network["router"] if network["router"]
+      res[intf][:router] = network["router"] if network["router"] && allow_gw
     else
       res[intf][:config] = "manual"
     end
