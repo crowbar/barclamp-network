@@ -95,8 +95,6 @@ class NetworkController < BarclampController
   
   private 
   
-#  "network":{"bmc":{"address":"192.168.124.174","netmask":"255.255.255.0","add_bridge":false,"usage":"bmc","node":"d00-26-6c-f2-85-84.dell.com","router":null,"broadcast":"192.168.124.255","vlan":100,"subnet":"192.168.124.0","use_vlan":false,"conduit":"bmc"},"admin":{"add_bridge":false,"netmask":"255.255.255.0","address":"192.168.124.92","usage":"admin","router":"192.168.124.1","node":"d00-26-6c-f2-85-84.dell.com","broadcast":"192.168.124.255","vlan":100,"use_vlan":false,"subnet":"192.168.124.0","conduit":"intf0"}},
-  
   def node_vlans(node)
     nv = {}
     vlans = node["crowbar"]["network"].each do |vlan, vdetails|
@@ -111,7 +109,7 @@ class NetworkController < BarclampController
       # list the interfaces
       if_list = node.crowbar_ohai["detected"]["network"].keys
       # this is a virtual switch if ALL the interfaces are virtual
-      physical = if_list.map{ |intf| node.crowbar_ohai["switch_config"][intf]['switch_name'] != '-1' }.include? true
+      physical = if_list.map{ |intf| node.crowbar_ohai["switch_config"][intf]['switch_name'] != '-1' }.include? false
       if_list.each do | intf |
         connected = !physical #if virtual, then all ports are connected
         raw = node.crowbar_ohai["switch_config"][intf]
