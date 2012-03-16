@@ -1,4 +1,5 @@
 # Copyright 2011, Dell
+# Copyright 2012, SUSE Linux Products GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -96,6 +97,72 @@ def local_debian_interfaces
       end
     end
   }
+  sort_interfaces(res)
+end
+
+def local_suse_interfaces
+  res = {}
+
+  ::Dir.entries("/etc/sysconfig/network").sort.each do |entry|
+    next unless entry =~ /^ifcfg-/
+    next if entry == "ifcfg-lo"
+    iface = entry.split('-',2)[1]
+    res[iface]=Hash.new unless res[iface]
+    res[iface][:interface]=iface
+    if File.exist?("/etc/sysconfig/network/ifroute-#{iface}") then
+        ::File.foreach("/etc/sysconfig/network/ifroute-#{iface}") do |line|
+          line = line.chomp.strip.split('#')[0] # strip comments
+          next if line.nil? or ( line.length == 0 ) # skip blank lines
+          parts = line.split(' ', 4)
+          next if parts[0] != "default"
+          res[iface][:router] = parts[1]
+        end
+    end
+    ::File.foreach("/etc/sysconfig/network/#{entry}") do |line|
+      line = line.chomp.strip.split('#')[0] # strip comments
+      next if line.nil? or ( line.length == 0 ) # skip blank lines
+      parts = line.split('=',2)
+      k=parts[0]
+      v=parts[1][/\A"(.*)"\z/m,1]  # Remove start/end quotes from the string
+      v=parts[1] if v.nil?
+      case k
+      when "STARTMODE"
+        res[iface][:auto] = true when v == "auto"
+      when "BOOTPROTO" then res[iface][:config] = v
+      when "IPADDR"
+        res[iface][:ipaddress] = v
+      when "NETMASK" then res[iface][:netmask] = v
+      when "BROADCAST" then res[iface][:broadcast] = v
+      when "BONDING_OPTS" then res[iface][:bond_opts] = v
+      when "MASTER" 
+        res[iface][:master] = v
+        res[v]=Hash.new unless res[v]
+        res[v][:mode] = "team"
+        res[v][:interface_list]=Array.new unless res[v][:interface_list]
+        res[v][:interface_list].push(iface)
+      when "SLAVE"
+        res[iface][:slave] = true if v == "yes"
+      when "BRIDGE"
+        res[iface][:bridge] = v
+        res[v]=Hash.new unless res[v]
+        res[v][:mode] = "bridge"
+        res[v][:interface_list]=Array.new unless res[iface][:interface_list]
+        res[v][:interface_list].push(iface)
+      when "VLAN"
+        res[iface][:mode] = "vlan"
+        res[iface][:vlan] = iface.split('.',2)[1].to_i
+        res[iface][:interface_list]=[iface.split('.',2)[0]]
+      end
+    end
+    if res[iface][:config] == "none"
+      res[iface][:config] = if res[iface][:ipaddress]
+                              "static"
+                            else
+                              "manual"
+                            end
+    end
+    res[iface][:auto] = false unless res[iface][:auto]
+  end
   sort_interfaces(res)
 end
 
@@ -198,7 +265,7 @@ def crowbar_interfaces(bond_list)
       res[intf][:interface] = intf
       # Bond opts is only needed and built for redhat.
       case node[:platform]
-      when "ubuntu","debian"
+      when "ubuntu","debian","suse"
         # No-op
       when "centos","redhat"
         res[intf][:bond_opts] = "mode=#{tm} miimon=100"
@@ -332,6 +399,8 @@ old_interfaces = case node[:platform]
                    local_debian_interfaces
                  when "centos","redhat"
                    local_redhat_interfaces
+                 when "suse"
+                    local_suse_interfaces
                  end
 new_interfaces = crowbar_interfaces(bond_list)
 interfaces_to_up={}
@@ -361,6 +430,17 @@ else
     new_interfaces.values.each {|iface|
       template "/etc/sysconfig/network-scripts/ifcfg-#{iface[:interface]}" do
         source "redhat-cfg.erb"
+        variables :iface => iface
+      end
+    }
+  when "suse"
+    new_interfaces.values.each {|iface|
+      template "/etc/sysconfig/network/ifcfg-#{iface[:interface]}" do
+        source "suse-cfg.erb"
+        variables :iface => iface
+      end
+      template "/etc/sysconfig/network/ifroute-#{iface[:interface]}" do
+        source "suse-route.erb"
         variables :iface => iface
       end
     }
