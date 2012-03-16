@@ -1,0 +1,39 @@
+# Managed by Crowbar.
+# Do not edit.
+<% @iface.keys.each do |k|
+    v=@iface[k]
+    next unless v
+    next if v.class == Array and v.empty?
+    case k
+    when :auto then
+    	 if v == true
+       	    k="STARTMODE"
+       	    v="auto"
+	 end
+    when :config
+      	 k="BOOTPROTO"
+      	 case v
+      	 when "static","manual"
+              v = "static"
+      	 end
+    when :ipaddress then k="IPADDR"
+    when :interface then k="NAME"
+    when :netmask then k="NETMASK"
+    when :bond_opts then k="BONDING_OPTS"
+    when :broadcast then k="BROADCAST"
+    when :master then k="MASTER"
+    when :slave
+      if v == true
+        k="SLAVE"
+        v="yes"
+      end
+    when :bridge
+      k="BRIDGE"
+    when :vlan
+      k="VLAN"
+      v="yes"
+    end
+    next if k.class != String 
+    quote = ((v.include? " ") ? "\"" : "") -%>
+<%= "#{k}=#{quote}#{v}#{quote}" %>
+<% end -%>
