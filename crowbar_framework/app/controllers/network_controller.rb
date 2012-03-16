@@ -34,6 +34,18 @@ class NetworkController < BarclampController
   end
 
   # Below here handles ip address assignment.
+  add_help(:deallocate_ip,[:id,:network,:name],[:post])
+  def deallocate_ip
+    id = params[:id]       # Network id
+    network = params[:network]
+    name = params[:name]
+
+    ret = @service_object.deallocate_ip(id, network, name)
+    return render :text => ret[1], :status => ret[0] if ret[0] != 200
+    render :json => ret[1]
+  end
+
+  # Below here handles ip address assignment.
   add_help(:enable_interface,[:id,:network,:name],[:post])
   def enable_interface
     id = params[:id]       # Network id
