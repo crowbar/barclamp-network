@@ -98,7 +98,8 @@ rpms:
     - dhcp
     - tftp-server
     - nfs-utils
-
+    - iptables
+    - iptables-ipv6
 debs:
   ubuntu-10.10:
     pkgs:
