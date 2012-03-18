@@ -1,0 +1,68 @@
+%h2= t('.title')
+
+.column_100
+  - if @node
+    %section.box#details
+      %h3= t('.interface_map')
+      %ul
+        %li= "{ \"pattern\": \"#{@node.hardware}\","
+        %li= "\"bus_order\": ["
+        %li
+          %ul
+            - i = 1
+            - @node.crowbar_ohai['detected']['network'].each do |intf, pattern|
+              - p = pattern.split('/')
+              %li
+                = "\"#{p[0]}/#{p[1]}\""
+                = "," if i < @node.crowbar_ohai['detected']['network'].length
+                - i +=1
+        %li= "] },"
+
+%table.data.box
+  %thead
+    %tr
+      %th= t('.node')
+      %th= t('.model')
+      %th= t('.has_map')
+      -@interfaces.each do |intf|
+        %th= intf
+  %tbody
+    -if @nodes
+      -@nodes.sort_by{ |n| n.alias}.each do |node|
+        - patterns = nil
+        - @patterns.each do |k, v|
+          - if node.hardware =~ /^#{k}/
+            - patterns = v
+            - break 
+        - addr_list = []
+        - if node.crowbar_ohai and node.crowbar_ohai['detected'] and node.crowbar_ohai['detected']['network'] 
+          - addresses = node.crowbar_ohai['detected']['network'] 
+          - addresses.each { |k, v| addr_list << "#{k}=#{v}" }
+        %tr
+          %td{:title=>node.description}= link_to node.alias, node_path(:name=>node.handle)
+          - if addresses
+            %td{:title=>addr_list.join(", ")}= link_to node.hardware, nodes_barclamp_path(:controller=>'network', :id=>node.handle)
+          - else
+            %td= node.hardware
+          - if patterns
+            %td{:title=>patterns.join(', ')}= t('yes')
+          - else
+            %td= t('no')
+          - @interfaces.each do |intf|
+            - if patterns and addresses 
+              - address = addresses[intf]
+              - if address
+                - a = address.split('/')
+                - i = patterns.index("#{a[0]}/#{a[1].split('.')[0]}")
+                %td{:title=>patterns[i]}= "1g#{i+1}"
+              - else
+                %td
+            - else
+              %td
+    -else
+      %tr
+        %td{:colspan=>(3+@interfaces.length)}
+          = t('no_items')
+  %tfoot
+    %tr
+      %td{:colspan=>(3+@interfaces.length)}
