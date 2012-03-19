@@ -215,7 +215,15 @@ class NetworkService < ServiceObject
     end
 
     if state == "delete" or state == "reset"
-      # GREG: remove networks and have fun.
+      node = NodeObject.find_node_by_name name
+      @logger.error("Network transition: return node not found: #{name}") if node.nil?
+      return [404, "No node found"] if node.nil?
+
+      nets = node.crowbar["crowbar"]["network"].keys
+      nets.each do |net|
+        ret, msg = self.deallocate_ip(inst, net, name)
+        return [ ret, msg ] if ret != 200
+      end
     end
 
     @logger.debug("Network transition: Exiting #{name} for #{state}")
