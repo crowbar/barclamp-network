@@ -127,7 +127,7 @@ class NetworkService < ServiceObject
     # If we already have on allocated, return success
     net_info = node.get_network_by_type(network)
     if net_info.nil? or net_info["address"].nil?
-      @logger.error("Network deallocate_ip: node does not have address: #{name} #{network} #{range}")
+      @logger.error("Network deallocate_ip: node does not have address: #{name} #{network}")
       return [200, nil]
     end
 
@@ -143,7 +143,7 @@ class NetworkService < ServiceObject
         save = true
 
         newhash = {}
-        db["allocated_by_name"].each do {k,v}
+        db["allocated_by_name"].each do |k,v|
           newhash[k] = v unless k == node.name
         end
         db["allocated_by_name"] = newhash
@@ -152,7 +152,7 @@ class NetworkService < ServiceObject
       unless db["allocated"][address.to_s].nil?
         save = true
         newhash = {}
-        db["allocated"].each do {k,v}
+        db["allocated"].each do |k,v|
           newhash[k] = v unless k == address.to_s
         end
         db["allocated"] = newhash
@@ -169,7 +169,7 @@ class NetworkService < ServiceObject
 
     # Save the information.
     newhash = {} 
-    node.crowbar["crowbar"]["network"].each do {k, v}
+    node.crowbar["crowbar"]["network"].each do |k, v|
       newhash[k] = v unless k == network
     end
     node.crowbar["crowbar"]["network"] = newhash

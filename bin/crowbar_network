@@ -32,11 +32,11 @@ def enable_interface(name, node, network)
   struct = post_json("/enable_interface/#{name}", @data)
 
   if struct[1] == 200
-    [ "Edited #{name} #{struct[0].inspect}", 0 ]
+    [ "Enabled interface #{name} #{struct[0].inspect}", 0 ]
   elsif struct[1] == 404
-    [ "Failed to edit: #{name} : Not Found", 1 ]
+    [ "Failed to enable interface: #{name} : Not Found", 1 ]
   elsif struct[1] == 400
-    [ "Failed to edit: #{name} : Errors in data\n#{struct[0]}", 1 ]
+    [ "Failed to enable interface: #{name} : Errors in data\n#{struct[0]}", 1 ]
   else
     [ "Failed to talk to service enable_interface: #{struct[1]}: #{struct[0]}", 1 ]
   end
@@ -52,11 +52,11 @@ def allocate_ip(name, node, network, range)
   struct = post_json("/allocate_ip/#{name}", @data)
 
   if struct[1] == 200
-    [ "Edited #{name} #{struct[0].inspect}", 0 ]
+    [ "Allocate ip #{name} #{struct[0].inspect}", 0 ]
   elsif struct[1] == 404
-    [ "Failed to edit: #{name} : Not Found", 1 ]
+    [ "Failed to Allocate ip: #{name} : Not Found", 1 ]
   elsif struct[1] == 400
-    [ "Failed to edit: #{name} : Errors in data\n#{struct[0]}", 1 ]
+    [ "Failed to Allocate ip: #{name} : Errors in data\n#{struct[0]}", 1 ]
   else
     [ "Failed to talk to service allocate_ip: #{struct[1]}: #{struct[0]}", 1 ]
   end
@@ -71,11 +71,11 @@ def deallocate_ip(name, node, network)
   struct = post_json("/deallocate_ip/#{name}", @data)
 
   if struct[1] == 200
-    [ "Edited #{name} #{struct[0].inspect}", 0 ]
+    [ "Deallocate address #{network} #{node}", 0 ]
   elsif struct[1] == 404
-    [ "Failed to edit: #{name} : Not Found", 1 ]
+    [ "Failed to deallocate ip: #{name} : Not Found", 1 ]
   elsif struct[1] == 400
-    [ "Failed to edit: #{name} : Errors in data\n#{struct[0]}", 1 ]
+    [ "Failed to deallocate ip: #{name} : Errors in data\n#{struct[0]}", 1 ]
   else
     [ "Failed to talk to service deallocate_ip: #{struct[1]}: #{struct[0]}", 1 ]
   end
@@ -90,7 +90,7 @@ def disable_interface(name, node, network)
   struct = post_json("/disable_interface/#{name}", @data)
 
   if struct[1] == 200
-    [ "Disable interface #{name} #{struct[0].inspect}", 0 ]
+    [ "Disable interface #{network} #{node}", 0 ]
   elsif struct[1] == 404
     [ "Failed to disable interface: #{name} : Not Found", 1 ]
   elsif struct[1] == 400
