@@ -105,6 +105,32 @@ class NetworkController < BarclampController
     
   end
   
+  def nodes
+
+    net_bc = RoleObject.find_role_by_name 'network-config-default'
+    @map = net_bc.default_attributes['network']['interface_map'] if net_bc.barclamp == 'network'
+    @patterns = {}
+    @interfaces = []
+    @map.each do |maps|
+      @patterns[maps['pattern']] = maps['bus_order']
+    end
+    
+    if params[:id]
+      @node = NodeObject.find_node_by_name params[:id]
+    end
+    
+    @nodes = NodeObject.all
+    @nodes.each do |node|
+      if node.crowbar_ohai and node.crowbar_ohai["detected"] and node.crowbar_ohai["detected"]["network"]
+        node.crowbar_ohai["detected"]['network'].each do |intf, address|
+          @interfaces << intf unless @interfaces.include? intf
+        end
+      end
+    end
+    @interfaces = @interfaces.sort
+    
+  end
+    
   private 
   
   def node_vlans(node)
