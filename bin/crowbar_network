@@ -21,6 +21,7 @@ require File.join(File.expand_path(File.dirname(__FILE__)), "barclamp_lib")
 @commands["deallocate_ip"] = [ "deallocate_ip(ARGV.shift,ARGV.shift,ARGV.shift)", "deallocate_ip <name> <node> <network> - Deallocate an ip from a node on a network" ]
 @commands["allocate_ip"] = [ "allocate_ip(ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift)", "allocate_ip <name> <node> <network> <range> - Allocate an ip for a node on a network from a range" ]
 @commands["enable_interface"] = [ "enable_interface(ARGV.shift,ARGV.shift,ARGV.shift)", "enable_interface <name> <node> <network> - Ensure that an interface is present for the specified network" ]
+@commands["disable_interface"] = [ "disable_interface(ARGV.shift,ARGV.shift,ARGV.shift)", "disable_interface <name> <node> <network> - Ensure that an interface is not enabled for the specified network" ]
 
 def enable_interface(name, node, network)
   usage -1 if name.nil? or name == ""
