@@ -26,8 +26,9 @@ class NetworkController < BarclampController
     network = params[:network]
     range = params[:range]
     name = params[:name]
+    suggestion = params[:suggestion]
 
-    ret = @service_object.allocate_ip(id, network, range, name)
+    ret = @service_object.allocate_ip(id, network, range, name, suggestion)
     return render :text => ret[1], :status => ret[0] if ret[0] != 200
     render :json => ret[1]
   end

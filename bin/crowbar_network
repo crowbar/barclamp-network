@@ -19,7 +19,7 @@ require File.join(File.expand_path(File.dirname(__FILE__)), "barclamp_lib")
 @barclamp = "network"
 
 @commands["deallocate_ip"] = [ "deallocate_ip(ARGV.shift,ARGV.shift,ARGV.shift)", "deallocate_ip <name> <node> <network> - Deallocate an ip from a node on a network" ]
-@commands["allocate_ip"] = [ "allocate_ip(ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift)", "allocate_ip <name> <node> <network> <range> - Allocate an ip for a node on a network from a range" ]
+@commands["allocate_ip"] = [ "allocate_ip(ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift)", "allocate_ip <name> <node> <network> <range> [<suggestion>] - Allocate an ip for a node on a network from a range" ]
 @commands["enable_interface"] = [ "enable_interface(ARGV.shift,ARGV.shift,ARGV.shift)", "enable_interface <name> <node> <network> - Ensure that an interface is present for the specified network" ]
 @commands["disable_interface"] = [ "disable_interface(ARGV.shift,ARGV.shift,ARGV.shift)", "disable_interface <name> <node> <network> - Ensure that an interface is not enabled for the specified network" ]
 
@@ -42,13 +42,15 @@ def enable_interface(name, node, network)
   end
 end
 
-def allocate_ip(name, node, network, range)
+def allocate_ip(name, node, network, range, suggestion)
   usage -1 if name.nil? or name == ""
   usage -1 if network.nil? or network == ""
   usage -1 if node.nil? or node == ""
   usage -1 if range.nil? or range == ""
 
-  @data = { "name" => node, "network" => network, "range" => range }.to_json
+  @data = { "name" => node, "network" => network, "range" => range }
+  @data["suggestion"] = suggestion if suggestion
+  @data = @data.to_json
   struct = post_json("/allocate_ip/#{name}", @data)
 
   if struct[1] == 200
