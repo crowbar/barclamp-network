@@ -28,7 +28,7 @@ class NetworkService < ServiceObject
     release_lock f
   end
 
-  def allocate_ip(bc_instance, network, range, name)
+  def allocate_ip(bc_instance, network, range, name, suggestion = nil)
     @logger.debug("Network allocate_ip: entering #{name} #{network} #{range}")
 
     return [404, "No network specified"] if network.nil?
@@ -68,10 +68,25 @@ class NetworkService < ServiceObject
       stop_address = IPAddr.new(net_info["subnet"]) | (stop_address.to_i + 1)
       address = IPAddr.new(net_info["subnet"]) | index
 
-      # Did we already allocate this, but the node lose it?
-      unless db["allocated_by_name"][node.name].nil?
-        found = true
-        address = db["allocated_by_name"][node.name]["address"]
+      if suggestion
+        @logger.error("Allocating with suggestion: #{suggestion}")
+        subsug = IPAddr.new(suggestion) & IPAddr.new(net_info["netmask"])
+        subnet = IPAddr.new(net_info["subnet"]) & IPAddr.new(net_info["netmask"])
+        if subnet == subsug
+          if db["allocated"][suggestion].nil?
+            @logger.error("Using suggestion: #{name} #{net} #{suggestion}")
+            address = suggestion
+            found = true
+          end
+        end
+      end
+
+      unless found
+        # Did we already allocate this, but the node lose it?
+        unless db["allocated_by_name"][node.name].nil?
+          found = true
+          address = db["allocated_by_name"][node.name]["address"]
+        end
       end
 
       # Let's search for an empty one.
