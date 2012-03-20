@@ -74,7 +74,7 @@ class NetworkService < ServiceObject
         subnet = IPAddr.new(net_info["subnet"]) & IPAddr.new(net_info["netmask"])
         if subnet == subsug
           if db["allocated"][suggestion].nil?
-            @logger.error("Using suggestion: #{name} #{net} #{suggestion}")
+            @logger.error("Using suggestion: #{name} #{network} #{suggestion}")
             address = suggestion
             found = true
           end
