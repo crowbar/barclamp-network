@@ -243,7 +243,7 @@
         "environment": "network-base-config",
         "mode": "full",
         "transitions": true,
-        "transition_list": [ "discovered" ]
+        "transition_list": [ "discovered", "reset", "delete" ]
       }
     }
   }

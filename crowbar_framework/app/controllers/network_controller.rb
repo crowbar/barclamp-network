@@ -20,20 +20,30 @@ class NetworkController < BarclampController
     @service_object = NetworkService.new logger
   end
 
-  # Below here handles ip address assignment.
   add_help(:allocate_ip,[:id,:network,:range,:name],[:post])
   def allocate_ip
     id = params[:id]       # Network id
     network = params[:network]
     range = params[:range]
     name = params[:name]
+    suggestion = params[:suggestion]
 
-    ret = @service_object.allocate_ip(id, network, range, name)
+    ret = @service_object.allocate_ip(id, network, range, name, suggestion)
     return render :text => ret[1], :status => ret[0] if ret[0] != 200
     render :json => ret[1]
   end
 
-  # Below here handles ip address assignment.
+  add_help(:deallocate_ip,[:id,:network,:name],[:post])
+  def deallocate_ip
+    id = params[:id]       # Network id
+    network = params[:network]
+    name = params[:name]
+
+    ret = @service_object.deallocate_ip(id, network, name)
+    return render :text => ret[1], :status => ret[0] if ret[0] != 200
+    render :json => ret[1]
+  end
+
   add_help(:enable_interface,[:id,:network,:name],[:post])
   def enable_interface
     id = params[:id]       # Network id
@@ -41,6 +51,17 @@ class NetworkController < BarclampController
     name = params[:name]
 
     ret = @service_object.enable_interface(id, network, name)
+    return render :text => ret[1], :status => ret[0] if ret[0] != 200
+    render :json => ret[1]
+  end
+
+  add_help(:disable_interface,[:id,:network,:name],[:post])
+  def disable_interface
+    id = params[:id]       # Network id
+    network = params[:network]
+    name = params[:name]
+
+    ret = @service_object.disable_interface(id, network, name)
     return render :text => ret[1], :status => ret[0] if ret[0] != 200
     render :json => ret[1]
   end
