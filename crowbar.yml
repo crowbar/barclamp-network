@@ -19,6 +19,7 @@ barclamp:
   name: network
   display: Network
   version: 0
+  online_help: 'https://github.com/dellcloudedge/crowbar/wiki/Network--barclamp'
   member:
     - crowbar
 
@@ -75,6 +76,13 @@ locale_additions:
         inuse: Active
         not_inuse: X
         nodes: Nodes
+      nodes:
+        title: Interface and Conduit Maps
+        interface_map: Interface Map for Network Attributes
+        node: Node
+        model: Model
+        has_map: Mapped
+        
 
 rpms:
   redhat-5.6:
@@ -98,7 +106,8 @@ rpms:
     - dhcp
     - tftp-server
     - nfs-utils
-
+    - iptables
+    - iptables-ipv6
 debs:
   ubuntu-10.10:
     pkgs:

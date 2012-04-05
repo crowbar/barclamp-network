@@ -28,7 +28,7 @@ class NetworkService < ServiceObject
     release_lock f
   end
 
-  def allocate_ip(bc_instance, network, range, name)
+  def allocate_ip(bc_instance, network, range, name, suggestion = nil)
     @logger.debug("Network allocate_ip: entering #{name} #{network} #{range}")
 
     return [404, "No network specified"] if network.nil?
@@ -68,10 +68,25 @@ class NetworkService < ServiceObject
       stop_address = IPAddr.new(net_info["subnet"]) | (stop_address.to_i + 1)
       address = IPAddr.new(net_info["subnet"]) | index
 
-      # Did we already allocate this, but the node lose it?
-      unless db["allocated_by_name"][node.name].nil?
-        found = true
-        address = db["allocated_by_name"][node.name]["address"]
+      if suggestion
+        @logger.error("Allocating with suggestion: #{suggestion}")
+        subsug = IPAddr.new(suggestion) & IPAddr.new(net_info["netmask"])
+        subnet = IPAddr.new(net_info["subnet"]) & IPAddr.new(net_info["netmask"])
+        if subnet == subsug
+          if db["allocated"][suggestion].nil?
+            @logger.error("Using suggestion: #{name} #{network} #{suggestion}")
+            address = suggestion
+            found = true
+          end
+        end
+      end
+
+      unless found
+        # Did we already allocate this, but the node lose it?
+        unless db["allocated_by_name"][node.name].nil?
+          found = true
+          address = db["allocated_by_name"][node.name]["address"]
+        end
       end
 
       # Let's search for an empty one.
@@ -108,6 +123,77 @@ class NetworkService < ServiceObject
     [200, net_info]
   end
 
+  def deallocate_ip(bc_instance, network, name)
+    @logger.debug("Network deallocate_ip: entering #{name} #{network}")
+
+    return [404, "No network specified"] if network.nil?
+    return [404, "No name specified"] if name.nil?
+
+    # Find the node
+    node = NodeObject.find_node_by_name name
+    @logger.error("Network deallocate_ip: return node not found: #{name} #{network}") if node.nil?
+    return [404, "No node found"] if node.nil?
+
+    # Find an interface based upon config
+    role = RoleObject.find_role_by_name "network-config-#{bc_instance}"
+    @logger.error("Network allocate_ip: No network data found: #{name} #{network}") if role.nil?
+    return [404, "No network data found"] if role.nil?
+
+    # If we already have on allocated, return success
+    net_info = node.get_network_by_type(network)
+    if net_info.nil? or net_info["address"].nil?
+      @logger.error("Network deallocate_ip: node does not have address: #{name} #{network}")
+      return [200, nil]
+    end
+
+    save = false
+    begin # Rescue block
+      f = acquire_ip_lock
+      db = ProposalObject.find_data_bag_item "crowbar/#{network}_network"
+
+      address = net_info["address"]
+ 
+      # Did we already allocate this, but the node lose it?
+      unless db["allocated_by_name"][node.name].nil?
+        save = true
+
+        newhash = {}
+        db["allocated_by_name"].each do |k,v|
+          newhash[k] = v unless k == node.name
+        end
+        db["allocated_by_name"] = newhash
+      end
+
+      unless db["allocated"][address.to_s].nil?
+        save = true
+        newhash = {}
+        db["allocated"].each do |k,v|
+          newhash[k] = v unless k == address.to_s
+        end
+        db["allocated"] = newhash
+      end
+
+      if save
+        db.save
+      end
+    rescue Exception => e
+      @logger.error("Error finding address: #{e.message}")
+    ensure
+      release_ip_lock(f)
+    end
+
+    # Save the information.
+    newhash = {} 
+    node.crowbar["crowbar"]["network"].each do |k, v|
+      newhash[k] = v unless k == network
+    end
+    node.crowbar["crowbar"]["network"] = newhash
+    node.save
+
+    @logger.info("Network deallocate_ip: removed: #{name} #{network}")
+    [200, nil]
+  end
+
   def create_proposal
     @logger.debug("Network create_proposal: entering")
     base = super
@@ -141,6 +227,18 @@ class NetworkService < ServiceObject
       @logger.debug("Network transition: Exiting #{name} for #{state} discovered path")
       return [200, NodeObject.find_node_by_name(name).to_hash] if result
       return [400, "Failed to add role to node"] unless result
+    end
+
+    if state == "delete" or state == "reset"
+      node = NodeObject.find_node_by_name name
+      @logger.error("Network transition: return node not found: #{name}") if node.nil?
+      return [404, "No node found"] if node.nil?
+
+      nets = node.crowbar["crowbar"]["network"].keys
+      nets.each do |net|
+        ret, msg = self.deallocate_ip(inst, net, name)
+        return [ ret, msg ] if ret != 200
+      end
     end
 
     @logger.debug("Network transition: Exiting #{name} for #{state}")
