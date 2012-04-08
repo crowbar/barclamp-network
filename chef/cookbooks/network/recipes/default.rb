@@ -15,7 +15,6 @@
 
 include_recipe 'utils'
 
-bond_list = {}
 $bond_count = 0
 team_mode = node["network"]["teaming"]["mode"]
 
@@ -156,13 +155,15 @@ def local_redhat_interfaces
   sort_interfaces(res)
 end
 
-def crowbar_interfaces(bond_list)
+def crowbar_interfaces()
   intf_to_if_map = Barclamp::Inventory.build_node_map(node)
   res = Hash.new
-  machine_team_mode = nil # seems that we can only have 1 bonding mode is possible per machine
+  # seems that we can only have 1 bonding mode is possible per machine
+  machine_team_mode = nil
   ## find most prefered network to use a default gw
   max_pref = 10000
-  net_pref = "admin"  # name of network prefered as default route - default admin net.
+  # name of network prefered as default route - default admin net.
+  net_pref = "admin"
   node["crowbar"]["network"].each { |name, network | 
     r_pref = 10000
     r_pref= Integer(network["router_pref"]) if network["router_pref"]
@@ -194,6 +195,9 @@ def crowbar_interfaces(bond_list)
       end
       res[intf] = Hash.new unless res[intf]
       res[intf][:interface_list] = interface_list
+      unless interface_list && ! interface_list.empty?
+        raise ::RangeError.new("No slave interfaces for #{intf}")
+      end
       res[intf][:mode] = "team"
       res[intf][:interface] = intf
       # Bond opts is only needed and built for redhat.
@@ -273,42 +277,6 @@ end
 
 package "bridge-utils"
 
-case node[:platform]
-when "ubuntu","debian"
-  package "vlan"
-  package "ifenslave-2.6"
-
-  utils_line "8021q" do
-    action :add
-    file "/etc/modules"
-  end
-
-  if node["network"]["mode"] == "team"
-    # make sure to pick up any updates
-    team_mode = node["network"]["teaming"]["mode"]
-    utils_line "bonding mode=#{team_mode} miimon=100" do
-      action :add
-      regexp_exclude "bonding mode=.*"  
-      file "/etc/modules"
-    end
-    bash "load bonding module" do
-      code "/sbin/modprobe bonding mode=#{team_mode} miimon=100"
-      not_if { ::File.exists?("/sys/module/bonding") }
-    end
-  end
-when "centos","redhat"
-  package "vconfig"
-
-  if node["network"]["mode"] == "team"
-    bond_list.keys.each do |bond|
-      utils_line "alias #{bond} bonding" do
-        action :add
-        file "/etc/modprobe.conf"
-      end
-    end
-  end
-end
-
 ## Make sure that ip6tables is off.
 #bash "Make sure ip6tables is off" do
 #  code "/sbin/chkconfig ip6tables off"
@@ -333,8 +301,46 @@ old_interfaces = case node[:platform]
                  when "centos","redhat"
                    local_redhat_interfaces
                  end
-new_interfaces = crowbar_interfaces(bond_list)
+new_interfaces = crowbar_interfaces
 interfaces_to_up={}
+
+case node[:platform]
+when "ubuntu","debian"
+  package "vlan"
+  package "ifenslave-2.6"
+
+  utils_line "8021q" do
+    action :add
+    file "/etc/modules"
+  end
+
+  if node["network"]["mode"] == "team"
+    # make sure to pick up any updates
+    team_mode = node["network"]["teaming"]["mode"]
+    utils_line "bonding mode=#{team_mode} miimon=100" do
+      action :add
+      regexp_exclude "bonding mode=.*"
+      file "/etc/modules"
+    end
+    bash "load bonding module" do
+      code "/sbin/modprobe bonding mode=#{team_mode} miimon=100"
+      not_if { ::File.exists?("/sys/module/bonding") }
+    end
+  end
+when "centos","redhat"
+  package "vconfig"
+
+  if node["network"]["mode"] == "team"
+    new_interfaces.keys.each do |bond|
+      next if new_interfaces[bond][:config] == "team"
+      utils_line "alias #{bond} bonding" do
+        action :add
+        file "/etc/modprobe.conf"
+      end
+    end
+  end
+end
+
 
 def deorder(i)
   i.reject{|k,v|k == :order or v.nil? or (v.respond_to?(:empty?) and v.empty?)}
