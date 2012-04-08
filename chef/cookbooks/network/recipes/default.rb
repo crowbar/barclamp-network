@@ -156,7 +156,8 @@ def local_redhat_interfaces
 end
 
 def crowbar_interfaces()
-  intf_to_if_map = Barclamp::Inventory.build_node_map(node)
+  conduit_map = Barclamp::Inventory.build_node_map(node)
+  Chef::Log.debug("Conduit mapping for this node:  #{conduit_map.inspect}")
   res = Hash.new
   # seems that we can only have 1 bonding mode is possible per machine
   machine_team_mode = nil
@@ -179,7 +180,7 @@ def crowbar_interfaces()
     allow_gw = (netname == net_pref)
 
     conduit = network["conduit"]
-    intf, interface_list, tm = Barclamp::Inventory.lookup_interface_info(node, conduit, intf_to_if_map)
+    intf, interface_list, tm = Barclamp::Inventory.lookup_interface_info(node, conduit, conduit_map)
     if intf.nil?
       log("No conduit for interface: #{conduit}") { level :fatal }
       log("Refusing to do so.") { level :fatal }
