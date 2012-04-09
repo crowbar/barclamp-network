@@ -15,7 +15,6 @@
 
 include_recipe 'utils'
 
-bond_list = {}
 $bond_count = 0
 team_mode = node["network"]["teaming"]["mode"]
 
@@ -26,12 +25,10 @@ def sort_interfaces(interfaces)
   seq=0
   i=interfaces.keys.sort
   until i.empty?
-    Chef::Log.debug("Processing interfaces #{i.inspect}")
     i.each do |ifname|
       iface=interfaces[ifname]
       iface[:interface_list] ||= Array.new
       iface[:interface_list] = iface[:interface_list].sort
-      Chef::Log.debug("#{ifname}: #{iface.inspect}")
       # If this interface has children, and any of its children have not
       # been given a sequence number, skip it.
       next if not iface[:interface_list].empty? and 
@@ -156,32 +153,35 @@ def local_redhat_interfaces
   sort_interfaces(res)
 end
 
-def crowbar_interfaces(bond_list)
-  intf_to_if_map = Barclamp::Inventory.build_node_map(node)
+def crowbar_interfaces()
+  conduit_map = Barclamp::Inventory.build_node_map(node)
+  Chef::Log.info("Conduit mapping for this node:  #{conduit_map.inspect}")
   res = Hash.new
-  machine_team_mode = nil # seems that we can only have 1 bonding mode is possible per machine
+  # seems that we can only have 1 bonding mode is possible per machine
+  machine_team_mode = nil
   ## find most prefered network to use a default gw
   max_pref = 10000
-  net_pref = "admin"  # name of network prefered as default route - default admin net.
+  # name of network prefered as default route - default admin net.
+  net_pref = "admin"
   node["crowbar"]["network"].each { |name, network | 
     r_pref = 10000
     r_pref= Integer(network["router_pref"]) if network["router_pref"]
-    log("eval router from #{name}, pref #{r_pref}")  { level :warn }
+    Chef::Log.debug("eval router from #{name}, pref #{r_pref}")
     if (r_pref < max_pref)
       max_pref = r_pref
       net_pref = name
     end
   }
-  log("will allow routers from #{net_pref}") { level :warn }
+  Chef::Log.info("will allow routers from #{net_pref}")
   node["crowbar"]["network"].each do |netname, network|
     next if netname == "bmc"
     allow_gw = (netname == net_pref)
 
     conduit = network["conduit"]
-    intf, interface_list, tm = Barclamp::Inventory.lookup_interface_info(node, conduit, intf_to_if_map)
+    intf, interface_list, tm = Barclamp::Inventory.lookup_interface_info(node, conduit, conduit_map)
     if intf.nil?
-      log("No conduit for interface: #{conduit}") { level :fatal }
-      log("Refusing to do so.") { level :fatal }
+      Chef::Log.fatal("No conduit for interface: #{conduit}")
+      Chef::Log.fatal("Refusing to do so.")
       raise ::RangeError.new("No conduit to interface map for #{conduit}")
     end
 
@@ -190,10 +190,13 @@ def crowbar_interfaces(bond_list)
       machine_team_mode = tm if machine_team_mode.nil?
       if (!machine_team_mode.nil? and !machine_team_mode == tm)
           # once a bonding mode has been selected for the machine, don't let others...
-	  Chef::Provider::Log::ChefLog.log("CONFLICTING TEAM MODES: for conduit #{conduit}")
+	  Chef::Log.warn("CONFLICTING TEAM MODES: for conduit #{conduit}")
       end
       res[intf] = Hash.new unless res[intf]
       res[intf][:interface_list] = interface_list
+      unless interface_list && ! interface_list.empty?
+        raise ::RangeError.new("No slave interfaces for #{intf}")
+      end
       res[intf][:mode] = "team"
       res[intf][:interface] = intf
       # Bond opts is only needed and built for redhat.
@@ -273,42 +276,6 @@ end
 
 package "bridge-utils"
 
-case node[:platform]
-when "ubuntu","debian"
-  package "vlan"
-  package "ifenslave-2.6"
-
-  utils_line "8021q" do
-    action :add
-    file "/etc/modules"
-  end
-
-  if node["network"]["mode"] == "team"
-    # make sure to pick up any updates
-    team_mode = node["network"]["teaming"]["mode"]
-    utils_line "bonding mode=#{team_mode} miimon=100" do
-      action :add
-      regexp_exclude "bonding mode=.*"  
-      file "/etc/modules"
-    end
-    bash "load bonding module" do
-      code "/sbin/modprobe bonding mode=#{team_mode} miimon=100"
-      not_if { ::File.exists?("/sys/module/bonding") }
-    end
-  end
-when "centos","redhat"
-  package "vconfig"
-
-  if node["network"]["mode"] == "team"
-    bond_list.keys.each do |bond|
-      utils_line "alias #{bond} bonding" do
-        action :add
-        file "/etc/modprobe.conf"
-      end
-    end
-  end
-end
-
 ## Make sure that ip6tables is off.
 #bash "Make sure ip6tables is off" do
 #  code "/sbin/chkconfig ip6tables off"
@@ -333,19 +300,57 @@ old_interfaces = case node[:platform]
                  when "centos","redhat"
                    local_redhat_interfaces
                  end
-new_interfaces = crowbar_interfaces(bond_list)
+new_interfaces = crowbar_interfaces
 interfaces_to_up={}
+
+case node[:platform]
+when "ubuntu","debian"
+  package "vlan"
+  package "ifenslave-2.6"
+
+  utils_line "8021q" do
+    action :add
+    file "/etc/modules"
+  end
+
+  if node["network"]["mode"] == "team"
+    # make sure to pick up any updates
+    team_mode = node["network"]["teaming"]["mode"]
+    utils_line "bonding mode=#{team_mode} miimon=100" do
+      action :add
+      regexp_exclude "bonding mode=.*"
+      file "/etc/modules"
+    end
+    bash "load bonding module" do
+      code "/sbin/modprobe bonding mode=#{team_mode} miimon=100"
+      not_if { ::File.exists?("/sys/module/bonding") }
+    end
+  end
+when "centos","redhat"
+  package "vconfig"
+
+  if node["network"]["mode"] == "team"
+    new_interfaces.keys.each do |bond|
+      next if new_interfaces[bond][:config] == "team"
+      utils_line "alias #{bond} bonding" do
+        action :add
+        file "/etc/modprobe.conf"
+      end
+    end
+  end
+end
+
 
 def deorder(i)
   i.reject{|k,v|k == :order or v.nil? or (v.respond_to?(:empty?) and v.empty?)}
 end
 
-log("Current interfaces:\n#{old_interfaces.inspect}\n") { level :debug }
-log("New interfaces:\n#{new_interfaces.inspect}\n") { level :debug }
+Chef::Log.info("Current interfaces:\n#{old_interfaces.inspect}\n")
+Chef::Log.info("New interfaces:\n#{new_interfaces.inspect}\n")
 
 if (not new_interfaces) or new_interfaces.empty?
-  log("Crowbar instructed us to tear down all our interfaces!") { level :fatal }
-  log("Refusing to do so.") { level :fatal }
+  Chef::Log.fatal("Crowbar instructed us to tear down all our interfaces!")
+  Chef::Log.fatal("Refusing to do so.")
   raise ::RangeError.new("Not enough active network interfaces.")
 else
   # Third, rewrite the network configuration to match the new config.
@@ -369,12 +374,12 @@ else
   # Second, examine each interface that exists in both the old and the
   # new configuration to see what changed, and take appropriate action.
   (old_interfaces.keys & new_interfaces.keys).each {|i|
-    log("Transitioning #{i}:\n#{old_interfaces[i].inspect}\n=>\n#{new_interfaces[i].inspect}\n") { level :debug }
+    Chef::Log.info("Transitioning #{i}:\n#{old_interfaces[i].inspect}\n=>\n#{new_interfaces[i].inspect}\n")
     case
     when deorder(old_interfaces[i]) == deorder(new_interfaces[i])
       # The only thing that changed is the proposed position in the interfaces
       # file.  Don't do anything with this interface.
-      log "#{i} did not change, skipping."
+      Chef::Log.info("#{i} did not change, skipping.")
       next
     when old_interfaces[i][:config] == "dhcp"
       # We are going to transition an interface into being owned by Crowbar.
@@ -419,7 +424,7 @@ else
   (old_interfaces.keys - new_interfaces.keys).sort{|a,b| 
     old_interfaces[b][:order] <=> old_interfaces[a][:order]}.each {|i|
     next if i.nil? or i == ""
-    log("Removing #{old_interfaces[i]}\n") { level :debug }
+    Chef::Log.info("Removing #{old_interfaces[i]}\n")
     bash "ifdown #{i} for removal" do
       code "ifdown #{i}"
       ignore_failure true
@@ -458,7 +463,7 @@ else
   
   # If we need to sleep now, do it.
   delay_time = delay ? node["network"]["start_up_delay"] : 0
-  log "Sleeping for #{delay_time} seconds due new link coming up"
+  Chef::Log.info "Sleeping for #{delay_time} seconds due new link coming up"
   bash "network delay sleep" do
     code "sleep #{delay_time}"
     only_if { delay != 0 }
