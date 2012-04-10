@@ -345,6 +345,10 @@ def deorder(i)
   i.reject{|k,v|k == :order or v.nil? or (v.respond_to?(:empty?) and v.empty?)}
 end
 
+def only_router_changed(a,b)
+  deorder(a.reject{|k,v| k == :router}) == deorder(b.reject{|k,v| k== :router})
+end
+
 Chef::Log.info("Current interfaces:\n#{old_interfaces.inspect}\n")
 Chef::Log.info("New interfaces:\n#{new_interfaces.inspect}\n")
 
@@ -352,121 +356,133 @@ if (not new_interfaces) or new_interfaces.empty?
   Chef::Log.fatal("Crowbar instructed us to tear down all our interfaces!")
   Chef::Log.fatal("Refusing to do so.")
   raise ::RangeError.new("Not enough active network interfaces.")
-else
-  # Third, rewrite the network configuration to match the new config.
+end
+# First, tear down any interfaces that are going to be deleted in 
+# reverse order in which they appear in the current /etc/network/interfaces
+(old_interfaces.keys - new_interfaces.keys).sort {|a,b| 
+  old_interfaces[b][:order] <=> old_interfaces[a][:order]}.each do |i|
+  next if i.nil? or i == ""
+  Chef::Log.info("Removing #{old_interfaces[i]}\n")
+  bash "ifdown #{i} for removal" do
+    code "ifdown #{i}"
+    ignore_failure true
+  end
   case node[:platform]
   when "ubuntu","debian"
-    template "/etc/network/interfaces" do
-      source "interfaces.erb"
-      variables :interfaces => new_interfaces.values.sort{|a,b| 
-        a[:order] <=> b[:order]
-      }
-    end
+    # No-op
   when "centos","redhat"
-    new_interfaces.values.each {|iface|
-      template "/etc/sysconfig/network-scripts/ifcfg-#{iface[:interface]}" do
-        source "redhat-cfg.erb"
-        variables :iface => iface
-      end
-    }
+    file "/etc/sysconfig/network-scripts/ifcfg-#{i}" do
+      action :delete
+    end
   end
-  
-  # Second, examine each interface that exists in both the old and the
-  # new configuration to see what changed, and take appropriate action.
-  (old_interfaces.keys & new_interfaces.keys).each {|i|
-    Chef::Log.info("Transitioning #{i}:\n#{old_interfaces[i].inspect}\n=>\n#{new_interfaces[i].inspect}\n")
-    case
-    when deorder(old_interfaces[i]) == deorder(new_interfaces[i])
-      # The only thing that changed is the proposed position in the interfaces
-      # file.  Don't do anything with this interface.
-      Chef::Log.info("#{i} did not change, skipping.")
-      next
-    when old_interfaces[i][:config] == "dhcp"
-      # We are going to transition an interface into being owned by Crowbar.
-      # Kill any dhclients for this interface, and then take action
-      # based on whether we are giving it an IP address or not.
-      bash "kill dhclients" do
-        code "killall dhclient3 ; rm -rf /etc/dhclient*"
-        only_if "pidof dhclient3"
+end
+
+# Second, examine each interface that exists in both the old and the
+# new configuration to see what changed, and take appropriate action.
+(old_interfaces.keys & new_interfaces.keys).sort {|a,b|
+  new_interfaces[a][:order] <=> new_interfaces[b][:order]}.each do |i|
+  case
+  when deorder(old_interfaces[i]) == deorder(new_interfaces[i])
+    # The only thing that changed is the proposed position in the interfaces
+    # file.  Don't do anything with this interface.
+    Chef::Log.info("#{i} did not change, skipping.")
+  when only_router_changed(old_interfaces[i], new_interfaces[i])
+    Chef::Log.info("Default route through #{i} changed, handling specially.")
+    if old_interfaces[i][:router]
+      bash "Remove default route through #{i}" do
+        code "ip route del default via #{old_interfaces[i][:router]} dev #{i}"
       end
-      if new_interfaces[i][:config] == "static"
-        # We are giving it a static IP.  Schedule the interface to be 
-        # forced up with the new config, which should give it the new 
-        # configuration without taking the link down.
-        # We rely on our static network config being otherwise identical
-        # to our DHCP config.
-        interfaces_to_up[i] = "ifup #{i}"
-      else
-        # We are giving it a manual config.  Ifdown the interface, and then
-        # schedule it to be ifup'ed based on whether or not :auto is true.
-        bash "ifdown #{i} for crowbar capture" do
-          code "ifdown #{i}"
-          ignore_failure true
-        end
-        interfaces_to_up[i] = "ifup #{i}" if new_interfaces[i][:auto]
-        delay = true
+    end
+    if new_interfaces[i][:router]
+      bash "Add default route through #{i}" do
+        code "ip route add default via #{new_interface[i][:router]} dev #{i}"
       end
+    end
+  when old_interfaces[i][:config] == "dhcp"
+    Chef::Log.info("Taking ownership of #{i}")
+    # We are going to transition an interface into being owned by Crowbar.
+    # Kill any dhclients for this interface, and then take action
+    # based on whether we are giving it an IP address or not.
+    bash "kill dhclients" do
+      code "killall dhclient3 ; rm -rf /etc/dhclient*"
+      only_if "pidof dhclient3"
+    end
+    if new_interfaces[i][:config] == "static"
+      # We are giving it a static IP.  Schedule the interface to be 
+      # forced up with the new config, which should give it the new 
+      # configuration without taking the link down.
+      # We rely on our static network config being otherwise identical
+      # to our DHCP config.
+      interfaces_to_up[i] = "ifup #{i}"
     else
-      # The interface changed, and it is not a matter of taking ownership
-      # from the OS.  ifdown it now, and schedule it to be ifup'ed if 
-      # the new config is set to :auto.
-      bash "ifdown #{i} for reconfigure" do
+      # We are giving it a manual config.  Ifdown the interface, and then
+      # schedule it to be ifup'ed based on whether or not :auto is true.
+      bash "ifdown #{i} for crowbar capture" do
         code "ifdown #{i}"
         ignore_failure true
       end
       interfaces_to_up[i] = "ifup #{i}" if new_interfaces[i][:auto]
       delay = true
     end
-  }
-
-  # First, tear down any interfaces that are going to be deleted in 
-  # reverse order in which they appear in the current /etc/network/interfaces
-  (old_interfaces.keys - new_interfaces.keys).sort{|a,b| 
-    old_interfaces[b][:order] <=> old_interfaces[a][:order]}.each {|i|
-    next if i.nil? or i == ""
-    Chef::Log.info("Removing #{old_interfaces[i]}\n")
-    bash "ifdown #{i} for removal" do
+  else
+    Chef::Log.info("Transitioning #{i}:\n#{old_interfaces[i].inspect}\n=>\n#{new_interfaces[i].inspect}\n")
+    # The interface changed, and it is not a matter of taking ownership
+    # from the OS.  ifdown it now, and schedule it to be ifup'ed if 
+    # the new config is set to :auto.
+    bash "ifdown #{i} for reconfigure" do
       code "ifdown #{i}"
       ignore_failure true
     end
-    case node[:platform]
-    when "ubuntu","debian"
-      # No-op
-    when "centos","redhat"
-      file "/etc/sysconfig/network-scripts/ifcfg-#{i}" do
-        action :delete
-      end
-    end
-  }
-  
-  # Fourth, bring up any new or changed interfaces
-  new_interfaces.values.sort{|a,b|a[:order] <=> b[:order]}.each {|i|
-    next if i[:interface] == "bmc"
-    case
-    when (old_interfaces[i[:interface]].nil? and i[:auto])
-      # This is a new interface.  Ifup it if it should be auto ifuped.
-      bash "ifup new #{i[:interface]}" do
-        code "ifup #{i[:interface]}"
-        ignore_failure true
-      end
-      delay = true
-    when interfaces_to_up[i[:interface]]
-      # This is an interface that we had in common with old_interfaces that
-      # did not have an identical configuration from the last time.
-      # We need to bring it up according to the instructions left behind.
-      bash "ifup reconfigured #{i[:interface]}" do
-        code interfaces_to_up[i[:interface]]
-        ignore_failure true
-      end
-    end
-  }
-  
-  # If we need to sleep now, do it.
-  delay_time = delay ? node["network"]["start_up_delay"] : 0
-  Chef::Log.info "Sleeping for #{delay_time} seconds due new link coming up"
-  bash "network delay sleep" do
-    code "sleep #{delay_time}"
-    only_if { delay != 0 }
+    interfaces_to_up[i] = "ifup #{i}" if new_interfaces[i][:auto]
+    delay = true
   end
+end
+
+# Third, rewrite the network configuration to match the new config.
+case node[:platform]
+when "ubuntu","debian"
+  template "/etc/network/interfaces" do
+    source "interfaces.erb"
+    variables :interfaces => new_interfaces.values.sort{|a,b| 
+      a[:order] <=> b[:order]
+    }
+  end
+when "centos","redhat"
+  new_interfaces.values.each do |iface|
+    template "/etc/sysconfig/network-scripts/ifcfg-#{iface[:interface]}" do
+      source "redhat-cfg.erb"
+      variables :iface => iface
+    end
+  end
+end
+
+# Fourth, bring up any new or changed interfaces
+new_interfaces.values.sort{|a,b|a[:order] <=> b[:order]}.each do |i|
+  next if i[:interface] == "bmc"
+  case
+  when (old_interfaces[i[:interface]].nil? and i[:auto])
+    # This is a new interface.  Ifup it if it should be auto ifuped.
+    bash "ifup new #{i[:interface]}" do
+      code "ifup #{i[:interface]}"
+      ignore_failure true
+    end
+    delay = true
+  when interfaces_to_up[i[:interface]]
+    # This is an interface that we had in common with old_interfaces that
+    # did not have an identical configuration from the last time.
+    # We need to bring it up according to the instructions left behind.
+    bash "ifup reconfigured #{i[:interface]}" do
+      code interfaces_to_up[i[:interface]]
+      ignore_failure true
+    end
+  end
+end
+
+# If we need to sleep now, do it.
+delay_time = delay ? node["network"]["start_up_delay"] : 0
+Chef::Log.info "Sleeping for #{delay_time} seconds due new link coming up"
+bash "network delay sleep" do
+  code "sleep #{delay_time}"
+  only_if { delay != 0 }
 end
 
