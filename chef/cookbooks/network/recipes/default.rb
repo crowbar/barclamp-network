@@ -485,6 +485,6 @@ delay_time = delay ? node["network"]["start_up_delay"] : 0
 Chef::Log.info "Sleeping for #{delay_time} seconds due new link coming up"
 bash "network delay sleep" do
   code "sleep #{delay_time}"
-  only_if { delay != 0 }
+  only_if { delay_time > 0 }
 end
 
