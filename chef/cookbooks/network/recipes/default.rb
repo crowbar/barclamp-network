@@ -419,12 +419,7 @@ end
     else
       # We are giving it a manual config.  Ifdown the interface, and then
       # schedule it to be ifup'ed based on whether or not :auto is true.
-      bash "ifdown #{i} for crowbar capture" do
-        code "ifdown #{i}"
-        ignore_failure true
-      end
       interfaces_to_up[i] = "ifup #{i}" if new_interfaces[i][:auto]
-      delay = true
     end
   else
     Chef::Log.info("Transitioning #{i}:\n#{old_interfaces[i].inspect}\n=>\n#{new_interfaces[i].inspect}\n")
