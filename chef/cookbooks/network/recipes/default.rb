@@ -330,9 +330,9 @@ when "centos","redhat"
   package "vconfig"
 
   if node["network"]["mode"] == "team"
-    new_interfaces.keys.each do |bond|
-      next if new_interfaces[bond][:config] == "team"
-      utils_line "alias #{bond} bonding" do
+    new_interfaces.keys.each do |i|
+      next unless new_interfaces[i][:mode] == "team"
+      utils_line "alias #{i} bonding" do
         action :add
         file "/etc/modprobe.conf"
       end
@@ -391,11 +391,13 @@ end
     if old_interfaces[i][:router]
       bash "Remove default route through #{i}" do
         code "ip route del default via #{old_interfaces[i][:router]} dev #{i}"
+        only_if "ip route show dev #{i} |grep -q default"
       end
     end
     if new_interfaces[i][:router]
       bash "Add default route through #{i}" do
         code "ip route add default via #{new_interface[i][:router]} dev #{i}"
+        not_if "ip route show dev #{i} |grep -q default"
       end
     end
   when old_interfaces[i][:config] == "dhcp"
