@@ -57,14 +57,14 @@ def local_debian_interfaces
     when "auto"
       parts[1..-1].each { |name|
         next if name == "lo"
-        res[name] = Hash.new unless res[name]
+        res[name] ||= Hash.new
         res[name][:auto] = true
-        res[name][:interface] = name unless res[name][:interface]
+        res[name][:interface] ||= name
       }
     when "iface"
       iface = parts[1]
       next if iface == "lo"
-      res[iface] = Hash.new unless res[iface]
+      res[iface] ||= Hash.new 
       res[iface][:interface] = iface
       res[iface][:interface_list] = Array.new
       res[iface][:config] = parts[3]
@@ -76,7 +76,7 @@ def local_debian_interfaces
       res[iface][:mode] = "bridge"
       res[iface][:interface_list] = parts[1..-1]
       res[iface][:interface_list].each do |i|
-        res[i]=Hash.new unless res[i]
+        res[i] ||= Hash.new
         res[i][:bridge]=iface
       end
     when "vlan_raw_device" then
@@ -87,7 +87,7 @@ def local_debian_interfaces
       res[iface][:mode] = "team"
       res[iface][:interface_list] = parts[4..-1]
       res[iface][:interface_list].each do |i|
-        res[i]=Hash.new unless res[i]
+        res[i] ||= Hash.new
         res[i][:master]=iface
         res[i][:slave]=true
       end
@@ -102,7 +102,7 @@ def local_redhat_interfaces
     next unless entry =~ /^ifcfg/
     next if entry == "ifcfg-lo"
     iface = entry.split('-',2)[1]
-    res[iface]=Hash.new unless res[iface]
+    res[iface] ||= Hash.new
     ::File.foreach("/etc/sysconfig/network-scripts/#{entry}") do |line|
       line = line.chomp.strip.split('#')[0] # strip comments
       next if line.nil? or ( line.length == 0 ) # skip blank lines
@@ -123,17 +123,17 @@ def local_redhat_interfaces
       when "GATEWAY" then res[iface][:router] = v
       when "MASTER" 
         res[iface][:master] = v
-        res[v]=Hash.new unless res[v]
+        res[v] ||= Hash.new
         res[v][:mode] = "team"
-        res[v][:interface_list]=Array.new unless res[v][:interface_list]
+        res[v][:interface_list] ||= Array.new
         res[v][:interface_list].push(iface)
       when "SLAVE"
         res[iface][:slave] = true if v == "yes"
       when "BRIDGE"
         res[iface][:bridge] = v
-        res[v]=Hash.new unless res[v]
+        res[v] ||= Hash.new
         res[v][:mode] = "bridge"
-        res[v][:interface_list]=Array.new unless res[iface][:interface_list]
+        res[v][:interface_list] ||= Array.new 
         res[v][:interface_list].push(iface)
       when "VLAN"
         res[iface][:mode] = "vlan"
@@ -192,7 +192,7 @@ def crowbar_interfaces()
           # once a bonding mode has been selected for the machine, don't let others...
 	  Chef::Log.warn("CONFLICTING TEAM MODES: for conduit #{conduit}")
       end
-      res[intf] = Hash.new unless res[intf]
+      res[intf] ||= Hash.new
       res[intf][:interface_list] = interface_list
       unless interface_list && ! interface_list.empty?
         raise ::RangeError.new("No slave interfaces for #{intf}")
@@ -222,7 +222,7 @@ def crowbar_interfaces()
     # Handle vlans first.
     if network["use_vlan"]
       intf = "#{intf}.#{network["vlan"]}"
-      res[intf] = Hash.new unless res[intf]
+      res[intf] ||= Hash.new
       res[intf][:interface] = intf
       res[intf][:auto] = true
       res[intf][:vlan] = network["vlan"]
@@ -237,7 +237,7 @@ def crowbar_interfaces()
         end
       end
     else
-      res[intf] = Hash.new unless res[intf]
+      res[intf] ||= Hash.new
       res[intf][:interface] = intf
       res[intf][:auto] = true
     end
@@ -253,7 +253,7 @@ def crowbar_interfaces()
       res[intf][:config]="manual"
       base_if=intf
       intf=res[intf][:bridge]
-      res[intf]=Hash.new unless res[intf]
+      res[intf] ||= Hash.new
       res[intf][:interface] = intf
       res[intf][:interface_list] = [ base_if ]
       res[intf][:auto] = true
