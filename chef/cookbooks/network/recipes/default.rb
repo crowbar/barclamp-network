@@ -436,7 +436,6 @@ end
       ignore_failure true
     end
     interfaces_to_up[i] = "ifup #{i}" if new_interfaces[i][:auto]
-    delay = true
   end
 end
 
@@ -468,7 +467,6 @@ new_interfaces.values.sort{|a,b|a[:order] <=> b[:order]}.each do |i|
       code "ifup #{i[:interface]}"
       ignore_failure true
     end
-    delay = true
   when interfaces_to_up[i[:interface]]
     # This is an interface that we had in common with old_interfaces that
     # did not have an identical configuration from the last time.
@@ -478,6 +476,8 @@ new_interfaces.values.sort{|a,b|a[:order] <=> b[:order]}.each do |i|
       ignore_failure true
     end
   end
+  # Only delay if we ifup'ed a real physical interface.
+  delay = ::File.exists? "/sys/class/net/#{i}/device" unless delay
 end
 
 # If we need to sleep now, do it.
