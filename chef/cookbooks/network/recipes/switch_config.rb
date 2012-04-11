@@ -32,23 +32,28 @@ search(:node, "*:*").each do |aNode|
       port_key = "#{switch_unit}/0/#{switch_port}"
       interfaces[port_key] = {} if interfaces[port_key].nil?
 
-      aNode["network"]["networks"].each do |aNetworkName, aNetwork|
+      aNode["crowbar"]["network"].each do |aNetworkName, aNetwork|
         next if aNetwork["conduit"] != conduit
         vlan = aNetwork["vlan"]
         unique_vlans[vlan] = ""
         vlans_for_interface = interfaces[port_key]
-        vlans_for_interface[vlan] = ""
+        vlans_for_interface[vlan] = aNetwork["use_vlan"]
       end
     end
   end
 end
 
-# TODO: Put this file in a reasonable place
-template "/tmp/switch_config.json" do
-  mode 0644
-  source "switch_config.erb"
+directory "/opt/dell/switch" do
+  mode 0755
   owner "root"
   group "root"
+end
+
+template "/opt/dell/switch/switch_config.json" do
+  mode 0644
+  owner "root"
+  group "root"
+  source "switch_config.erb"
   variables(
     :admin_node_ip => admin_ip,
     :unique_vlans => unique_vlans.keys.sort,

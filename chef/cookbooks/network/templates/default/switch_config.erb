@@ -21,7 +21,7 @@
   # vlans
   ####################################
   "vlans": [
-    <% @unique_vlans.each do | vlan| -%>
+    <% @unique_vlans.each do | vlan| %>
     {
       "vlan_name": "vlan<%= vlan %>",
       "vlan_id": <%= vlan %>
@@ -70,13 +70,13 @@
   ####################################
   "interfaces": [
     {
-    <% @interfaces.each do |port_key, vlans_for_interface| -%>
+    <% @interfaces.each do |port_key, vlans_for_interface| %>
       "id": <%= port_key %>
       "vlans": [
-      <% vlans_for_interface.keys.sort.each do |vlan| -%>
+      <% vlans_for_interface.keys.sort.each do |vlan| %>
         { 
           "vlan_name": "vlan<%= vlan %>",
-          "vlan_mode": "UNTAGGED",
+          "vlan_mode": "<%= vlans_for_interface[vlan] ? "TAGGED" : "UNTAGGED" %>",
         },
       <% end %>
       ],
