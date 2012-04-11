@@ -3,7 +3,6 @@
 {
   ####################################
   # sysloginfo
-  #   Note that only one entry is supported for now.
   ####################################
   "sysloginfo": [
    {
@@ -71,31 +70,17 @@
   ####################################
   "interfaces": [
     {
-
-      "id": "1/0/20"
+    <% @interfaces.each do |port_key, vlans_for_interface| -%>
+      "id": <%= port_key %>
       "vlans": [
+      <% vlans_for_interface.keys.sort.each do |vlan| -%>
         { 
-          "vlan_name": "vlan100",
-          "vlan_mode": "TAGGED",
-        },
-        { 
-          "vlan_name": "vlan200",
+          "vlan_name": "vlan<%= vlan %>",
           "vlan_mode": "UNTAGGED",
         },
+      <% end %>
       ],
+    <% end %>
     },
-    {
-      "id": "tag1"
-      "vlans": [
-        { 
-          "vlan_name": "vlan300",
-          "vlan_mode": "TAGGED",
-        },
-        { 
-          "vlan_name": "vlan400",
-          "vlan_mode": "UNTAGGED",
-        },
-      ],
-    }
   ]
 }

@@ -15,15 +15,33 @@
 
 admin_ip = Chef::Recipe::Barclamp::Inventory.get_network_by_type(node, "admin").address
 
+interfaces = {}
+
 # Find the list of unique vlans
 unique_vlans={}
-search(:node, "*:*").each { |aNode|
-  aNode["network"]["networks"].each do |aNetworkName, aNetwork|
-    next if !aNetwork["use_vlan"]
-    vlan = aNetwork["vlan"]
-    unique_vlans[vlan] = ""
+search(:node, "*:*").each do |aNode|
+  node_map = Chef::Recipe::Barclamp::Inventory.build_node_map(aNode)
+
+  node_map.each do |conduit, if_hash|
+    if_list = if_hash["if_list"]
+    if if_list.size > 1
+      # TBD
+    else
+      switch_unit=aNode["crowbar_ohai"]["switch_config"][if_list[0]]["switch_unit"]
+      switch_port=aNode["crowbar_ohai"]["switch_config"][if_list[0]]["switch_port"]
+      port_key = "#{switch_unit}/0/#{switch_port}"
+      interfaces[port_key] = {} if interfaces[port_key].nil?
+
+      aNode["network"]["networks"].each do |aNetworkName, aNetwork|
+        next if aNetwork["conduit"] != conduit
+        vlan = aNetwork["vlan"]
+        unique_vlans[vlan] = ""
+        vlans_for_interface = interfaces[port_key]
+        vlans_for_interface[vlan] = ""
+      end
+    end
   end
-}
+end
 
 # TODO: Put this file in a reasonable place
 template "/tmp/switch_config.json" do
@@ -33,6 +51,7 @@ template "/tmp/switch_config.json" do
   group "root"
   variables(
     :admin_node_ip => admin_ip,
-    :unique_vlans => unique_vlans.keys.sort
+    :unique_vlans => unique_vlans.keys.sort,
+    :interfaces => interfaces
   )
 end
