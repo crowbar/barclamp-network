@@ -33,54 +33,34 @@
   # LAGs
   ####################################
   "LAGs": [
+  <% @lags.keys.sort.each do |lag_id| %>
     {
-      "lag_id": 1,
-      "lag_mode": "STATIC",
+      "lag_id": <%= lag_id %>,
       "ports": [
-        { "port_id": "1/0/1" },
-        { "port_id": "1/0/2" },
-        { "port_id": "1/0/3" },
-        { "port_id": "1/0/4" },
+      <% @lags[lag_id]["ports"].each do |port_key| %>
+        { "port_id": "<%= port_key %>" },
+      <% end %>
       ]
     },
-    {
-      "lag_id": 2,
-      "lag_mode": "DYNAMIC",
-      "ports": [
-        { "port_id": "1/0/5" },
-        { "port_id": "1/0/6" },
-        { "port_id": "1/0/7" },
-        { "port_id": "1/0/8" },
-      ]
-    },
-    {
-      "lag_id": 3,
-      "lag_mode": "STATIC",
-      "ports": [
-        { "port_id": "1/0/9" },
-        { "port_id": "1/0/10" },
-        { "port_id": "1/0/11" },
-        { "port_id": "1/0/12" },
-      ]
-    }
+  <% end %>
   ]
 
   ####################################
   # Interfaces
   ####################################
   "interfaces": [
+    <% @interfaces.keys.sort.each do |interface_id| %>
     {
-    <% @interfaces.each do |port_key, vlans_for_interface| %>
-      "id": <%= port_key %>
+      "id": <%= interface_id %>
       "vlans": [
-      <% vlans_for_interface.keys.sort.each do |vlan| %>
+      <% @interfaces[interface_id].keys.sort.each do |vlan| %>
         { 
           "vlan_name": "vlan<%= vlan %>",
-          "vlan_mode": "<%= vlans_for_interface[vlan] ? "TAGGED" : "UNTAGGED" %>",
+          "vlan_mode": "<%= @interfaces[interface_id][vlan] ? "TAGGED" : "UNTAGGED" %>",
         },
       <% end %>
       ],
-    <% end %>
     },
+    <% end %>
   ]
 }

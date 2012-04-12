@@ -13,31 +13,69 @@
 # limitations under the License.
 #
 
+def setup_interface(unique_vlans, interfaces, a_node, conduit, interface_id )
+    a_node["crowbar"]["network"].each do |network_name, network|
+      next if network["conduit"] != conduit
+      vlan = network["vlan"]
+      unique_vlans[vlan] = ""
+
+      interfaces[interface_id] = {} if interfaces[interface_id].nil?
+      vlans_for_interface = interfaces[interface_id]
+      vlans_for_interface[vlan] = network["use_vlan"]
+    end
+end
+
 admin_ip = Chef::Recipe::Barclamp::Inventory.get_network_by_type(node, "admin").address
 
-interfaces = {}
-
-# Find the list of unique vlans
 unique_vlans={}
-search(:node, "*:*").each do |aNode|
-  node_map = Chef::Recipe::Barclamp::Inventory.build_node_map(aNode)
+interfaces = {}
+next_lag_id=1
+lags = {}
 
-  node_map.each do |conduit, if_hash|
-    if_list = if_hash["if_list"]
-    if if_list.size > 1
-      # TBD
+search(:node, "*:*").each do |a_node|
+  node_map = Chef::Recipe::Barclamp::Inventory.build_node_map(a_node)
+
+  node_map.each do |conduit, conduit_info|
+    if_list = conduit_info["if_list"]
+    team_mode = conduit_info["team_mode"] rescue nil
+
+    interface_id=""
+    if if_list.size > 1 && team_mode != 5 && team_mode != 6
+
+      lag_ports = []
+      found_lag_port = false
+
+      if_list.each do |intf|
+        switch_unit=a_node["crowbar_ohai"]["switch_config"][intf]["switch_unit"]
+        switch_port=a_node["crowbar_ohai"]["switch_config"][intf]["switch_port"]
+        next if switch_unit == -1
+
+        found_lag_port = true
+        lag_ports << "#{switch_unit}/0/#{switch_port}"
+      end
+
+      # Only create the LAG if at least one interface is connected to the switch
+      if found_lag_port
+        lag_ports.sort!
+
+        lag_id = next_lag_id
+        next_lag_id += 1
+
+        lag = {}
+        lag["lag_id"] = lag_id
+        lag["ports"] = lag_ports
+
+        lags[lag_id] = lag
+
+        setup_interface(unique_vlans, interfaces, a_node, conduit, lag_id.to_s )
+      end
     else
-      switch_unit=aNode["crowbar_ohai"]["switch_config"][if_list[0]]["switch_unit"]
-      switch_port=aNode["crowbar_ohai"]["switch_config"][if_list[0]]["switch_port"]
-      port_key = "#{switch_unit}/0/#{switch_port}"
-      interfaces[port_key] = {} if interfaces[port_key].nil?
+      if_list.each do |intf|
+        switch_unit=a_node["crowbar_ohai"]["switch_config"][intf]["switch_unit"]
+        switch_port=a_node["crowbar_ohai"]["switch_config"][intf]["switch_port"]
+        next if switch_unit == -1
 
-      aNode["crowbar"]["network"].each do |aNetworkName, aNetwork|
-        next if aNetwork["conduit"] != conduit
-        vlan = aNetwork["vlan"]
-        unique_vlans[vlan] = ""
-        vlans_for_interface = interfaces[port_key]
-        vlans_for_interface[vlan] = aNetwork["use_vlan"]
+        setup_interface(unique_vlans, interfaces, a_node, conduit, "#{switch_unit}/0/#{switch_port}" )
       end
     end
   end
@@ -57,6 +95,7 @@ template "/opt/dell/switch/switch_config.json" do
   variables(
     :admin_node_ip => admin_ip,
     :unique_vlans => unique_vlans.keys.sort,
+    :lags => lags,
     :interfaces => interfaces
   )
 end
