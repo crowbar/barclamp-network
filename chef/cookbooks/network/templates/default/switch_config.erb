@@ -22,8 +22,8 @@
   ],
 
   "LAGs": [
-  <% lags = @lags.keys.sort %>
-  <% lags.each do |lag_id| %>
+  <% lag_ids = @lags.keys.sort %>
+  <% lag_ids.each do |lag_id| %>
     {
       "lag_id": <%= lag_id %>,
       "ports": [
@@ -32,13 +32,13 @@
         { "port_id": "<%= port_key %>" }<%= "," if port_key != ports.last %>
       <% end %>
       ]
-    }<%= "," if lag_id != lags.last %>
+    }<%= "," if lag_id != lag_ids.last %>
   <% end %>
   ],
 
   "interfaces": [
-    <% interfaces = @interfaces.keys.sort %>
-    <% interfaces.each do |interface_id| %>
+    <% interface_ids = @interfaces.keys.sort %>
+    <% interface_ids.each do |interface_id| %>
     {
       "id": "<%= interface_id %>",
       "vlans": [
@@ -50,7 +50,7 @@
         }<%= "," if vlan != vlans.last %>
       <% end %>
       ]
-    }<%= "," if interface_id != interfaces.last %>
+    }<%= "," if interface_id != interface_ids.last %>
     <% end %>
   ]
 }
