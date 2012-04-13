@@ -218,8 +218,13 @@ class NetworkService < ServiceObject
     @logger.debug("Network transition: Entering #{name} for #{state}")
 
     if state == "discovered"
+
       db = ProposalObject.find_proposal "network", inst
       role = RoleObject.find_role_by_name "network-config-#{inst}"
+      if NodeObject.find_node_by_name(name)["crowbar"]["admin_node"]
+        @logger.error("Admin node transitioning to discovered state.  Adding switch_config role.")
+        result = add_role_to_instance_and_node("network", inst, name, db, role, "switch_config")
+      end
 
       @logger.debug("Network transition: make sure that network role is on all nodes: #{name} for #{state}")
       result = add_role_to_instance_and_node("network", inst, name, db, role, "network")
