@@ -13,7 +13,29 @@
 # limitations under the License.
 #
 
-def setup_interface(unique_vlans, interfaces, a_node, conduit, interface_id )
+def get_switch_config(switch_config, switch_name)
+  a_switch_config = switch_config[switch_name]
+
+  if a_switch_config.nil?
+    a_switch_config = {}
+    switch_config[switch_name] = a_switch_config
+    a_switch_config["unique_vlans"] = {}
+    a_switch_config["interfaces"] = {}
+    a_switch_config["lags"] = {}
+    a_switch_config["next_lag_id"] = 1
+  end
+
+  a_switch_config
+end
+
+
+def setup_interface(switch_config, a_node, conduit, switch_name, interface_id )
+
+    a_switch_config = get_switch_config(switch_config, switch_name)
+    unique_vlans = a_switch_config["unique_vlans"]
+    interfaces = a_switch_config["interfaces"]
+
+    # Find the conduit associated with the interface
     a_node["crowbar"]["network"].each do |network_name, network|
       next if network["conduit"] != conduit
       vlan = network["vlan"]
@@ -22,15 +44,14 @@ def setup_interface(unique_vlans, interfaces, a_node, conduit, interface_id )
       interfaces[interface_id] = {} if interfaces[interface_id].nil?
       vlans_for_interface = interfaces[interface_id]
       vlans_for_interface[vlan] = network["use_vlan"]
+      break
     end
 end
 
+
 admin_ip = Chef::Recipe::Barclamp::Inventory.get_network_by_type(node, "admin").address
 
-unique_vlans={}
-interfaces = {}
-next_lag_id=1
-lags = {}
+switch_config={}
 
 search(:node, "*:*").each do |a_node|
   node_map = Chef::Recipe::Barclamp::Inventory.build_node_map(a_node)
@@ -39,43 +60,43 @@ search(:node, "*:*").each do |a_node|
     if_list = conduit_info["if_list"]
     team_mode = conduit_info["team_mode"] rescue nil
 
-    interface_id=""
-    if if_list.size > 1 && team_mode != 5 && team_mode != 6
+    # Figure out the config for all switches attached to this one conduit for this one node
+    switch_ports = {}
+    if_list.each do |intf|
+      switch_name=a_node["crowbar_ohai"]["switch_config"][intf]["switch_name"]
+      switch_unit=a_node["crowbar_ohai"]["switch_config"][intf]["switch_unit"]
+      switch_port=a_node["crowbar_ohai"]["switch_config"][intf]["switch_port"]
+      next if switch_unit == -1
 
-      lag_ports = []
-      found_lag_port = false
+      switch_ports[switch_name] = [] if switch_ports[switch_name].nil?
+      switch_ports[switch_name] << "#{switch_unit}/0/#{switch_port}"
+    end
 
-      if_list.each do |intf|
-        switch_unit=a_node["crowbar_ohai"]["switch_config"][intf]["switch_unit"]
-        switch_port=a_node["crowbar_ohai"]["switch_config"][intf]["switch_port"]
-        next if switch_unit == -1
+    switch_ports.each do |switch_name, ports|
+      ports.sort!
 
-        found_lag_port = true
-        lag_ports << "#{switch_unit}/0/#{switch_port}"
-      end
+      interface_ids = []
+      if ports.size > 1 && team_mode != 5 && team_mode != 6
 
-      # Only create the LAG if at least one interface is connected to the switch
-      if found_lag_port
-        lag_ports.sort!
-
-        lag_id = next_lag_id
-        next_lag_id += 1
+        a_switch_config = get_switch_config(switch_config, switch_name)
+        lag_id = a_switch_config["next_lag_id"]
+        a_switch_config["next_lag_id"] += 1
 
         lag = {}
         lag["lag_id"] = lag_id
-        lag["ports"] = lag_ports
+        lag["ports"] = ports
 
-        lags[lag_id] = lag
+        a_switch_config["lags"][lag_id] = lag
 
-        setup_interface(unique_vlans, interfaces, a_node, conduit, lag_id.to_s )
+        interface_ids << lag_id.to_s
+      else
+        # If we're here then there is either only 1 port connected to this switch or
+        # there are multiple ports in team mode 5 or 6, so treat as interfaces
+        interface_ids = ports
       end
-    else
-      if_list.each do |intf|
-        switch_unit=a_node["crowbar_ohai"]["switch_config"][intf]["switch_unit"]
-        switch_port=a_node["crowbar_ohai"]["switch_config"][intf]["switch_port"]
-        next if switch_unit == -1
 
-        setup_interface(unique_vlans, interfaces, a_node, conduit, "#{switch_unit}/0/#{switch_port}" )
+      interface_ids.each do |interface_id|
+        setup_interface(switch_config, a_node, conduit, switch_name, interface_id )
       end
     end
   end
@@ -87,15 +108,23 @@ directory "/opt/dell/switch" do
   group "root"
 end
 
-template "/opt/dell/switch/switch_config.json" do
-  mode 0644
-  owner "root"
-  group "root"
-  source "switch_config.erb"
-  variables(
-    :admin_node_ip => admin_ip,
-    :unique_vlans => unique_vlans.keys.sort,
-    :lags => lags,
-    :interfaces => interfaces
-  )
+switch_config.each do |switch_name, a_switch_config|
+
+  # For testing on a virtual admin node
+  switch_name = "virtual" if switch_name == -1
+
+  switch_config_file_name = "/opt/dell/switch/#{switch_name.gsub( /:/, '_')}_switch_config.json"
+
+  template switch_config_file_name do
+    mode 0644
+    owner "root"
+    group "root"
+    source "switch_config.erb"
+    variables(
+      :admin_node_ip => admin_ip,
+      :unique_vlans => a_switch_config["unique_vlans"].keys.sort,
+      :lags => a_switch_config["lags"],
+      :interfaces => a_switch_config["interfaces"]
+    )
+  end
 end
