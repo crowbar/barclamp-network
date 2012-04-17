@@ -63,13 +63,13 @@ search(:node, "*:*").each do |a_node|
     switch_ports = {}
     if_list.each do |intf|
       sw=a_node["crowbar_ohai"]["switch_config"][intf] rescue {}
-      next unless sw["switch_unit"] && sw["switch_name"] && sw["switch_port"]
-      next if sw["switch_unit"] == -1
+      next unless sw["switch_name"] && sw["switch_port"] && sw["switch_port_name"]
+      next if sw["switch_port"] == -1
       switch_name=sw["switch_name"]
-      switch_unit=sw["switch_unit"]
       switch_port=sw["switch_port"]
+      switch_port_name=sw["switch_port_name"]
       switch_ports[switch_name] ||= []
-      switch_ports[switch_name] << "#{switch_unit}/0/#{switch_port}"
+      switch_ports[switch_name] << switch_port_name
     end
 
     switch_ports.each do |switch_name, ports|
