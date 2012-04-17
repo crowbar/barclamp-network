@@ -25,7 +25,7 @@
   <% lag_ids = @lags.keys.sort %>
   <% lag_ids.each do |lag_id| %>
     {
-      "lag_id": <%= lag_id %>,
+      "lag_id": "lag<%= lag_id %>",
       "ports": [
       <% ports = @lags[lag_id]["ports"] %>
       <% ports.each do |port_key| %>
