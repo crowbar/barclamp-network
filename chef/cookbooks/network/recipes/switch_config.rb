@@ -48,7 +48,6 @@ def setup_interface(switch_config, a_node, conduit, switch_name, interface_id )
     end
 end
 
-
 admin_ip = Chef::Recipe::Barclamp::Inventory.get_network_by_type(node, "admin").address
 
 switch_config={}
@@ -63,12 +62,13 @@ search(:node, "*:*").each do |a_node|
     # Figure out the config for all switches attached to this one conduit for this one node
     switch_ports = {}
     if_list.each do |intf|
-      switch_name=a_node["crowbar_ohai"]["switch_config"][intf]["switch_name"]
-      switch_unit=a_node["crowbar_ohai"]["switch_config"][intf]["switch_unit"]
-      switch_port=a_node["crowbar_ohai"]["switch_config"][intf]["switch_port"]
-      next if switch_unit == -1
-
-      switch_ports[switch_name] = [] if switch_ports[switch_name].nil?
+      sw=a_node["crowbar_ohai"]["switch_config"][intf] rescue {}
+      next unless sw["switch_unit"] && sw["switch_name"] && sw["switch_port"]
+      next if sw["switch_unit"] == -1
+      switch_name=sw["switch_name"]
+      switch_unit=sw["switch_unit"]
+      switch_port=sw["switch_port"]
+      switch_ports[switch_name] ||= []
       switch_ports[switch_name] << "#{switch_unit}/0/#{switch_port}"
     end
 
