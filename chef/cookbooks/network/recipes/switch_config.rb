@@ -63,6 +63,7 @@ search(:node, "*:*").each do |a_node|
     switch_ports = {}
     if_list.each do |intf|
       sw=a_node["crowbar_ohai"]["switch_config"][intf] rescue {}
+      next if sw.nil?
       next unless sw["switch_name"] && sw["switch_port"] && sw["switch_port_name"]
       next if sw["switch_port"] == -1
       switch_name=sw["switch_name"]
