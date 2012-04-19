@@ -39,7 +39,7 @@ def setup_interface(switch_config, a_node, conduit, switch_name, interface_id )
     a_node["crowbar"]["network"].each do |network_name, network|
       next if network["conduit"] != conduit
       vlan = network["vlan"]
-      unique_vlans[vlan] = ""
+      unique_vlans[vlan] = network_name
 
       interfaces[interface_id] = {} if interfaces[interface_id].nil?
       vlans_for_interface = interfaces[interface_id]
@@ -123,7 +123,7 @@ switch_config.each do |switch_name, a_switch_config|
     source "switch_config.erb"
     variables(
       :admin_node_ip => admin_ip,
-      :unique_vlans => a_switch_config["unique_vlans"].keys.sort,
+      :unique_vlans => a_switch_config["unique_vlans"],
       :lags => a_switch_config["lags"],
       :interfaces => a_switch_config["interfaces"]
     )
