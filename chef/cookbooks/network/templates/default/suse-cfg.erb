@@ -1,39 +1,44 @@
 # Managed by Crowbar.
 # Do not edit.
-<% @iface.keys.each do |k|
-    v=@iface[k]
-    next unless v
-    next if v.class == Array and v.empty?
-    case k
-    when :auto then
-    	 if v == true
-       	    k="STARTMODE"
-       	    v="auto"
-	 end
-    when :config
-      	 k="BOOTPROTO"
-      	 case v
-      	 when "static","manual"
-              v = "static"
-      	 end
-    when :ipaddress then k="IPADDR"
-    when :interface then k="NAME"
-    when :netmask then k="NETMASK"
-    when :bond_opts then k="BONDING_OPTS"
-    when :broadcast then k="BROADCAST"
-    when :master then k="MASTER"
-    when :slave
-      if v == true
-        k="SLAVE"
-        v="yes"
-      end
-    when :bridge
-      k="BRIDGE"
-    when :vlan
-      k="VLAN"
-      v="yes"
-    end
-    next if k.class != String 
-    quote = ((v.include? " ") ? "\"" : "") -%>
-<%= "#{k}=#{quote}#{v}#{quote}" %>
+<%
+# quote a string for the shell
+# usage: "VARIABLE=#{quote value}"
+def quote(s)
+  # Watch out, in gsub \' means "after the matched string"
+  # We must escape it once to get rid of that
+  # and the second time in double quotes
+  # so that "Joe's" comes out as WHOSE='Joe'\''s'
+  # Using to_s for nils and numbers.
+  "'" + s.to_s.gsub(/'/, "'\\\\''") + "'"
+end
+
+def var(ifcfg_key, iface_key)
+  ifcfg_key + "=" + quote(@iface[iface_key])
+end
+-%>
+<%= var "NAME", :interface %>
+<% if @iface[:auto] -%>
+STARTMODE='auto'
+<% end -%>
+<%= var "BOOTPROTO", :config %>
+<%# --- -%>
+<% if @iface[:ipaddress] -%>
+<%= var "IPADDR", :ipaddress %>
+<%= var "NETMASK", :netmask %>
+<%= var "BROADCAST", :broadcast %>
+<% end -%>
+<%# --- -%>
+<% case @iface[:mode] -%>
+  <%- when "bridge" -%>
+BRIDGE='yes'
+BRIDGE_PORTS=<%= quote @iface[:interface_list].join %>
+  <%- when "vlan" -%>
+<% var "VLAN_ID", :vlan %>
+ETHERDEVICE=<%= quote @iface[:interface_list].first %>
+  <%- when "team" -%>
+BONDING_MASTER='yes'
+<%= var "BONDING_MODULE_OPTS", :bond_opts %>
+    <%- @iface[:interface_list].each_with_index do |slave, i| -%>
+<%= "BONDING_SLAVE_#{i}='#{slave}'\n" %>
+    <%- end -%>
 <% end -%>
