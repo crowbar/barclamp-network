@@ -123,7 +123,7 @@ def local_suse_interfaces
       next if line.nil? or ( line.length == 0 ) # skip blank lines
       parts = line.split('=',2)
       k=parts[0]
-      v=parts[1][/\A"(.*)"\z/m,1]  # Remove start/end quotes from the string
+      v=parts[1][/\A['"](.*)["']\z/m,1]  # Remove start/end quotes from the string
       v=parts[1] if v.nil?
       case k
       when "STARTMODE"
@@ -131,27 +131,35 @@ def local_suse_interfaces
       when "BOOTPROTO" then res[iface][:config] = v
       when "IPADDR"
         res[iface][:ipaddress] = v
-      when "NETMASK" then res[iface][:netmask] = v
-      when "BROADCAST" then res[iface][:broadcast] = v
-      when "BONDING_OPTS" then res[iface][:bond_opts] = v
-      when "MASTER" 
-        res[iface][:master] = v
-        res[v]=Hash.new unless res[v]
-        res[v][:mode] = "team"
-        res[v][:interface_list]=Array.new unless res[v][:interface_list]
-        res[v][:interface_list].push(iface)
-      when "SLAVE"
-        res[iface][:slave] = true if v == "yes"
+      when "NETMASK"
+        res[iface][:netmask] = v
+      when "BROADCAST"
+        res[iface][:broadcast] = v
+
+      # bonds:
+      when "BONDING_MODULE_OPTS"
+        res[iface][:bond_opts] = v
+      when "BONDING_MASTER" 
+        next unless v == "yes"
+        res[iface][:mode] = "team"
+      when /^BONDING_SLAVE_/
+        res[iface][:interface_list] ||= []
+        res[iface][:interface_list] << v
+
+      # bridges:
       when "BRIDGE"
-        res[iface][:bridge] = v
-        res[v]=Hash.new unless res[v]
-        res[v][:mode] = "bridge"
-        res[v][:interface_list]=Array.new unless res[iface][:interface_list]
-        res[v][:interface_list].push(iface)
-      when "VLAN"
+        next unless v == "yes"
+        res[iface][:mode] = "bridge"
+      when "BRIDGE_PORTS"
+        res[iface][:interface_list] = v.split
+
+      # VLANs:
+      when "ETHERDEVICE"
         res[iface][:mode] = "vlan"
-        res[iface][:vlan] = iface.split('.',2)[1].to_i
-        res[iface][:interface_list]=[iface.split('.',2)[0]]
+        res[iface][:vlan] ||= iface.split('.',2)[1].to_i
+        res[iface][:interface_list]=[v]
+      when "VLAN_ID"
+        res[iface][:vlan] ||= v.to_i
       end
     end
     if res[iface][:config] == "none"
