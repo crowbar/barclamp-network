@@ -44,7 +44,6 @@ def setup_interface(switch_config, a_node, conduit, switch_name, interface_id )
       interfaces[interface_id] = {} if interfaces[interface_id].nil?
       vlans_for_interface = interfaces[interface_id]
       vlans_for_interface[vlan] = network["use_vlan"]
-      break
     end
 end
 
@@ -54,7 +53,6 @@ switch_config={}
 
 search(:node, "*:*").each do |a_node|
   node_map = Chef::Recipe::Barclamp::Inventory.build_node_map(a_node)
-
   node_map.each do |conduit, conduit_info|
     if_list = conduit_info["if_list"]
     team_mode = conduit_info["team_mode"] rescue nil
