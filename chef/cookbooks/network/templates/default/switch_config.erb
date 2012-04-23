@@ -13,11 +13,12 @@
   ],
 
   "vlans": [
-    <% @unique_vlans.each do | vlan| %>
+    <% vlans = @unique_vlans.keys.sort %>
+    <% vlans.each do |vlan| %>
     {
       "vlan_name": "vlan<%= vlan %>",
-      "vlan_id": <%= vlan %>
-    }<%= "," if vlan != @unique_vlans.last %>
+      "vlan_id": <%= vlan %><%= ",\n      \"default\": \"true\"" if @unique_vlans[vlan] == "admin" %>
+    }<%= "," if vlan != vlans.last %>
     <% end %>
   ],
 
@@ -25,7 +26,7 @@
   <% lag_ids = @lags.keys.sort %>
   <% lag_ids.each do |lag_id| %>
     {
-      "lag_id": <%= lag_id %>,
+      "lag_id": "lag<%= lag_id %>",
       "ports": [
       <% ports = @lags[lag_id]["ports"] %>
       <% ports.each do |port_key| %>
