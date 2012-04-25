@@ -152,6 +152,10 @@ def local_suse_interfaces
         res[iface][:mode] = "bridge"
       when "BRIDGE_PORTS"
         res[iface][:interface_list] = v.split
+        v.split.each do |i|
+          res[i]=Hash.new unless res[i]
+          res[i][:bridge]=iface
+        end
 
       # VLANs:
       when "ETHERDEVICE"
