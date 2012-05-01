@@ -1,40 +1,38 @@
 # Managed by Crowbar.
 # Do not edit.
-<% @iface.keys.each do |k|
-    v=@iface[k]
-    next unless v
-    next if v.class == Array and v.empty?
-    case k
-    when :interface then k="DEVICE"
-    when :auto then
-    	 if v == true
-       	    k="ONBOOT"
-       	    v="yes"
-	 end
-    when :config
-      	 k="BOOTPROTO"
-      	 case v
-      	 when "static","manual"
-              v = "none"
-      	 end
-    when :ipaddress then k="IPADDR"
-    when :netmask then k="NETMASK"
-    when :bond_opts then k="BONDING_OPTS"
-    when :broadcast then k="BROADCAST"
-    when :router then k="GATEWAY"
-    when :master then k="MASTER"
-    when :slave
-      if v == true
-        k="SLAVE"
-        v="yes"
-      end
-    when :bridge
-      k="BRIDGE"
-    when :vlan
-      k="VLAN"
-      v="yes"
-    end
-    next if k.class != String 
-    quote = ((v.include? " ") ? "\"" : "") -%>
-<%= "#{k}=#{quote}#{v}#{quote}" %>
+<% iface = @interfaces[@nic.name] -%>
+DEVICE=<%=@nic.name%>
+<% case
+   when @nic.kind_of?(Nic::Bridge) -%>
+TYPE=Bridge
+<% if @nic.stp -%>
+STP=yes
+DELAY=<%=@nic.forward_delay%>
+<% else -%>
+STP=no
+<% end -%>
+<% when @nic.kind_of?(Nic::Bond) -%>
+BONDING_OPTS="miimon=<%=@nic.miimon%> mode=<%=@nic.mode%>"
+<% when @nic.kind_of?(Nic::Vlan) -%>
+VLAN=yes
+<% when @nic.kind_of?(Nic) -%>
+HWADDR=<%=@nic.mac%>
+TYPE=Ethernet
+<% end -%>
+<% if @nic.bond_master -%>
+SLAVE=yes
+MASTER=<%=@nic.bond_master.name%>
+<% end -%>
+<% if @nic.bridge_master-%>
+BRIDGE=<%=@nic.bridge_master.name%>
+<% end -%>
+ONBOOT=yes
+BOOTPROTO=none
+<% v4addrs, v6addrs = iface["addresses"].map{|a|::IP.coerce(a)}.partition{|a|a.kind_of? IP::IP4}
+   v4addrs.each_index do |i| -%>
+IPADDR<%=(i == 0)?'':(i+1).to_s%>=<%=v4addrs[i].to_s.split('/')[0]%>
+PREFIX<%=(i == 0)?'':(i+1).to_s%>=<%=v4addrs[i].subnet%>
+<% end -%>
+<% if iface["gateway"] -%>
+GATEWAY=<%=iface["gateway"]%>
 <% end -%>
