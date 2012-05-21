@@ -69,12 +69,12 @@ locale_additions:
       dense:
         no_connection: No Connection
       vlan:
-        title: Available VLANs
+        title: Available Networks
         name: Name
         id: VLAN ID
         conduit: Conduit
-        inuse: Active
-        not_inuse: X
+        inuse: Active VLAN
+        not_inuse: Untagged
         nodes: Nodes
       nodes:
         title: Interface and Conduit Maps
