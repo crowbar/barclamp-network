@@ -117,26 +117,26 @@ class NetworkController < BarclampController
   def nodes
 
     net_bc = RoleObject.find_role_by_name 'network-config-default'
-    @map = net_bc.default_attributes['network']['interface_map'] if net_bc.barclamp == 'network'
-    @patterns = {}
-    @interfaces = []
-    @map.each do |maps|
-      @patterns[maps['pattern']] = maps['bus_order']
+    @modes = []
+    @active_mode = @mode = net_bc.default_attributes['network']['mode']
+    # first, we need a mode list
+    net_bc.default_attributes['network']['conduit_map'].each do |conduit| 
+      mode = conduit['pattern'].split('/')[0]
+      @modes << mode unless @modes.include? mode
+      @mode = params[:mode] if @modes.include? params[:mode]
     end
-    
-    if params[:id]
-      @node = NodeObject.find_node_by_name params[:id]
+    # now we need to complete conduit list for the mode (we have to inspect all conduits!)
+    @conduits = []
+    net_bc.default_attributes['network']['conduit_map'].each do |conduit| 
+      mode = conduit['pattern'].split('/')[0]
+      conduit['conduit_list'].each { |c, details| @conduits << c unless @conduits.include? c } if mode == @mode
     end
-    
-    @nodes = NodeObject.all
-    @nodes.each do |node|
-      if node.crowbar_ohai and node.crowbar_ohai["detected"] and node.crowbar_ohai["detected"]["network"]
-        node.crowbar_ohai["detected"]['network'].each do |intf, address|
-          @interfaces << intf unless @interfaces.include? intf
-        end
-      end
+            
+    @nodes = {}
+    NodeObject.all.each do |node|
+      @nodes[node.handle] = {:alias=>node.alias, :description=>node.description, :model=>node.hardware, :bus=>node.get_bus_order, :conduits=>node.build_node_map }
     end
-    @interfaces = @interfaces.sort
+    @conduits = @conduits.sort
     
   end
     
