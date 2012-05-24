@@ -77,13 +77,13 @@
           "pattern": "dual/.*/.*",
           "conduit_list": { 
             "intf0": {
-              "if_list": [ "1g1" ]
+              "if_list": [ "?1g1" ]
             },
             "intf1": {
-              "if_list": [ "1g2" ]
+              "if_list": [ "?1g2" ]
             },
             "intf2": {
-              "if_list": [ "1g1" ]
+              "if_list": [ "?1g1" ]
             }
           }
         },
@@ -91,13 +91,13 @@
           "pattern": "single/.*/.*",
           "conduit_list": { 
             "intf0": {
-              "if_list": [ "1g1" ]
+              "if_list": [ "?1g1" ]
             },
             "intf1": {
-              "if_list": [ "1g1" ]
+              "if_list": [ "?1g1" ]
             },
             "intf2": {
-              "if_list": [ "1g1" ]
+              "if_list": [ "?1g1" ]
             }
           }
         },
@@ -105,7 +105,7 @@
           "pattern": ".*/.*/.*",
           "conduit_list": { 
             "intf0": {
-              "if_list": [ "1g1" ]
+              "if_list": [ "?1g1" ]
             },
             "intf1": {
               "if_list": [ "1g1" ]
@@ -122,10 +122,10 @@
               "if_list": [ "1g1" ]
             },
             "intf1": {
-              "if_list": [ "1g1" ]
+              "if_list": [ "?1g1" ]
             },
             "intf2": {
-              "if_list": [ "1g1" ]
+              "if_list": [ "?1g1" ]
             }
           }
         }
