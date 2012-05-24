@@ -81,8 +81,23 @@ locale_additions:
         interface_map: Interface Map for Network Attributes
         node: Node
         model: Model
-        has_map: Mapped
-        
+        mode: Network Mapping Mode
+        default_bus_order: Using Default Interface (Bus) Ordering
+        bus_order: Interface (Bus) Order Map
+        conduit_mgmt: Management
+        conduit_bmc: 'BMC/IMPI'
+        conduit_prod: Production
+        conduit_public: 'Public/Guest'
+        conduit_intf0: Default
+        conduit_intf1: First Interface
+        conduit_intf2: Second Interface
+        conduit_intf3: Third Interface
+        team_1: Team Mode 1
+        team_2: Team Mode 2
+        team_3: Team Mode 3
+        team_4: Team Mode 4
+        team_5: Team Mode 5
+        team_6: Team Mode 6
 
 rpms:
   redhat-5.6:
