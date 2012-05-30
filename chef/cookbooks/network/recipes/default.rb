@@ -459,9 +459,15 @@ when "suse"
       source "suse-cfg.erb"
       variables :iface => iface
     end
-    template "/etc/sysconfig/network/ifroute-#{iface[:interface]}" do
-      source "suse-route.erb"
-      variables :iface => iface
+    if iface[:router].nil? or iface[:router] == ""
+      file "/etc/sysconfig/network/ifroute-#{iface[:interface]}" do
+        action :delete
+      end
+    else
+      template "/etc/sysconfig/network/ifroute-#{iface[:interface]}" do
+        source "suse-route.erb"
+        variables :iface => iface
+      end
     end
   end
 end
