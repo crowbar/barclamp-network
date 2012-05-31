@@ -46,10 +46,9 @@ class NetworkService < ServiceObject
     return [404, "No network data found"] if role.nil?
 
     # If we already have on allocated, return success
-    net_info = node.get_network_by_type(network)
-    unless net_info.nil? or net_info["address"].nil?
+    unless node.address(network)
       @logger.error("Network allocate_ip: node already has address: #{name} #{network} #{range}")
-      return [200, net_info]
+      return [200, node[:crowbar][:network][network]]
     end
 
     net_info={}
@@ -267,10 +266,9 @@ class NetworkService < ServiceObject
     return [404, "No network data found"] if role.nil?
 
     # If we already have on allocated, return success
-    net_info = node.get_network_by_type(network)
-    unless net_info.nil?
+    if node.interface(network)
       @logger.error("Network enable_interface: node already has address: #{name} #{network}")
-      return [200, net_info]
+      return [200, node[:crowbar][:network][network]]
     end
 
     net_info={}
