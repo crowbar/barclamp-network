@@ -396,7 +396,7 @@ end
     end
     if new_interfaces[i][:router]
       bash "Add default route through #{i}" do
-        code "ip route add default via #{new_interface[i][:router]} dev #{i}"
+        code "ip route add default via #{new_interfaces[i][:router]} dev #{i}"
         not_if "ip route show dev #{i} |grep -q default"
       end
     end
