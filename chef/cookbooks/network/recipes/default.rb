@@ -1,4 +1,5 @@
 # Copyright 2011, Dell
+# Copyright 2012, SUSE Linux Products GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -93,6 +94,84 @@ def local_debian_interfaces
       end
     end
   }
+  sort_interfaces(res)
+end
+
+def local_suse_interfaces
+  res = {}
+
+  ::Dir.entries("/etc/sysconfig/network").sort.each do |entry|
+    next unless entry =~ /^ifcfg-/
+    next if entry == "ifcfg-lo"
+    iface = entry.split('-',2)[1]
+    res[iface]=Hash.new unless res[iface]
+    res[iface][:interface]=iface
+    if File.exist?("/etc/sysconfig/network/ifroute-#{iface}") then
+        ::File.foreach("/etc/sysconfig/network/ifroute-#{iface}") do |line|
+          line = line.chomp.strip.split('#')[0] # strip comments
+          next if line.nil? or ( line.length == 0 ) # skip blank lines
+          parts = line.split(' ', 4)
+          next if parts[0] != "default"
+          res[iface][:router] = parts[1]
+        end
+    end
+    ::File.foreach("/etc/sysconfig/network/#{entry}") do |line|
+      line = line.chomp.strip.split('#')[0] # strip comments
+      next if line.nil? or ( line.length == 0 ) # skip blank lines
+      parts = line.split('=',2)
+      k=parts[0]
+      v=parts[1][/\A['"](.*)["']\z/m,1]  # Remove start/end quotes from the string
+      v=parts[1] if v.nil?
+      case k
+      when "STARTMODE"
+        res[iface][:auto] = true when v == "auto"
+      when "BOOTPROTO" then res[iface][:config] = v
+      when "IPADDR"
+        res[iface][:ipaddress] = v
+      when "NETMASK"
+        res[iface][:netmask] = v
+      when "BROADCAST"
+        res[iface][:broadcast] = v
+
+      # bonds:
+      when "BONDING_MODULE_OPTS"
+        res[iface][:bond_opts] = v
+      when "BONDING_MASTER" 
+        next unless v == "yes"
+        res[iface][:mode] = "team"
+      when /^BONDING_SLAVE_/
+        res[iface][:interface_list] ||= []
+        res[iface][:interface_list] << v
+
+      # bridges:
+      when "BRIDGE"
+        next unless v == "yes"
+        res[iface][:mode] = "bridge"
+      when "BRIDGE_PORTS"
+        res[iface][:interface_list] = v.split
+        v.split.each do |i|
+          res[i]=Hash.new unless res[i]
+          res[i][:bridge]=iface
+        end
+
+      # VLANs:
+      when "ETHERDEVICE"
+        res[iface][:mode] = "vlan"
+        res[iface][:vlan] ||= iface.split('.',2)[1].to_i
+        res[iface][:interface_list]=[v]
+      when "VLAN_ID"
+        res[iface][:vlan] ||= v.to_i
+      end
+    end
+    if res[iface][:config] == "none"
+      res[iface][:config] = if res[iface][:ipaddress]
+                              "static"
+                            else
+                              "manual"
+                            end
+    end
+    res[iface][:auto] = false unless res[iface][:auto]
+  end
   sort_interfaces(res)
 end
 
@@ -199,11 +278,10 @@ def crowbar_interfaces()
       end
       res[intf][:mode] = "team"
       res[intf][:interface] = intf
-      # Bond opts is only needed and built for redhat.
       case node[:platform]
       when "ubuntu","debian"
         # No-op
-      when "centos","redhat"
+      when "centos","redhat","suse"
         res[intf][:bond_opts] = "mode=#{tm} miimon=100"
       end
       # Since we are making a team out of these devices, blow away whatever
@@ -299,6 +377,8 @@ old_interfaces = case node[:platform]
                    local_debian_interfaces
                  when "centos","redhat"
                    local_redhat_interfaces
+                 when "suse"
+                   local_suse_interfaces
                  end
 new_interfaces = crowbar_interfaces
 interfaces_to_up={}
@@ -340,7 +420,6 @@ when "centos","redhat"
   end
 end
 
-
 def deorder(i)
   i.reject{|k,v|k == :order or v.nil? or (v.respond_to?(:empty?) and v.empty?)}
 end
@@ -357,6 +436,42 @@ if (not new_interfaces) or new_interfaces.empty?
   Chef::Log.fatal("Refusing to do so.")
   raise ::RangeError.new("Not enough active network interfaces.")
 end
+
+# Third, rewrite the network configuration to match the new config.
+case node[:platform]
+when "ubuntu","debian"
+  template "/etc/network/interfaces" do
+    source "interfaces.erb"
+    variables :interfaces => new_interfaces.values.sort{|a,b| 
+      a[:order] <=> b[:order]
+    }
+  end
+when "centos","redhat"
+  new_interfaces.values.each do |iface|
+    template "/etc/sysconfig/network-scripts/ifcfg-#{iface[:interface]}" do
+      source "redhat-cfg.erb"
+      variables :iface => iface
+    end
+  end
+when "suse"
+  new_interfaces.values.each do |iface|
+    template "/etc/sysconfig/network/ifcfg-#{iface[:interface]}" do
+      source "suse-cfg.erb"
+      variables :iface => iface
+    end
+    if iface[:router].nil? or iface[:router] == ""
+      file "/etc/sysconfig/network/ifroute-#{iface[:interface]}" do
+        action :delete
+      end
+    else
+      template "/etc/sysconfig/network/ifroute-#{iface[:interface]}" do
+        source "suse-route.erb"
+        variables :iface => iface
+      end
+    end
+  end
+end
+
 # First, tear down any interfaces that are going to be deleted in 
 # reverse order in which they appear in the current /etc/network/interfaces
 (old_interfaces.keys - new_interfaces.keys).sort {|a,b| 
@@ -431,24 +546,6 @@ end
       ignore_failure true
     end
     interfaces_to_up[i] = "ifup #{i}" if new_interfaces[i][:auto]
-  end
-end
-
-# Third, rewrite the network configuration to match the new config.
-case node[:platform]
-when "ubuntu","debian"
-  template "/etc/network/interfaces" do
-    source "interfaces.erb"
-    variables :interfaces => new_interfaces.values.sort{|a,b| 
-      a[:order] <=> b[:order]
-    }
-  end
-when "centos","redhat"
-  new_interfaces.values.each do |iface|
-    template "/etc/sysconfig/network-scripts/ifcfg-#{iface[:interface]}" do
-      source "redhat-cfg.erb"
-      variables :iface => iface
-    end
   end
 end
 
