@@ -515,14 +515,18 @@ end
         not_if "ip route show dev #{i} |grep -q default"
       end
     end
-  when old_interfaces[i][:config] == "dhcp"
+  when old_interfaces[i][:config].start_with?("dhcp")
     Chef::Log.info("Taking ownership of #{i}")
     # We are going to transition an interface into being owned by Crowbar.
     # Kill any dhclients for this interface, and then take action
     # based on whether we are giving it an IP address or not.
-    bash "kill dhclients" do
+    bash "kill dhclient3" do
       code "killall dhclient3 ; rm -rf /etc/dhclient*"
       only_if "pidof dhclient3"
+    end
+    bash "kill dhcpcd" do
+      code "killall dhcpcd"
+      only_if "pidof dhcpcd"
     end
     if new_interfaces[i][:config] == "static"
       # We are giving it a static IP.  Schedule the interface to be 
