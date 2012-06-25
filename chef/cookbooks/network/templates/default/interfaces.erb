@@ -1,39 +1,54 @@
 # Managed by Crowbar via Chef.
-# Do not manually edit, all your changes will be reverted and your 
-# networking will be undone.  
+# Do not manually edit, all your changes will be reverted and your
+# networking will be undone.
 auto lo
 iface lo inet loopback
 
-<% @interfaces.each do |interface| -%>
-<% next if interface[:interface] == "bmc" -%>
-<% if interface[:auto] -%>
-auto <%= interface[:interface] %>
+<% ::Nic.nics.each do |nic|
+  next unless @interfaces[nic.name]
+  name = nic.name
+  i = @interfaces[name]
+  addrs = i["addresses"].dup.map{|a|::IP.coerce(a)}
+  addr = addrs.shift
+  -%>
+auto <%= name %>
+<% if addr.kind_of?(IP::IP4) -%>
+iface <%= name %> inet static
+<% elsif addr.kind_of?(IP::IP6) -%>
+iface <%= name %> inet6 static
+<% else -%>
+iface <%= name %> inet manual
 <% end -%>
-iface <%= interface[:interface] %> inet <%= interface[:config] %>
-<% if !interface[:ipaddress].nil? -%>
-  address <%= interface[:ipaddress] %>
+<% unless addr.nil? -%>
+    address <%= addr.to_s.split('/')[0] %>
+    netmask <%= addr.to_s.split('/')[1] %>
 <% end -%>
-<% if !interface[:netmask].nil? -%>
-  netmask <%= interface[:netmask] %>
+<% addrs.each do |a| -%>
+    post-up ip addr add <%= a %> dev <%= name %> || true
+    pre-down ip addr del <%= a %> dev <%= name %> || true
 <% end -%>
-<% if !interface[:broadcast].nil? -%>
-  broadcast <%= interface[:broadcast] %>
+<% if i["gateway"] -%>
+    post-up ip route add default via <%= i["gateway"] %> dev <%= name %> || true
+    pre-down ip route del default via <%= i["gateway"] %> dev <%= name %> || true
 <% end -%>
-<% if !interface[:router].nil? -%>
-  gateway <%= interface[:router] %>
-<% end -%>
-<% case interface[:mode] -%>
-<% when "bridge" -%>
-  bridge_ports <%= interface[:interface_list].join %>
-  bridge_stp on
-  bridge_maxwait 0
-  bridge_fd 0
-<% when "vlan" -%>
-  vlan_raw_device <%= interface[:interface_list].first %>
-<% when "team" -%>
-  down /sbin/ifenslave -d <%= interface[:interface] %> <%= interface[:interface_list].join(" ") %>
-  up /sbin/ifenslave <%= interface[:interface] %> <%= interface[:interface_list].join(" ") %>
-<% end -%>
-
+<% case
+       when i["type"] == "bridge"-%>
+    bridge_ports <%= i["slaves"].join %>
+    bridge_stp on
+    bridge_maxwait 0
+    bridge_fd 0
+<% when i["type"] == "vlan" -%>
+    vlan_raw_device <%= i["parent"] %>
+<% when i["type"] == "bond" -%>
+    pre-up test -f /sys/class/net/bonding_masters || modprobe bonding
+    pre-up grep -qw <%=name%> /sys/class/net/bonding_masters || echo +<%=name%> >/sys/class/net/bonding_masters || true
+    pre-up echo <%=i["mode"] %> >/sys/class/net/<%=name%>/bonding/mode || true
+       <% i["slaves"].each do |slave| -%>
+    up ip link set <%=slave%> down
+    up echo +<%=slave%> > /sys/class/net/<%=name%>/bonding/slaves || true
+    down echo -<%=slave%> > /sys/class/net/<%=name%>/bonding/slaves || true
+       <% end # interface.slaves.each -%>
+    post-down echo -<%=name%> >/sys/class/net/bonding_masters || true
+    <% end # case -%>
 <% end # loop -%>
 
