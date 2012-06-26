@@ -79,6 +79,7 @@ node["crowbar"]["network"].keys.sort{|a,b|
     Chef::Log.fatal("Conduit #{conduit} does not have any nics. Your config is invalid.")
     raise ::RangeError.new("Invalid conduit mapping #{conduit_map.inspect}")
   when 1
+    Chef::Log.info("Using interface #{base_ifs[0]} for network #{name}")
     our_iface = base_ifs[0]
   else
     # We want a bond.  Figure out what mode it should be.  Default to 5
@@ -90,9 +91,14 @@ node["crowbar"]["network"].keys.sort{|a,b|
       i.kind_of?(Nic::Bond) &&
         (i.slaves.empty? ||
          (i.slaves.sort == base_ifs))
-    end ||
-      Nic::Bond.create("bond#{Nic.nics.select{|i| Nic::bond?(i)}.length}",
+    end
+    if bond
+      Chef::Log.info("Using bond #{bond.name} for network #{name}")
+    else
+      bond = Nic::Bond.create("bond#{Nic.nics.select{|i| Nic::bond?(i)}.length}",
                        team_mode)
+      Chef::Log.info("Creating bond #{bond.name} for network #{name}")
+    end
     ifs[bond.name] ||= Hash.new
     ifs[bond.name]["addresses"] ||= Array.new
     ifs[bond.name]["slaves"] = Array.new
@@ -112,10 +118,11 @@ node["crowbar"]["network"].keys.sort{|a,b|
   # interface and/or bond that we already have
   if network["use_vlan"]
     vlan = "#{our_iface.name}.#{network["vlan"]}"
-    Chef::Log.info("Using vlan #{vlan} for network #{name}")
     if Nic.exists?(vlan)
+      Chef::Log.info("Using vlan #{vlan} for network #{name}")
       our_iface = Nic.new vlan
     else
+      Chef::Log.info("Creating vlan #{vlan} for network #{name}")
       our_iface = Nic::Vlan.create(our_iface,network["vlan"])
     end
     # Destroy any vlan interfaces for this vlan that might
@@ -140,10 +147,11 @@ node["crowbar"]["network"].keys.sort{|a,b|
              else
                "br-#{name}"
              end
-    Chef::Log.info("Using bridge #{bridge} for network #{name}")
     br = if Nic.exists?(bridge)
+           Chef::Log.info("Using bridge #{bridge} for network #{name}")
            Nic.new bridge
          else
+           Chef::Log.info("Creating bridge #{bridge} for network #{name}")
            Nic::Bridge.create(bridge)
          end
     ifs[br.name] ||= Hash.new
