@@ -417,9 +417,9 @@ end
       # to our DHCP config.
       interfaces_to_up[i] = "ifup #{i}"
     else
-      # We are giving it a manual config.  Ifdown the interface, and then
-      # schedule it to be ifup'ed based on whether or not :auto is true.
-      interfaces_to_up[i] = "ifup #{i}" if new_interfaces[i][:auto]
+      # We are giving it a manual config. We don't want to take the link down,
+      # so just flush its addresses and routes, and hope that is enough.
+      interfaces_to_up[i] = "ip addr flush dev #{i}; ip route flush dev #{i}; ip link set #{i} up"
     end
   else
     Chef::Log.info("Transitioning #{i}:\n#{old_interfaces[i].inspect}\n=>\n#{new_interfaces[i].inspect}\n")
