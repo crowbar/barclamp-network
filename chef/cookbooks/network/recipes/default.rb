@@ -110,7 +110,6 @@ node["crowbar"]["network"].keys.sort{|a,b|
     end
     ifs[bond.name]["mode"] = team_mode
     ifs[bond.name]["type"] = "bond"
-    Chef::Log.info("Using bond #{bond.name} for network #{name}")
     our_iface = bond
   end
   net_ifs << our_iface.name
