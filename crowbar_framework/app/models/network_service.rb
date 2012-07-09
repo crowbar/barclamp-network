@@ -299,6 +299,7 @@ class NetworkService < ServiceObject
     add_bridge = db["network"]["add_bridge"]
     broadcast = db["network"]["broadcast"]
     router = db["network"]["router"]
+    router=nil if router == ""
     router_pref = db["network"]["router_pref"] unless db["network"]["router_pref"].nil?
     netmask = db["network"]["netmask"]
     conduit = db["network"]["conduit"]
