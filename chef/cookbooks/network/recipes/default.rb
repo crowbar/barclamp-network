@@ -32,6 +32,12 @@ when "centos","redhat","suse"
   end
 end
 
+if ::File.exists?("/etc/init/network-interface.conf")
+  # Make upstart stop trying to dynamically manage interfaces.
+  ::File.unlink("/etc/init/network-interface.conf")
+  ::Kernel.system("killall -HUP init")
+end
+
 provisioner = search(:node, "roles:provisioner-server")[0]
 conduit_map = Barclamp::Inventory.build_node_map(node)
 Chef::Log.debug("Conduit mapping for this node:  #{conduit_map.inspect}")
