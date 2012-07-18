@@ -98,7 +98,7 @@ class NetworkController < BarclampController
       end
     end
     #make sure port max is even
-    flash[:notice] = "<b>#{I18n.t :warning, :scope => :error}:</b> #{I18n.t :no_nodes_found, :scope => :error}" if @nodes.empty? #.html_safe if @nodes.empty?
+    flash[:notice] = "<b>#{I18n.t :warning, :scope => :error}:</b> #{I18n.t :no_nodes_found, :scope => :error}".html_safe if @nodes.empty?
   end
 
   def vlan
