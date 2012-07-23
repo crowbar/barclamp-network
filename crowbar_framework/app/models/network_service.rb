@@ -303,6 +303,7 @@ class NetworkService < ServiceObject
     router_pref = db["network"]["router_pref"] unless db["network"]["router_pref"].nil?
     netmask = db["network"]["netmask"]
     conduit = db["network"]["conduit"]
+    router_pref = nil if conduit == "bmc"
     net_info = { 
       "conduit" => conduit, 
       "netmask" => netmask, "node" => name, "router" => router,
