@@ -263,6 +263,18 @@ Nic.nics.each do |nic|
     end
   end
 end
+
+if ["delete","reset"].member?(node["state"])
+  # We just had the rug pulled out from under us.
+  # Do our darndest to get an IP address we can use.
+  Nic.refresh_all
+  Nic.nics.each{|n|
+    next if n.name =~ /^lo/
+    n.up
+    break if ::Kernel.system("dhclient -1 #{n.name}")
+  }
+end
+
 # Wait for the administrative network to come back up.
 Chef::Log.info("Waiting up to 60 seconds for the net to come back")
 60.times do
