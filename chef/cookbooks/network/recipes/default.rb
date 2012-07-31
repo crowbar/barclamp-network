@@ -352,7 +352,9 @@ def crowbar_interfaces()
   sort_interfaces(res)
 end
 
-package "bridge-utils"
+package "bridge-utils" do
+  action :upgrade
+end
 
 ## Make sure that ip6tables is off.
 #bash "Make sure ip6tables is off" do
@@ -385,8 +387,12 @@ interfaces_to_up={}
 
 case node[:platform]
 when "ubuntu","debian"
-  package "vlan"
-  package "ifenslave-2.6"
+  package "vlan" do
+    action :upgrade
+  end
+  package "ifenslave-2.6" do
+    action :upgrade
+  end
 
   utils_line "8021q" do
     action :add
@@ -407,7 +413,9 @@ when "ubuntu","debian"
     end
   end
 when "centos","redhat"
-  package "vconfig"
+  package "vconfig" do
+    action :upgrade
+  end
 
   if node["network"]["mode"] == "team"
     new_interfaces.keys.each do |i|
