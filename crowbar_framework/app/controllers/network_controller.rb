@@ -16,10 +16,15 @@
 class NetworkController < BarclampController
   # Make a copy of the barclamp controller help
   self.help_contents = Array.new(superclass.help_contents)
-  def initialize
+ 
+  before_filter :set_service_object
+ 
+  def set_service_object
     @service_object = NetworkService.new logger
   end
 
+  private :set_service_object
+  
   add_help(:allocate_ip,[:id,:network,:range,:name],[:post])
   def allocate_ip
     id = params[:id]       # Network id
