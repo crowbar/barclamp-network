@@ -38,6 +38,13 @@ if ::File.exists?("/etc/init/network-interface.conf")
   ::Kernel.system("killall -HUP init")
 end
 
+# Stop udev from jacking up our vlans and bridges as we create them.
+["40-bridge-network-interface.rules","40-vlan-network-interface.rules"].each do |rule|
+  next if ::File.exists?("/etc/udev/rules.d/#{rule}")
+  next unless ::File.exists?("/lib/udev/rules.d/#{rule}")
+  ::Kernel.system("echo 'ACTION==\"add\", SUBSYSTEM==\"net\", RUN+=\"/bin/true\"' >/etc/udev/rules.d/#{rule}")
+end
+
 provisioner = search(:node, "roles:provisioner-server")[0]
 conduit_map = Barclamp::Inventory.build_node_map(node)
 Chef::Log.debug("Conduit mapping for this node:  #{conduit_map.inspect}")
