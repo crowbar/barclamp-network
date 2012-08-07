@@ -197,7 +197,7 @@ class NetworkService < ServiceObject
     @logger.debug("Network create_proposal: entering")
     base = super
 
-    networks = JSON::parse(base.current_config.config)["attributes"]["network"]["networks"] rescue nil
+    networks = base.current_config.config_hash["network"]["networks"] rescue nil
     unless networks
       @logger.warn("Network doesn't have any networks specified")
       network = {}
