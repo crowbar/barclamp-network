@@ -197,7 +197,12 @@ class NetworkService < ServiceObject
     @logger.debug("Network create_proposal: entering")
     base = super
 
-    base["attributes"]["network"]["networks"].each do |k,net|
+    networks = JSON::parse(base.current_config.config)["attributes"]["network"]["networks"] rescue nil
+    unless networks
+      @logger.warn("Network doesn't have any networks specified")
+      network = {}
+    end
+    networks.each do |k,net|
       @logger.debug("Network: creating #{k} in the network")
       bc = Chef::DataBagItem.new
       bc.data_bag "crowbar"
