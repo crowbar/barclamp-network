@@ -217,19 +217,17 @@ class NetworkService < ServiceObject
     @logger.debug("Network transition: Entering #{name} for #{state}")
 
     if state == "discovered"
-
-      db = ProposalObject.find_proposal "network", inst
-      role = RoleObject.find_role_by_name "network-config-#{inst}"
-      if NodeObject.find_node_by_name(name)["crowbar"]["admin_node"]
+      node = Node.find_by_name(name)
+      if node.is_admin?
         @logger.error("Admin node transitioning to discovered state.  Adding switch_config role.")
-        result = add_role_to_instance_and_node("network", inst, name, db, role, "switch_config")
+        result = add_role_to_instance_and_node(name, inst, "switch_config")
       end
 
       @logger.debug("Network transition: make sure that network role is on all nodes: #{name} for #{state}")
-      result = add_role_to_instance_and_node("network", inst, name, db, role, "network")
+      result = add_role_to_instance_and_node(name, inst, "network")
 
       @logger.debug("Network transition: Exiting #{name} for #{state} discovered path")
-      return [200, NodeObject.find_node_by_name(name).to_hash] if result
+      return [200, ""] if result
       return [400, "Failed to add role to node"] unless result
     end
 
@@ -246,7 +244,7 @@ class NetworkService < ServiceObject
     end
 
     @logger.debug("Network transition: Exiting #{name} for #{state}")
-    [200, NodeObject.find_node_by_name(name).to_hash]
+    [200, ""]
   end
 
   def enable_interface(bc_instance, network, name)
