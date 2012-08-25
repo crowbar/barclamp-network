@@ -16,7 +16,7 @@ BONDING_OPTS="miimon=<%=@nic.miimon%> mode=<%=@nic.mode%>"
 <% when @nic.kind_of?(Nic::Vlan) -%>
 VLAN=yes
 <% when @nic.kind_of?(Nic) -%>
-HWADDR=<%=@nic.mac%>
+#HWADDR=<%=@nic.mac%>
 TYPE=Ethernet
 <% end -%>
 <% if @nic.bond_master -%>
