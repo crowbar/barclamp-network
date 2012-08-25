@@ -1,4 +1,4 @@
-# Copyright 2011, Dell
+# Copyright 2012, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Author: RobHirschfeld
 #
 
 barclamp:
@@ -24,80 +23,10 @@ barclamp:
     - crowbar
 
 crowbar:
-  layout: 1
+  layout: 2
   order: 20
   run_order: 20
   chef_order: 20
-
-nav:
-  network:
-    switch: switch_path
-    vlan: vlan_path
-    
-locale_additions:
-  en:
-    barclamp:
-      network:
-        edit_attributes: 
-          attributes: Attributes
-        edit_deployment: 
-          deployment: Deployment
-    nav:
-      switch: Switches
-      vlan: VLANs
-    network:
-      vlan_names:
-        admin: Admin
-        bmc: Mgmt (BMC)
-        bmc_vlan: Mgmt Connect
-        nova_fixed: Nova Fixed
-        nova_floating: Nova Floating
-        public: Public
-        private: Private
-        storage: Storage
-      controller:
-        virtual: Virtual
-      switch:
-        title: Network Switches
-        switch_details: Switch Expanded Details
-        switch: Switch
-        port: Port
-        node: Node
-        nc: N/C
-        no_connection: No Connection
-        all: Show All
-      dense:
-        no_connection: No Connection
-      vlan:
-        title: Available Networks
-        name: Name
-        id: VLAN ID
-        conduit: Conduit
-        inuse: Active VLAN
-        not_inuse: Untagged
-        nodes: Nodes
-      nodes:
-        title: Interface and Conduit Maps
-        interface_map: Interface Map for Network Attributes
-        node: Node
-        model: Model
-        mode: Network Mapping Mode
-        default_bus_order: Using Default Interface (Bus) Ordering
-        bus_order: Interface (Bus) Order Map
-        conduit_mgmt: Management
-        conduit_bmc: 'BMC/IMPI'
-        conduit_prod: Production
-        conduit_public: 'Public/Guest'
-        conduit_intf0: Default
-        conduit_intf1: First Interface
-        conduit_intf2: Second Interface
-        conduit_intf3: Third Interface
-        team_1: Team Mode 1
-        team_2: Team Mode 2
-        team_3: Team Mode 3
-        team_4: Team Mode 4
-        team_5: Team Mode 5
-        team_6: Team Mode 6
 
 rpms:
   redhat-5.6:
