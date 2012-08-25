@@ -16,8 +16,43 @@
 class NetworkController < BarclampController
   # Make a copy of the barclamp controller help
   self.help_contents = Array.new(superclass.help_contents)
-  def initialize
-    @service_object = NetworkService.new logger
+ 
+  add_help(:network_list,[],[:get])
+  def networks
+    Rails.logger.error("Listing networks");
+    return render :text => "Listing networks"
+  end
+
+  add_help(:network_show,[:id],[:get])
+  def network_show
+    Rails.logger.error("Showing network #{params[:id]}");
+    return render :text => "Showing network #{params[:id]}"
+  end
+
+  add_help(:network_create,[:name, :conduit, :subnet, :router_pref, :dhcp_enabled],[:post])
+  def network_create
+    Rails.logger.error("Creating network #{params[:id]}");
+
+    subnet = IpAddress.new(:cidr => params[:subnet] )
+    network = Network.new(:name => params[:name], :dhcp_enabled => "true".casecmp( params[:dhcp_enabled]) )
+    network.subnet = subnet
+    network.save
+
+    respond_to do |format|
+      format.json { render :json => network }
+    end
+  end
+
+  add_help(:network_update,[:name, :conduit, :subnet, :router_pref, :dhcp_enabled],[:put])
+  def network_update
+    Rails.logger.error("Updating network #{params[:id]}");
+    return render :text => "Updating network #{params[:id]}"
+  end
+
+  add_help(:network_delete,[:id],[:delete])
+  def network_delete
+    Rails.logger.error("Deleting network #{params[:id]}");
+    return render :text => "Deleting network #{params[:id]}"
   end
 
   add_help(:allocate_ip,[:id,:network,:range,:name],[:post])
@@ -98,7 +133,7 @@ class NetworkController < BarclampController
       end
     end
     #make sure port max is even
-    flash[:notice] = "<b>#{I18n.t :warning, :scope => :error}:</b> #{I18n.t :no_nodes_found, :scope => :error}" if @nodes.empty? #.html_safe if @nodes.empty?
+    flash[:notice] = "<b>#{I18n.t :warning, :scope => :error}:</b> #{I18n.t :no_nodes_found, :scope => :error}".html_safe if @nodes.empty?
   end
 
   def vlan
