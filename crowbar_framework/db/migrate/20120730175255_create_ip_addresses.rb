@@ -19,6 +19,9 @@ class CreateIpAddresses < ActiveRecord::Migration
       t.references :interface
       t.integer :network_id
       t.integer :subnet_id
+      t.integer :router_id
+      t.integer :start_ip_range_id
+      t.integer :end_ip_range_id
 
       t.timestamps
     end

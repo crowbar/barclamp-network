@@ -15,5 +15,15 @@
 class Network < ActiveRecord::Base
   has_many :allocated_ips, :class_name => "IpAddress", :dependent => :nullify
   has_one :subnet, :foreign_key => "subnet_id", :class_name => "IpAddress", :dependent => :destroy
-  attr_accessible :dhcp_enabled, :name
+  belongs_to :conduit, :inverse_of => :networks
+  has_one :router, :inverse_of => :network, :dependent => :destroy
+  has_many :ip_ranges, :dependent => :destroy
+
+  attr_accessible :name, :dhcp_enabled
+
+  validates :name, :presence => true, :uniqueness => true
+  validates :dhcp_enabled, :presence => true, :inclusion => { :in => ["true", "false"] }
+  validates :subnet, :presence => true
+  validates :conduit, :presence => true
+  validates :ip_ranges, :presence => true
 end

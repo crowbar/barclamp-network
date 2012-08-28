@@ -19,40 +19,91 @@ class NetworkController < BarclampController
  
   add_help(:network_list,[],[:get])
   def networks
-    Rails.logger.error("Listing networks");
-    return render :text => "Listing networks"
+    Rails.logger.debug("Listing networks");
+
+    network_refs = []
+
+    Network.all.each { |network|
+      network_refs << network.id
+    }
+
+    respond_to do |format|
+      format.json { render :json => network_refs }
+      format.xml { render :xml => network_refs }
+    end
   end
 
   add_help(:network_show,[:id],[:get])
   def network_show
-    Rails.logger.error("Showing network #{params[:id]}");
-    return render :text => "Showing network #{params[:id]}"
-  end
+    id = params[:id]
 
-  add_help(:network_create,[:name, :conduit, :subnet, :router_pref, :dhcp_enabled],[:post])
-  def network_create
-    Rails.logger.error("Creating network #{params[:id]}");
+    Rails.logger.debug("Showing network #{id}");
 
-    subnet = IpAddress.new(:cidr => params[:subnet] )
-    network = Network.new(:name => params[:name], :dhcp_enabled => "true".casecmp( params[:dhcp_enabled]) )
-    network.subnet = subnet
-    network.save
+    ret = operations.network_get(id)
+
+    return render :text => ret[1], :status => ret[0] if ret[0] != 200
 
     respond_to do |format|
-      format.json { render :json => network }
+      format.json { render :json => ret[1] }
+      format.xml { render :xml => ret[1] }
     end
   end
 
-  add_help(:network_update,[:name, :conduit, :subnet, :router_pref, :dhcp_enabled],[:put])
+  add_help(:network_create,[:name, :conduit_id, :subnet, :dhcp_enabled, :ip_ranges, :router_pref, :router_ip],[:post])
+  def network_create
+    name = params[:name]
+    conduit_id = params[:conduit_id]
+    subnet = params[:subnet]
+    dhcp_enabled = params[:dhcp_enabled]
+    ip_ranges_json = params[:ip_ranges]
+    if !ip_ranges_json.nil?
+      ip_ranges = JSON.parse(ip_ranges_json)
+    end
+    router_pref = params[:router_pref]
+    router_ip = params[:router_ip]
+
+    Rails.logger.debug("Creating network #{name}");
+
+    ret = operations.network_create(name, conduit_id, subnet, dhcp_enabled, ip_ranges, router_pref, router_ip)
+
+    return render :text => ret[1], :status => ret[0] if ret[0] != 200
+
+    respond_to do |format|
+      format.json { render :json => ret[1] }
+    end
+  end
+
+  add_help(:network_update,[:id, :conduit_id, :subnet, :dhcp_enabled, :ip_ranges, :router_pref, :router_ip],[:put])
   def network_update
-    Rails.logger.error("Updating network #{params[:id]}");
-    return render :text => "Updating network #{params[:id]}"
+    id = params[:id]
+    conduit_id = params[:conduit_id]
+    subnet = params[:subnet]
+    dhcp_enabled = params[:dhcp_enabled]
+    ip_ranges_json = params[:ip_ranges]
+    if !ip_ranges_json.nil?
+      ip_ranges = JSON.parse(ip_ranges_json)
+    end
+    router_pref = params[:router_pref]
+    router_ip = params[:router_ip]
+
+    Rails.logger.debug("Updating network #{id}");
+
+    ret = operations.network_update(id, conduit_id, subnet, dhcp_enabled, ip_ranges, router_pref, router_ip)
+
+    return render :text => ret[1], :status => ret[0] if ret[0] != 200
+
+    respond_to do |format|
+      format.json { render :json => ret[1] }
+    end
   end
 
   add_help(:network_delete,[:id],[:delete])
   def network_delete
-    Rails.logger.error("Deleting network #{params[:id]}");
-    return render :text => "Deleting network #{params[:id]}"
+    Rails.logger.debug("Deleting network #{params[:id]}");
+
+    ret = operations.network_delete(params[:id])
+    return render :text => ret[1], :status => ret[0] if ret[0] != 200
+    render :json => ret[1]
   end
 
   add_help(:allocate_ip,[:id,:network,:range,:name],[:post])
@@ -63,7 +114,7 @@ class NetworkController < BarclampController
     name = params[:name]
     suggestion = params[:suggestion]
 
-    ret = @service_object.allocate_ip(id, network, range, name, suggestion)
+    ret = operations.allocate_ip(id, network, range, name, suggestion)
     return render :text => ret[1], :status => ret[0] if ret[0] != 200
     render :json => ret[1]
   end
@@ -74,7 +125,7 @@ class NetworkController < BarclampController
     network = params[:network]
     name = params[:name]
 
-    ret = @service_object.deallocate_ip(id, network, name)
+    ret = operations.deallocate_ip(id, network, name)
     return render :text => ret[1], :status => ret[0] if ret[0] != 200
     render :json => ret[1]
   end
@@ -85,7 +136,7 @@ class NetworkController < BarclampController
     network = params[:network]
     name = params[:name]
 
-    ret = @service_object.enable_interface(id, network, name)
+    ret = operations.enable_interface(id, network, name)
     return render :text => ret[1], :status => ret[0] if ret[0] != 200
     render :json => ret[1]
   end
@@ -96,7 +147,7 @@ class NetworkController < BarclampController
     network = params[:network]
     name = params[:name]
 
-    ret = @service_object.disable_interface(id, network, name)
+    ret = operations.disable_interface(id, network, name)
     return render :text => ret[1], :status => ret[0] if ret[0] != 200
     render :json => ret[1]
   end
@@ -213,6 +264,4 @@ class NetworkController < BarclampController
     end
     switches
   end
-  
 end
-

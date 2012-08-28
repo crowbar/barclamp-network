@@ -24,8 +24,8 @@ require File.join(File.expand_path(File.dirname(__FILE__)), "barclamp_lib")
 @commands["disable_interface"] = [ "disable_interface(ARGV.shift,ARGV.shift,ARGV.shift)", "disable_interface <name> <node> <network> - Ensure that an interface is not enabled for the specified network" ]
 @commands["network_list"] = [ "network_list()", "network_list - Show a list of current networks" ]
 @commands["network_show"] = [ "network_show(ARGV.shift)", "network_show <name_or_id> - Show a specific network" ]
-@commands["network_create"] = [ "network_create(ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift)", "network_create <name> <conduit> <subnet> <router_pref> <dhcp_enabled> - Create a network" ]
-@commands["network_edit"] = [ "network_edit(ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift)", "network_edit <name_or_id> <conduit> <subnet> <router_pref> <dhcp_enabled> - Edit a network" ]
+@commands["network_create"] = [ "network_create(ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift)", "network_create <name> <conduit_id> <subnet> <dhcp_enabled> <ip_ranges> <router_pref> <router_ip> - Create a network" ]
+@commands["network_edit"] = [ "network_edit(ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift)", "network_edit <name_or_id> <conduit_id> <subnet> <dhcp_enabled> <ip_ranges> <router_pref> <router_ip> - Edit a network" ]
 @commands["network_delete"] = [ "network_delete(ARGV.shift)", "network_delete <name_or_id> - Delete a network" ]
 
 def enable_interface(name, node, network)
@@ -115,36 +115,41 @@ def network_list()
   elsif struct[0].nil? or struct[0].empty?
     [ "No current networks", 0 ]
   else
-    out = ""
-    struct[0].each do |name|
-      out = out + "\n" if out != ""
-      out = out + "#{name}"
-    end
-    [ out, 0 ]
+    [ JSON.pretty_generate(struct[0]), 0]
   end
 end
 
-def network_show(name_or_id)
-  usage -1 if name_or_id.nil? or name_or_id == ""
+def network_show(id)
+  usage -1 if id.nil? or id == ""
 
-  struct = get_json2("crowbar/2.0/network/2.0/networks/#{name_or_id}")
+  struct = get_json2("crowbar/2.0/network/2.0/networks/#{id}")
 
   if struct[1] == 200
     [ "#{JSON.pretty_generate(struct[0])}", 0 ]
   elsif struct[1] == 404
-    [ "No network exists with name #{name_or_id}", 1 ]
+    [ struct[0], 1 ]
   else
-    [ "Failed to talk to service network_show: #{struct[1]}: #{struct[0]}", 1 ]
+    [ "Unable to retrieve network #{id}: #{struct[1]} - #{struct[0]}", 1 ]
   end
 end
 
-def network_create(name, conduit, subnet, router_pref, dhcp_enabled)
+def network_create(name, conduit_id, subnet, dhcp_enabled, ip_ranges, router_pref, router_ip)
   usage -1 if name.nil? or name == ""
-  usage -1 if conduit.nil? or conduit == ""
-  # router_pref is not required
+  usage -1 if conduit_id.nil? or conduit_id == ""
   usage -1 if dhcp_enabled.nil? or dhcp_enabled == ""
+  usage -1 if ip_ranges.nil? or ip_ranges == ""
+  # router_pref is not required
+  # router_ip is not required
 
-  @data = { "name" => name, "conduit" => conduit, "subnet" => subnet, "router_pref" => router_pref, "dhcp_enabled" => dhcp_enabled }.to_json
+  @data = {
+      "name" => name,
+      "conduit_id" => conduit_id,
+      "subnet" => subnet,
+      "dhcp_enabled" => dhcp_enabled,
+      "ip_ranges" => ip_ranges,
+      "router_pref" => router_pref,
+      "router_ip" => router_ip
+    }.to_json
   struct = post_json2("crowbar/2.0/network/2.0/networks", @data)
 
   if struct[1] == 200
@@ -152,17 +157,28 @@ def network_create(name, conduit, subnet, router_pref, dhcp_enabled)
   elsif struct[1] == 400
     [ "Failed to create network: #{name} : Errors in data\n#{struct[0]}", 1 ]
   else
-    [ "Failed to talk to service network_create: #{struct[1]}: #{struct[0]}", 1 ]
+    [ "An error occured while creating the network: #{struct[1]}: #{struct[0]}", 1 ]
   end
 end
 
-def network_edit(name_or_id, conduit, subnet, router_pref, dhcp_enabled)
+def network_edit(name_or_id, conduit_id, subnet, dhcp_enabled, ip_ranges, router_pref, router_ip)
   usage -1 if name_or_id.nil? or name_or_id == ""
-  usage -1 if conduit.nil? or conduit == ""
-  # router_pref is not required
+  usage -1 if conduit_id.nil? or conduit_id == ""
   usage -1 if dhcp_enabled.nil? or dhcp_enabled == ""
+  usage -1 if ip_ranges.nil? or ip_ranges == ""
+  # router_pref is not required
+  # router_ip is not required
 
-  @data = { "name" => name_or_id, "conduit" => conduit, "subnet" => subnet, "router_pref" => router_pref, "dhcp_enabled" => dhcp_enabled }.to_json
+  @data = {
+      "name" => name_or_id,
+      "conduit_id" => conduit_id,
+      "subnet" => subnet,
+      "dhcp_enabled" => dhcp_enabled,
+      "ip_ranges" => ip_ranges,
+      "router_pref" => router_pref,
+      "router_ip" => router_ip
+    }.to_json
+
   struct = put_json2("crowbar/2.0/network/2.0/networks/#{name_or_id}", @data)
 
   if struct[1] == 200
@@ -172,7 +188,7 @@ def network_edit(name_or_id, conduit, subnet, router_pref, dhcp_enabled)
   elsif struct[1] == 400
     [ "Failed to edit network: #{name_or_id} : Errors in data\n#{struct[0]}", 1 ]
   else
-    [ "Failed to talk to service network_edit: #{struct[1]}: #{struct[0]}", 1 ]
+    [ "An error occured while editing the network: #{struct[1]}: #{struct[0]}", 1 ]
   end
 end
 
@@ -184,7 +200,7 @@ def network_delete(name_or_id)
   if struct[1] == 200
     [ "Deleted network #{name_or_id}", 0 ]
   elsif struct[1] == 404
-    [ "Failed to delete network: #{name_or_id}: Not Found", 1 ]
+    [ struct[0], 1 ]
   else
     [ "Failed to talk to service network_delete: #{struct[1]}: #{struct[0]}", 1 ]
   end
