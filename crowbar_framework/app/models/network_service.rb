@@ -307,4 +307,241 @@ class NetworkService < ServiceObject
     net_info
   end
 
+
+  def network_get(id)
+    begin
+      [200, get_object(Network, id)]
+    rescue ActiveRecord::RecordNotFound => ex
+      @logger.warn(ex.message)
+      [404, ex.message]
+    rescue RuntimeError => ex
+      @logger.error(ex.message)
+      [500, ex.message]
+    end
+  end
+
+
+  def network_create(name, conduit_id, subnet, dhcp_enabled, ip_ranges, router_pref, router_ip)
+    @logger.debug("Entering service network_create #{name}")
+
+    network = nil
+    begin
+      Network.transaction do
+        subnet = IpAddress.create!(:cidr => subnet)
+        network = Network.new(
+            :name => name,
+            :dhcp_enabled => dhcp_enabled)
+        network.subnet = subnet
+        network.conduit = get_object( Conduit, conduit_id )
+
+        # Either both router_pref and router_ip are passed, or neither are
+        if !((router_pref.nil? and router_ip.nil?) or
+             (!router_pref.nil? and !router_ip.nil?))
+          raise ArgumentError, "Both router_ip and router_pref must be specified"
+        end
+
+        if !router_pref.nil?
+          network.router = create_router(router_pref, router_ip)
+        end
+
+        if ip_ranges.nil? || ip_ranges.size < 1
+          raise ArgumentError, "At least one ip_range must be specified"
+        end
+
+        ip_ranges.each_pair { |ip_range_name, ip_range_hash|
+          network.ip_ranges << create_ip_range( ip_range_name, ip_range_hash )
+        }
+
+        network.save!
+      end
+
+      [200, network]
+    rescue ActiveRecord::RecordNotFound, ActiveRecord::RecordInvalid, ArgumentError => ex
+      @logger.warn(ex.message)
+      [400, ex.message]
+    rescue RuntimeError => ex
+      @logger.error(ex.message)
+      [500, ex.message]
+    end
+  end
+
+
+  def network_update(id, conduit_id, subnet, dhcp_enabled, ip_ranges, router_pref, router_ip)
+    @logger.debug("Entering service network_update #{id}")
+
+    network = nil
+    begin
+      router_pref = router_pref.to_i
+      Network.transaction do
+        network = get_object( Network, id )
+
+        conduit = get_object( Conduit, conduit_id )
+        if conduit.name != network.conduit.name
+          @logger.debug("Updating conduit to #{conduit_id}")
+          network.conduit = conduit
+        end
+
+        if network.subnet.cidr != subnet
+          @logger.debug("Updating subnet to #{subnet}")
+          network.subnet = IpAddress.new(:cidr => subnet)
+        end
+
+        if network.dhcp_enabled != dhcp_enabled
+          @logger.debug("Updating dhcp_enabled to #{dhcp_enabled}")
+          network.dhcp_enabled = dhcp_enabled
+        end
+
+        if ip_ranges.nil? || ip_ranges.size < 1
+          raise ArgumentError, "At least one ip_range must be specified"
+        end
+
+        ranges = {}
+        network.ip_ranges.each { |range|
+          ranges[range.name] = range
+        }
+
+        ip_ranges.each_pair { |ip_range_name, ip_range_hash|
+          ip_range = ranges[ip_range_name]
+          if ip_range.nil?
+            network.ip_ranges << create_ip_range(ip_range_name, ip_range_hash)
+          else
+            ranges.delete( ip_range_name)
+
+            start_ip_str = ip_range_hash["start"]
+            if start_ip_str.nil? or start_ip_str.empty?
+              raise ArgumentError, "The ip_range #{ip_range_name} is missing a \"start\" address."
+            end
+            if ip_range.start_address.cidr != start_ip_str
+              @logger.debug("Setting starting address of ip_range #{ip_range_name} to #{start_ip_str}")
+              ip_range.start_address.cidr = start_ip_str
+              ip_range.start_address.save!
+            end
+
+            end_ip_str = ip_range_hash["end"]
+            if end_ip_str.nil? or end_ip_str.empty?
+              raise ArgumentError, "The ip_range #{ip_range_name} is missing an \"end\" address."
+            end
+            if ip_range.end_address.cidr != end_ip_str
+              @logger.debug("Setting ending address of ip_range #{ip_range_name} to #{end_ip_str}")
+              ip_range.end_address.cidr = end_ip_str
+              ip_range.end_address.save!
+            end
+          end
+        }
+
+        ranges.each_pair { |range_name, range|
+          @logger.debug("Destroying ip_range #{range_name}(#{range.id})")
+          range.destroy
+        }
+
+        # Either both router_pref and router_ip are passed, or neither are
+        if !((router_pref.nil? and router_ip.nil?) or
+             (!router_pref.nil? and !router_ip.nil?))
+          raise ArgumentError, "Both router_ip and router_pref must be specified"
+        end
+
+        if router_pref.nil? and !network.router.nil?
+          @logger.debug("Deleting associated router #{network.router.id}")
+          network.router.destroy
+        elsif network.router.nil? and !router_pref.nil?
+          @logger.debug("Creating associated router")
+          network.router = create_router(router_pref, router_ip)
+        else
+          if network.router.pref != router_pref
+            @logger.debug("Updating router_pref to #{router_pref}")
+            network.router.pref = router_pref
+            network.router.save!
+          end
+
+          if router_ip != network.router.ip.cidr
+            @logger.debug("Updating router_ip to #{router_ip}")
+            network.router.ip.cidr = router_ip
+            network.router.ip.save!
+          end
+        end
+
+        network.save!
+      end
+
+      [200, network]
+    rescue ActiveRecord::RecordNotFound, ArgumentError => ex
+      @logger.warn(ex.message)
+      [400, ex.message]
+    rescue RuntimeError => ex
+      @logger.error(ex.message)
+      [500, ex.message]
+    end
+  end
+
+
+  def network_delete(id)
+    @logger.debug("Entering service network_delete #{id}")
+
+    begin
+      network = get_object(Network, id)
+
+      @logger.debug("Deleting network #{network.id}/\"#{network.name}\"")
+      network.destroy
+
+      [200, ""]
+    rescue ActiveRecord::RecordNotFound => ex
+      @logger.warn(ex.message)
+      [404, ex.message]
+    rescue RuntimeError => ex
+      @logger.error(ex.message)
+      [500, ex.message]
+    end
+  end
+
+
+  private
+  def get_object(type, object_id )
+    object = nil
+    if object_id.match('^[0-9]+')
+      object = type.find(object_id)
+    else
+      objects = type.where( :name => object_id )
+      raise ActiveRecord::RecordNotFound, "Unable to find #{type} with id=#{object_id}" if objects.size == 0
+      object = objects[0] if objects.size == 1
+      raise "There are #{objects.size} #{type}s with the name #{object_id}" if objects.size > 1
+    end
+
+    object
+  end
+
+
+  def create_ip_range( ip_range_name, ip_range_hash )
+    @logger.debug("Creating ip_range #{ip_range_name}")
+    ip_range = IpRange.new( :name => ip_range_name )
+
+    start_ip_str = ip_range_hash[ "start" ]
+    if start_ip_str.nil? or start_ip_str.empty?
+      raise ArgumentError, "The ip_range #{ip_range_name} is missing a \"start\" address."
+    end
+    @logger.debug("Creating start ip #{start_ip_str}")
+    start_ip = IpAddress.create!( :cidr => start_ip_str )
+    ip_range.start_address = start_ip
+
+    end_ip_str = ip_range_hash[ "end" ]
+    if end_ip_str.nil? or end_ip_str.empty?
+      raise ArgumentError, "The ip_range #{ip_range_name} is missing an \"end\" address."
+    end
+    @logger.debug("Creating end ip #{end_ip_str}")
+    end_ip = IpAddress.create!( :cidr => end_ip_str )
+    ip_range.end_address = end_ip
+
+    ip_range.save!
+    ip_range
+  end
+
+
+  def create_router(router_pref, router_ip)
+    router = Router.new( :pref => router_pref )
+
+    @logger.debug("Creating router_ip #{router_ip}")
+    router.ip = IpAddress.create!( :cidr => router_ip )
+
+    router.save!
+    router
+  end
 end
