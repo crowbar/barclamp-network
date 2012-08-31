@@ -11,19 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
-class CreateIpAddresses < ActiveRecord::Migration
-  def change
-    create_table :ip_addresses do |t|
-      t.string :cidr
-      t.references :interface
-      t.integer :network_id
-      t.integer :subnet_id
-      t.integer :router_id
-      t.integer :start_ip_range_id
-      t.integer :end_ip_range_id
+class IpRange < ActiveRecord::Base
+  belongs_to :network, :inverse_of => :ip_ranges
+  has_one :start_address, :foreign_key => "start_ip_range_id", :class_name => "IpAddress", :dependent => :destroy
+  has_one :end_address, :foreign_key => "end_ip_range_id", :class_name => "IpAddress", :dependent => :destroy
 
-      t.timestamps
-    end
-  end
+  attr_accessible :name
+
+  validates :name, :presence => true
+  validates :start_address, :presence => true
+  validates :end_address, :presence => true
 end
