@@ -12,18 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class CreateIpAddresses < ActiveRecord::Migration
-  def change
-    create_table :ip_addresses do |t|
-      t.string :cidr
-      t.references :interface
-      t.integer :network_id
-      t.integer :subnet_id
-      t.integer :router_id
-      t.integer :start_ip_range_id
-      t.integer :end_ip_range_id
+class Router < ActiveRecord::Base
+  belongs_to :network, :inverse_of => :router
+  has_one :ip, :foreign_key => "router_id", :class_name => "IpAddress", :dependent => :destroy
 
-      t.timestamps
-    end
-  end
+  attr_accessible :pref
+
+  validates :pref, :presence => true, :numericality => { :only_integer => true }
+  validates :ip, :presence => true
 end

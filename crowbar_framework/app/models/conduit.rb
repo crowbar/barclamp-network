@@ -11,19 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
-class CreateIpAddresses < ActiveRecord::Migration
-  def change
-    create_table :ip_addresses do |t|
-      t.string :cidr
-      t.references :interface
-      t.integer :network_id
-      t.integer :subnet_id
-      t.integer :router_id
-      t.integer :start_ip_range_id
-      t.integer :end_ip_range_id
+class Conduit < ActiveRecord::Base
+  has_many :networks, :inverse_of => :conduit
 
-      t.timestamps
-    end
-  end
+  attr_accessible :name
+
+  validates :name, :presence => true, :uniqueness => true
 end
