@@ -108,7 +108,7 @@ def disable_interface(name, node, network)
 end
 
 def network_list()
-  struct = get_json2("crowbar/2.0/network/2.0/networks")
+  struct = get_json2("2.0/crowbar/2.0/network/networks")
 
   if struct[1] != 200
     [ "Failed to talk to service network list: #{struct[1]}: #{struct[0]}", 1 ]
@@ -122,7 +122,7 @@ end
 def network_show(id)
   usage -1 if id.nil? or id == ""
 
-  struct = get_json2("crowbar/2.0/network/2.0/networks/#{id}")
+  struct = get_json2("2.0/crowbar/2.0/network/networks/#{id}")
 
   if struct[1] == 200
     [ "#{JSON.pretty_generate(struct[0])}", 0 ]
@@ -150,7 +150,7 @@ def network_create(name, conduit_id, subnet, dhcp_enabled, ip_ranges, router_pre
       "router_pref" => router_pref,
       "router_ip" => router_ip
     }.to_json
-  struct = post_json2("crowbar/2.0/network/2.0/networks", @data)
+  struct = post_json2("2.0/crowbar/2.0/network/networks", @data)
 
   if struct[1] == 200
     [ "Created network #{name}", 0 ]
@@ -179,7 +179,7 @@ def network_edit(name_or_id, conduit_id, subnet, dhcp_enabled, ip_ranges, router
       "router_ip" => router_ip
     }.to_json
 
-  struct = put_json2("crowbar/2.0/network/2.0/networks/#{name_or_id}", @data)
+  struct = put_json2("2.0/crowbar/2.0/network/networks/#{name_or_id}", @data)
 
   if struct[1] == 200
     [ "Edited #{name_or_id}", 0 ]
@@ -195,7 +195,7 @@ end
 def network_delete(name_or_id)
   usage -1 if name_or_id.nil? or name_or_id == ""
 
-  struct = delete_json2("crowbar/2.0/network/2.0/networks/#{name_or_id}")
+  struct = delete_json2("2.0/crowbar/2.0/network/networks/#{name_or_id}")
 
   if struct[1] == 200
     [ "Deleted network #{name_or_id}", 0 ]
