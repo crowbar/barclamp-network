@@ -17,12 +17,12 @@
     %tbody
       %tr
         %td
-        - 1.step(max_port-1, 2) do |port|
+        - (@port_start).step(max_port-1, 2) do |port|
           =render :partial => 'dense', :locals => { :switch=> switch, :sw_details=>sw_details, :port=>port, :max_port=>max_port } 
         %td
       %tr
         %td
-        - 2.step(max_port, 2) do |port|
+        - (@port_start+1).step(max_port, 2) do |port|
           =render :partial => 'dense', :locals => { :switch=> switch, :sw_details=>sw_details, :port=>port, :max_port=>max_port } 
         %td
 
@@ -36,12 +36,12 @@
     %tbody
       %tr
         %td
-        - 1.step(23, 2) do |port|
+        - (@port_start).step((@port_start+22), 2) do |port|
           =render :partial => 'switch', :locals => { :switch=> switch, :sw_details=>sw_details, :port=>port } 
         %td
       %tr
         %td
-        - 2.step(24, 2) do |port|
+        - (@port_start+1).step((@port_start+23), 2) do |port|
           =render :partial => 'switch', :locals => { :switch=> switch, :sw_details=>sw_details, :port=>port } 
         %td
   -if max_port>24
@@ -55,12 +55,12 @@
       %tbody
         %tr
           %td
-          - 25.step(max_port-1, 2) do |port|
+          - (@port_start+24).step(max_port-1, 2) do |port|
             =render :partial => 'switch', :locals => { :switch=> switch, :sw_details=>sw_details, :port=>port } 
           %td
         %tr
           %td
-          - 26.step(max_port, 2) do |port|
+          - (@port_start+25).step(max_port, 2) do |port|
             =render :partial => 'switch', :locals => { :switch=> switch, :sw_details=>sw_details, :port=>port } 
           %td
 
