@@ -371,7 +371,6 @@ class NetworkService < ServiceObject
 
     network = nil
     begin
-      router_pref = router_pref.to_i
       Network.transaction do
         network = get_object( Network, id )
 
@@ -447,9 +446,9 @@ class NetworkService < ServiceObject
           @logger.debug("Creating associated router")
           network.router = create_router(router_pref, router_ip)
         else
-          if network.router.pref != router_pref
-            @logger.debug("Updating router_pref to #{router_pref}")
-            network.router.pref = router_pref
+          if network.router.pref != router_pref.to_i
+            @logger.debug("Updating router_pref to #{router_pref.to_i}")
+            network.router.pref = router_pref.to_i
             network.router.save!
           end
 
@@ -497,6 +496,7 @@ class NetworkService < ServiceObject
   private
   def get_object(type, object_id )
     object = nil
+    object_id = object_id.to_s
     if object_id.match('^[0-9]+')
       object = type.find(object_id)
     else
