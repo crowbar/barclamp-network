@@ -72,6 +72,7 @@ class NetworkController < BarclampController
     @groups = {}
     @switches = {}
     @nodes = {}
+    @port_start = 1
     nodes = (params[:node] ? NodeObject.find_nodes_by_name(params[:node]) : NodeObject.all)
     nodes.each do |node|
       @sum = @sum + node.name.hash
@@ -85,12 +86,13 @@ class NetworkController < BarclampController
       node_nics(node).each do |switch|
         key = switch[:switch]
         if key
-          @switches[key] = { :status=>{"ready"=>0, "failed"=>0, "unknown"=>0, "unready"=>0, "pending"=>0}, :nodes=>{}, :max_port=>24} unless @switches.key? key
+          @switches[key] = { :status=>{"ready"=>0, "failed"=>0, "unknown"=>0, "unready"=>0, "pending"=>0}, :nodes=>{}, :max_port=>(23+@port_start)} unless @switches.key? key
           port = if switch['switch_port'] == -1 or switch['switch_port'] == "-1"
             @vports[key] = 1 + (@vports[key] || 0)
           else
             switch[:port]
           end
+          @port_start = 0 if port == 0
           @switches[key][:max_port] = port if port>@switches[key][:max_port]
           @switches[key][:nodes][port] = { :handle=>node.handle, :intf=>switch[:intf] }
           @switches[key][:status][node.status] = (@switches[key][:status][node.status] || 0).to_i + 1
