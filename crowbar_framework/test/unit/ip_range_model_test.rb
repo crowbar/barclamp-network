@@ -81,6 +81,7 @@ class IpRangeModelTest < ActiveSupport::TestCase
 
 
   private
+  # Create an IpRange
   def create_an_ip_range
     ip_range = IpRange.new( :name => "dhcp" )
 

@@ -65,6 +65,7 @@ class RouterModelTest < ActiveSupport::TestCase
 
 
   private
+  # Create a Router
   def create_a_router()
     ip = IpAddress.new(:cidr => "192.168.130.12")
     router = Router.new()
