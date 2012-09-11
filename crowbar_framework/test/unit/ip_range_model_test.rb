@@ -82,18 +82,15 @@ class IpRangeModelTest < ActiveSupport::TestCase
 
   private
   def create_an_ip_range
-    ip_range = nil
-    assert_nothing_raised( Exception ) do
-      ip_range = IpRange.new( :name => "dhcp" )
+    ip_range = IpRange.new( :name => "dhcp" )
 
-      ip = IpAddress.new( :cidr => "192.168.24.50/24" )
-      ip_range.start_address = ip
+    ip = IpAddress.new( :cidr => "192.168.24.50/24" )
+    ip_range.start_address = ip
 
-      ip = IpAddress.new( :cidr => "192.168.24.99/24" )
-      ip_range.end_address = ip
+    ip = IpAddress.new( :cidr => "192.168.24.99/24" )
+    ip_range.end_address = ip
 
-      ip_range.save!
-    end
+    ip_range.save!
     assert_not_nil ip_range
     ip_range
   end

@@ -18,11 +18,7 @@ class RouterModelTest < ActiveSupport::TestCase
 
   # Test successful creation
   test "Router creation: success" do
-    router = nil
-    assert_nothing_raised( Exception ) do
-      router = create_a_router()
-    end
-    assert_not_nil router
+    assert_not_nil create_a_router()
   end
 
 
