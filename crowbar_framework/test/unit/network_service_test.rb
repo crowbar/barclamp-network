@@ -266,6 +266,7 @@ class NetworkServiceTest < ActiveSupport::TestCase
 
 
   private
+  # Create a Network
   def create_a_network(net_service, name)
     # HACK!  We should remove this line when conduits are prepopulated in the system
     Conduit.create!( :name =>"intf0" )
@@ -284,6 +285,7 @@ class NetworkServiceTest < ActiveSupport::TestCase
   end
 
 
+  # Retrieve a Network
   def get_a_network(net_service, id)
     http_error, network = net_service.network_get(id)
     assert_not_nil network
@@ -292,6 +294,7 @@ class NetworkServiceTest < ActiveSupport::TestCase
   end
 
 
+  # Try to delete a Network that does not exist
   def delete_nonexistant_network( net_service, id )
     http_error, msg = net_service.network_delete(id)
     assert_not_nil msg, "Expected to get error message, but got nil"

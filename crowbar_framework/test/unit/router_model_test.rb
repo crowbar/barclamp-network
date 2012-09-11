@@ -18,11 +18,7 @@ class RouterModelTest < ActiveSupport::TestCase
 
   # Test successful creation
   test "Router creation: success" do
-    router = nil
-    assert_nothing_raised( Exception ) do
-      router = create_a_router()
-    end
-    assert_not_nil router
+    assert_not_nil create_a_router()
   end
 
 
@@ -69,6 +65,7 @@ class RouterModelTest < ActiveSupport::TestCase
 
 
   private
+  # Create a Router
   def create_a_router()
     ip = IpAddress.new(:cidr => "192.168.130.12")
     router = Router.new()
