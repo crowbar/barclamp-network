@@ -221,7 +221,7 @@ class NetworkService < ServiceObject
 
       db = ProposalObject.find_proposal "network", inst
       role = RoleObject.find_role_by_name "network-config-#{inst}"
-      if NodeObject.find_node_by_name(name)["crowbar"]["admin_node"]
+      if NodeObject.find_node_by_name(name).try(:[], 'crowbar').try(:[], 'admin_node')
         @logger.error("Admin node transitioning to discovered state.  Adding switch_config role.")
         result = add_role_to_instance_and_node("network", inst, name, db, role, "switch_config")
       end
@@ -299,9 +299,11 @@ class NetworkService < ServiceObject
     add_bridge = db["network"]["add_bridge"]
     broadcast = db["network"]["broadcast"]
     router = db["network"]["router"]
+    router=nil if router == ""
     router_pref = db["network"]["router_pref"] unless db["network"]["router_pref"].nil?
     netmask = db["network"]["netmask"]
     conduit = db["network"]["conduit"]
+    router_pref = nil if conduit == "bmc"
     net_info = { 
       "conduit" => conduit, 
       "netmask" => netmask, "node" => name, "router" => router,

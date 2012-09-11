@@ -472,12 +472,12 @@ new_interfaces.values.sort{|a,b|a[:order] <=> b[:order]}.each do |i|
     end
   end
   # Only delay if we ifup'ed a real physical interface.
-  delay = ::File.exists? "/sys/class/net/#{i}/device" unless delay
+  delay = ::File.exists? "/sys/class/net/#{i[:interface]}/device" unless delay
 end
 
 # If we need to sleep now, do it.
 delay_time = delay ? node["network"]["start_up_delay"] : 0
-Chef::Log.info "Sleeping for #{delay_time} seconds due new link coming up"
+Chef::Log.info "Sleeping for #{delay_time} seconds due to new link coming up"
 bash "network delay sleep" do
   code "sleep #{delay_time}"
   only_if { delay_time > 0 }
