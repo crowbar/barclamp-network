@@ -21,6 +21,7 @@
     when :netmask then k="NETMASK"
     when :bond_opts then k="BONDING_OPTS"
     when :broadcast then k="BROADCAST"
+    when :mtu then k="MTU"; v=iface[k].to_s
     when :router then k="GATEWAY"
     when :master then k="MASTER"
     when :slave
