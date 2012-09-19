@@ -19,6 +19,9 @@ iface <%= interface[:interface] %> inet <%= interface[:config] %>
 <% if !interface[:broadcast].nil? -%>
   broadcast <%= interface[:broadcast] %>
 <% end -%>
+<% if !interface[:mtu].nil? -%>
+  mtu <%= interface[:mtu] %>
+<% end -%>
 <% if !interface[:router].nil? -%>
   gateway <%= interface[:router] %>
 <% end -%>

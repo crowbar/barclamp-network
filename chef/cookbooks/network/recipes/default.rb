@@ -66,12 +66,13 @@ def local_debian_interfaces
       next if iface == "lo"
       res[iface] ||= Hash.new 
       res[iface][:interface] = iface
-      res[iface][:interface_list] = Array.new
+      res[iface][:interface_list] ||= []
       res[iface][:config] = parts[3]
     when "address" then res[iface][:ipaddress] = parts[1]
     when "netmask" then res[iface][:netmask] = parts[1]
     when "broadcast" then res[iface][:broadcast] = parts[1]
     when "gateway" then res[iface][:router] = parts[1]
+    when "mtu" then res[iface][:mtu] = parts[1]
     when "bridge_ports" then 
       res[iface][:mode] = "bridge"
       res[iface][:interface_list] = parts[1..-1]
@@ -115,6 +116,7 @@ def local_redhat_interfaces
       when "ONBOOT" 
         res[iface][:auto] = true when v == "yes"
       when "BOOTPROTO" then res[iface][:config] = v
+      when "MTU" then res[iface][:mtu] = v
       when "IPADDR"
         res[iface][:ipaddress] = v
       when "NETMASK" then res[iface][:netmask] = v
@@ -178,6 +180,10 @@ def crowbar_interfaces()
     allow_gw = (netname == net_pref)
 
     conduit = network["conduit"]
+    ## get info about the network:
+    # intf = inteface to be used to carry the network. could be a bond or vlan to be created.
+    # intf_list = array of 1 or more theinterfrace to be used( >1 for bonds)
+    # tm = teaming mdoe for the bond, if any
     intf, interface_list, tm = Barclamp::Inventory.lookup_interface_info(node, conduit, conduit_map)
     if intf.nil?
       Chef::Log.fatal("No conduit for interface: #{conduit}")
@@ -193,6 +199,8 @@ def crowbar_interfaces()
 	  Chef::Log.warn("CONFLICTING TEAM MODES: for conduit #{conduit}")
       end
       res[intf] ||= Hash.new
+      #capture the network this interface supports
+      res[intf][:associated_network]= netname
       res[intf][:interface_list] = interface_list
       unless interface_list && ! interface_list.empty?
         raise ::RangeError.new("No slave interfaces for #{intf}")
@@ -223,6 +231,8 @@ def crowbar_interfaces()
     if network["use_vlan"]
       intf = "#{intf}.#{network["vlan"]}"
       res[intf] ||= Hash.new
+      #capture the network this interface supports
+      res[intf][:associated_network]= netname
       res[intf][:interface] = intf
       res[intf][:auto] = true
       res[intf][:vlan] = network["vlan"]
@@ -238,6 +248,8 @@ def crowbar_interfaces()
       end
     else
       res[intf] ||= Hash.new
+      #capture the network this interface supports
+      res[intf][:associated_network]= netname
       res[intf][:interface] = intf
       res[intf][:auto] = true
     end
@@ -254,6 +266,8 @@ def crowbar_interfaces()
       base_if=intf
       intf=res[intf][:bridge]
       res[intf] ||= Hash.new
+      #capture the network this interface supports
+      res[intf][:associated_network]= netname
       res[intf][:interface] = intf
       res[intf][:interface_list] = [ base_if ]
       res[intf][:auto] = true
@@ -269,10 +283,41 @@ def crowbar_interfaces()
       res[intf][:config] = "manual"
     end
   end  ## crowbar/network loop
+
   team_mode = machine_team_mode
   node["network"]["teaming"]["mode"] = team_mode
   sort_interfaces(res)
+  fixup_mtu(node,node[:crowbar][:network], res)
+
 end
+
+def fixup_mtu(node, networks, intfs)
+  ### fixup MTU for interfaces
+  detected = Barclamp::Inventory.get_detected_intfs(node)
+  mtus = {}
+  intfs.each { |intf_name,intf|
+    net = networks[intf[:associated_network]]
+    mtu =  net["mtu"]
+    # skip if no MTU specified for the network
+    Chef::Log.info("no MTU for network: #{net}") && next unless mtu
+
+    base_if = intf[:interface_list][0] rescue nil
+    base_if ||= intf[:interface] rescue nil
+    Chef::Log.info("network: #{net}, intf:#{intf.inspect}, base intf: #{base_if}")
+    # if it's not a Gig capable (1g, 10g) interface, skip
+    intf = detected[base_if]
+    Chef::Log.info("intf: #{base_if}, speeds:#{intf[:speeds]}")
+    next unless intf["speeds"].join().index('g')
+    Chef::Log.info("setting: intf:#{intf.inspect}, mtu: #{mtu}")
+    mtus[intf_name] = mtu
+  }
+  mtus.each { |k,v| 
+    intfs[k][:mtu] = v
+  }
+  Chef::Log.info("updated interfaces: #{intfs.inspect}")
+  intfs
+end
+
 
 package "bridge-utils"
 
@@ -346,7 +391,10 @@ def deorder(i)
 end
 
 def only_router_changed(a,b)
-  deorder(a.reject{|k,v| k == :router}) == deorder(b.reject{|k,v| k== :router})
+  filter = lambda { |k,v| [:router, :order, :associated_network].include?(k)}
+  a = a.dup.delete_if(&filter)
+  b = b.dup.delete_if(&filter)
+  a == b
 end
 
 Chef::Log.info("Current interfaces:\n#{old_interfaces.inspect}\n")
@@ -396,7 +444,7 @@ end
     end
     if new_interfaces[i][:router]
       bash "Add default route through #{i}" do
-        code "ip route add default via #{new_interface[i][:router]} dev #{i}"
+        code "ip route add default via #{new_interfaces[i][:router]} dev #{i}"
         not_if "ip route show dev #{i} |grep -q default"
       end
     end
@@ -477,7 +525,7 @@ end
 
 # If we need to sleep now, do it.
 delay_time = delay ? node["network"]["start_up_delay"] : 0
-Chef::Log.info "Sleeping for #{delay_time} seconds due to new link coming up"
+Chef::Log.info "Sleeping for #{delay_time} seconds due new link coming up"
 bash "network delay sleep" do
   code "sleep #{delay_time}"
   only_if { delay_time > 0 }
