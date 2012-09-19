@@ -145,7 +145,6 @@
         },
         "public": {
           "conduit": "intf1",
-	  "mtu": 9000,
           "vlan": 300,
           "use_vlan": true,
           "add_bridge": false,
