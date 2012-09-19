@@ -293,23 +293,12 @@ class NetworkService < ServiceObject
   def build_net_info(network, name, db = nil)
     db = ProposalObject.find_data_bag_item "crowbar/#{network}_network" unless db
 
-    subnet = db["network"]["subnet"]
-    vlan = db["network"]["vlan"]
-    use_vlan = db["network"]["use_vlan"]
-    add_bridge = db["network"]["add_bridge"]
-    broadcast = db["network"]["broadcast"]
-    router = db["network"]["router"]
-    router=nil if router == ""
-    router_pref = db["network"]["router_pref"] unless db["network"]["router_pref"].nil?
-    netmask = db["network"]["netmask"]
-    conduit = db["network"]["conduit"]
-    router_pref = nil if conduit == "bmc"
-    net_info = { 
-      "conduit" => conduit, 
-      "netmask" => netmask, "node" => name, "router" => router,
-      "subnet" => subnet, "broadcast" => broadcast, "usage" => network, 
-      "use_vlan" => use_vlan, "vlan" => vlan, "add_bridge" => add_bridge }
-    net_info["router_pref"] = router_pref unless router_pref.nil?
+    net_info = {}
+    db["network"].each { |k,v|
+      net_info[k] = v unless v.nil?
+    }
+    net_info["usage"]= network
+    net_info["node"] = name
     net_info
   end
 
