@@ -296,6 +296,7 @@ def fixup_mtu(node, networks, intfs)
   detected = Barclamp::Inventory.get_detected_intfs(node)
   mtus = {}
   intfs.each { |intf_name,intf|
+    next if intf[:slave] # skip enslaved interfaces.
     net = networks[intf[:associated_network]]
     mtu =  net["mtu"]
     # skip if no MTU specified for the network
