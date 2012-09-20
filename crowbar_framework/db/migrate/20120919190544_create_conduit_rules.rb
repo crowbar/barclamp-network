@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class CreateBusMaps < ActiveRecord::Migration
+class CreateConduitRules < ActiveRecord::Migration
   def change
-    create_table :bus_maps do |t|
-      t.string :pattern
+    create_table :conduit_rules do |t|
 
-      t.references :interface_map
+      t.references :conduit
       t.timestamps
     end
   end
