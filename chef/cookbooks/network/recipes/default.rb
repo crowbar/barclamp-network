@@ -300,11 +300,11 @@ def fixup_mtu(node, networks, intfs)
     net = networks[intf[:associated_network]]
     mtu =  net["mtu"]
     # skip if no MTU specified for the network
-    Chef::Log.info("no MTU for network: #{net}") && next unless mtu
+    Chef::Log.info("no MTU for network: #{net["usage"]}") && next unless mtu
 
     base_if = intf[:interface_list][0] rescue nil
     base_if ||= intf[:interface] rescue nil
-    Chef::Log.info("network: #{net}, intf:#{intf.inspect}, base intf: #{base_if}")
+    Chef::Log.info("network: #{net["usage"]}, intf:#{intf.inspect}, base intf: #{base_if}")
     # if it's not a Gig capable (1g, 10g) interface, skip
     intf = detected[base_if]
     Chef::Log.info("intf: #{base_if}, speeds:#{intf[:speeds]}")
@@ -315,7 +315,6 @@ def fixup_mtu(node, networks, intfs)
   mtus.each { |k,v| 
     intfs[k][:mtu] = v
   }
-  Chef::Log.info("updated interfaces: #{intfs.inspect}")
   intfs
 end
 
@@ -388,14 +387,15 @@ end
 
 
 def deorder(i)
-  i.reject{|k,v|k == :order or v.nil? or (v.respond_to?(:empty?) and v.empty?)}
+  i.reject{|k,v|
+    [:order,:associated_network].member?(k) or
+    v.nil? or
+    (v.respond_to?(:empty?) and v.empty?)
+  }
 end
 
 def only_router_changed(a,b)
-  filter = lambda { |k,v| [:router, :order, :associated_network].include?(k)}
-  a = a.dup.delete_if(&filter)
-  b = b.dup.delete_if(&filter)
-  a == b
+  deorder(a.reject{|k,v| k == :router}) == deorder(b.reject{|k,v| k == :router})
 end
 
 Chef::Log.info("Current interfaces:\n#{old_interfaces.inspect}\n")
@@ -519,6 +519,8 @@ new_interfaces.values.sort{|a,b|a[:order] <=> b[:order]}.each do |i|
       code interfaces_to_up[i[:interface]]
       ignore_failure true
     end
+  else
+    next
   end
   # Only delay if we ifup'ed a real physical interface.
   delay = ::File.exists? "/sys/class/net/#{i[:interface]}/device" unless delay
@@ -526,7 +528,7 @@ end
 
 # If we need to sleep now, do it.
 delay_time = delay ? node["network"]["start_up_delay"] : 0
-Chef::Log.info "Sleeping for #{delay_time} seconds due new link coming up"
+Chef::Log.info "Will sleep for #{delay_time} seconds due new link coming up"
 bash "network delay sleep" do
   code "sleep #{delay_time}"
   only_if { delay_time > 0 }
