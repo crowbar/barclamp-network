@@ -13,12 +13,14 @@
 # limitations under the License. 
 
 require 'test_helper'
+require 'network_test_helper'
  
 class RouterModelTest < ActiveSupport::TestCase
 
   # Test successful creation
   test "Router creation: success" do
-    assert_not_nil create_a_router()
+    router = NetworkTestHelper.create_a_router()
+    router.save!
   end
 
 
@@ -55,23 +57,12 @@ class RouterModelTest < ActiveSupport::TestCase
 
   # Test cascade ip deletion on router deletion
   test "Router deletion: cascade delete to ip" do
-    router = create_a_router()
+    router = NetworkTestHelper.create_a_router()
+    router.save!
     ip_id = router.ip.id
     router.destroy()
 
     ips = IpAddress.where( :id => ip_id )
     assert_equal 0, ips.size
-  end
-
-
-  private
-  # Create a Router
-  def create_a_router()
-    ip = IpAddress.new(:cidr => "192.168.130.12")
-    router = Router.new()
-    router.pref = 5
-    router.ip = ip
-    router.save!()
-    router
   end
 end

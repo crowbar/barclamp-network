@@ -13,11 +13,13 @@
 # limitations under the License. 
 
 require 'test_helper'
+require 'network_test_helper'
  
 class BusMapModelTest < ActiveSupport::TestCase
   # Test successful creation
   test "BusMap creation: success" do
-    create_a_bus_map()
+    bus_map = NetworkTestHelper.create_a_bus_map()
+    bus_map.save!
   end
 
 
@@ -25,7 +27,7 @@ class BusMapModelTest < ActiveSupport::TestCase
   test "BusMap creation: failure due to missing pattern" do
     assert_raise ActiveRecord::RecordInvalid do
       bus_map = BusMap.new()
-      bus_map.buses << create_a_bus()
+      bus_map.buses << NetworkTestHelper.create_a_bus()
       bus_map.save!
     end
   end
@@ -42,28 +44,13 @@ class BusMapModelTest < ActiveSupport::TestCase
 
   # Test deletion cascade to Buses
   test "BusMap deletion: cascade" do
-    bus_map = create_a_bus_map()
+    bus_map = NetworkTestHelper.create_a_bus_map()
+    bus_map.save!
     bus_id = bus_map.buses[0]
     bus_map.destroy
 
     assert_raise ActiveRecord::RecordNotFound do
       Bus.find(bus_id)
     end
-  end
-
-
-  private
-  def create_a_bus_map
-    bus_map = BusMap.new( :pattern => "PowerEdge C2100")
-    bus_map.buses << create_a_bus()
-    bus_map.save!
-
-    assert_not_nil bus_map
-    bus_map
-  end
-
-
-  def create_a_bus
-    Bus.new( :order => 1, :designator => "0000:00/0000:00:1c" )
   end
 end

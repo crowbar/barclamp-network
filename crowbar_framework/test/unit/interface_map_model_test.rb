@@ -13,11 +13,13 @@
 # limitations under the License. 
 
 require 'test_helper'
+require 'network_test_helper'
  
 class InterfaceMapModelTest < ActiveSupport::TestCase
   # Test successful creation
   test "InterfaceMap creation: success" do
-    create_an_interface_map()
+    interface_map = NetworkTestHelper.create_an_interface_map()
+    interface_map.save!
   end
 
 
@@ -31,36 +33,13 @@ class InterfaceMapModelTest < ActiveSupport::TestCase
 
   # Test deletion cascade to BusMaps
   test "IntefaceMap deletion: cascade" do
-    interface_map = create_an_interface_map()
+    interface_map = NetworkTestHelper.create_an_interface_map()
+    interface_map.save!
     bus_map_id = interface_map.bus_maps[0]
     interface_map.destroy
 
     assert_raise ActiveRecord::RecordNotFound do
       BusMap.find(bus_map_id)
     end
-  end
-
-
-  private
-  def create_an_interface_map
-    interface_map = InterfaceMap.new()
-    interface_map.bus_maps << create_a_bus_map()
-    assert_not_nil interface_map
-    interface_map
-  end
-
-
-  def create_a_bus_map
-    bus_map = BusMap.new( :pattern => "PowerEdge C2100")
-    bus_map.buses << create_a_bus()
-    bus_map.save!
-
-    assert_not_nil bus_map
-    bus_map
-  end
-
-
-  def create_a_bus
-    Bus.new( :order => 1, :designator => "0000:00/0000:00:1c" )
   end
 end

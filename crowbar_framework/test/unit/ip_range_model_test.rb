@@ -13,13 +13,14 @@
 # limitations under the License. 
 
 require 'test_helper'
- 
+require 'network_test_helper'
 
 class IpRangeModelTest < ActiveSupport::TestCase
 
   # Test successful creation
   test "IpRange creation: success" do
-    create_an_ip_range()
+    ip_range = NetworkTestHelper.create_an_ip_range()
+    ip_range.save!
   end
 
 
@@ -67,7 +68,8 @@ class IpRangeModelTest < ActiveSupport::TestCase
 
   # Test delete cascade to start & end addresses
   test "IpRange deletion: casaded delete test" do
-    ip_range = create_an_ip_range()
+    ip_range = NetworkTestHelper.create_an_ip_range()
+    ip_range.save!
 
     ip_range_id = ip_range.id
     ip_range.destroy()
@@ -77,22 +79,5 @@ class IpRangeModelTest < ActiveSupport::TestCase
 
     ip_ranges = IpAddress.where( :end_ip_range_id => ip_range_id )
     assert 0, ip_ranges.size
-  end
-
-
-  private
-  # Create an IpRange
-  def create_an_ip_range
-    ip_range = IpRange.new( :name => "dhcp" )
-
-    ip = IpAddress.new( :cidr => "192.168.24.50/24" )
-    ip_range.start_address = ip
-
-    ip = IpAddress.new( :cidr => "192.168.24.99/24" )
-    ip_range.end_address = ip
-
-    ip_range.save!
-    assert_not_nil ip_range
-    ip_range
   end
 end

@@ -18,19 +18,19 @@ class IpAddressModelTest < ActiveSupport::TestCase
 
   # Test successful creation, min
   test "IpAddress creation: min success" do
-    assert_not_nil IpAddress.create!( :cidr => "0.0.0.0/0" )
+    IpAddress.create!( :cidr => "0.0.0.0/0" )
   end
 
 
   # Test successful creation, max
   test "IpAddress creation: max success" do
-    assert_not_nil IpAddress.create!( :cidr => "255.255.255.255/32" )
+    IpAddress.create!( :cidr => "255.255.255.255/32" )
   end
 
 
   # Test successful creation, normal
   test "IpAddress creation: success" do
-    assert_not_nil IpAddress.create!( :cidr => "192.168.132.124/32" )
+    IpAddress.create!( :cidr => "192.168.132.124/32" )
   end
 
 

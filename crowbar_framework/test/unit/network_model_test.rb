@@ -13,6 +13,7 @@
 # limitations under the License. 
 
 require 'test_helper'
+require 'network_test_helper'
  
 class NetworkModelTest < ActiveSupport::TestCase
 
@@ -20,14 +21,14 @@ class NetworkModelTest < ActiveSupport::TestCase
 
   # Successful create
   test "Network creation: success" do
-    network = create_a_network
+    network = NetworkTestHelper.create_a_network()
     network.save!
   end
 
 
   # Successful delete
   test "Network deletion: success" do
-    network = create_a_network
+    network = NetworkTestHelper.create_a_network()
     network.save!
 
     subnet_id = network.subnet.id
@@ -67,7 +68,7 @@ class NetworkModelTest < ActiveSupport::TestCase
       network.dhcp_enabled = "true"
       network.subnet = IpAddress.create!( :cidr => "192.168.130.11/24" )
       network.conduit = Conduit.create!( :name => "intf0" )
-      network.ip_ranges << create_an_ip_range
+      network.ip_ranges << NetworkTestHelper.create_an_ip_range()
       network.save!
     end
   end
@@ -80,7 +81,7 @@ class NetworkModelTest < ActiveSupport::TestCase
       network.name = "fred"
       network.subnet = IpAddress.create!( :cidr => "192.168.130.11/24" )
       network.conduit = Conduit.create!( :name => "intf0" )
-      network.ip_ranges << create_an_ip_range
+      network.ip_ranges << NetworkTestHelper.create_an_ip_range()
       network.save!
     end
   end
@@ -94,7 +95,7 @@ class NetworkModelTest < ActiveSupport::TestCase
       network.dhcp_enabled = "blah"
       network.subnet = IpAddress.create!( :cidr => "192.168.130.11/24" )
       network.conduit = Conduit.create!( :name => "intf0" )
-      network.ip_ranges << create_an_ip_range
+      network.ip_ranges << NetworkTestHelper.create_an_ip_range()
       network.save!
     end
   end
@@ -107,23 +108,24 @@ class NetworkModelTest < ActiveSupport::TestCase
       network.name = "fred"
       network.dhcp_enabled = "false"
       network.conduit = Conduit.create!( :name => "intf0" )
-      network.ip_ranges << create_an_ip_range
+      network.ip_ranges << NetworkTestHelper.create_an_ip_range()
       network.save!
     end
   end
 
 
+  # TODO
   # conduit does not exist
-  test "Network creation: failure due to missing conduit" do
-    assert_raise ActiveRecord::RecordInvalid do
-      network = Network.new
-      network.name = "fred"
-      network.dhcp_enabled = "false"
-      network.subnet = IpAddress.create!( :cidr => "192.168.130.11/24" )
-      network.ip_ranges << create_an_ip_range
-      network.save!
-    end
-  end
+#  test "Network creation: failure due to missing conduit" do
+#    assert_raise ActiveRecord::RecordInvalid do
+#      network = Network.new
+#      network.name = "fred"
+#      network.dhcp_enabled = "false"
+#      network.subnet = IpAddress.create!( :cidr => "192.168.130.11/24" )
+#      network.ip_ranges << NetworkTestHelper.create_an_ip_range()
+#      network.save!
+#    end
+#  end
 
 
   # no ip_ranges specified
@@ -136,38 +138,5 @@ class NetworkModelTest < ActiveSupport::TestCase
       network.conduit = Conduit.create!( :name => "intf0" )
       network.save!
     end
-  end
-
-
-  private
-  # Create an IpRange
-  def create_an_ip_range
-    ip_range = IpRange.new( :name => "dhcp" )
-
-    ip = IpAddress.new( :cidr => "192.168.24.50/24" )
-    ip_range.start_address = ip
-
-    ip = IpAddress.new( :cidr => "192.168.24.99/24" )
-    ip_range.end_address = ip
-
-    ip_range
-  end
-
-
-  # Create a Network
-  def create_a_network
-    network = Network.new
-    network.name = "fred"
-    network.dhcp_enabled = "true"
-    network.subnet = IpAddress.create!( :cidr => "192.168.130.11/24" )
-    network.conduit = Conduit.create!( :name => "intf0" )
-
-    router = Router.new
-    router.pref = 5
-    router.ip = IpAddress.new( :cidr => "192.168.124.1/24" )
-    network.router = router
-
-    network.ip_ranges << create_an_ip_range
-    network
   end
 end
