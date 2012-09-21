@@ -13,11 +13,12 @@
 # limitations under the License. 
 
 require 'test_helper'
+require 'network_test_helper'
  
 class BusModelTest < ActiveSupport::TestCase
   # Test successful creation
   test "Bus creation: success" do
-    create_a_bus()
+    NetworkTestHelper.create_a_bus()
   end
 
 
@@ -42,13 +43,5 @@ class BusModelTest < ActiveSupport::TestCase
     assert_raise ActiveRecord::RecordInvalid do
       Bus.create!( :order => "fred" )
     end
-  end
-
-
-  private
-  def create_a_bus
-    bus = Bus.create!( :order => 1, :designator => "0000:00/0000:00:1c" )
-    assert_not_nil bus
-    bus
   end
 end

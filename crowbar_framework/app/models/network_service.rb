@@ -332,7 +332,8 @@ class NetworkService < ServiceObject
             :name => name,
             :dhcp_enabled => dhcp_enabled)
         network.subnet = subnet
-        network.conduit = get_object( Conduit, conduit_id )
+        # TODO
+        network.conduit = nil # get_object( Conduit, conduit_id )
 
         # Either both router_pref and router_ip are passed, or neither are
         if !((router_pref.nil? and router_ip.nil?) or
@@ -374,11 +375,12 @@ class NetworkService < ServiceObject
       Network.transaction do
         network = get_object( Network, id )
 
-        conduit = get_object( Conduit, conduit_id )
-        if conduit.name != network.conduit.name
-          @logger.debug("Updating conduit to #{conduit_id}")
-          network.conduit = conduit
-        end
+        # TODO
+        #conduit = get_object( Conduit, conduit_id )
+        #if conduit.name != network.conduit.name
+        #  @logger.debug("Updating conduit to #{conduit_id}")
+        #  network.conduit = conduit
+        #end
 
         if network.subnet.cidr != subnet
           @logger.debug("Updating subnet to #{subnet}")

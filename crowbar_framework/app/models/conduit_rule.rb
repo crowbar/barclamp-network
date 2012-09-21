@@ -12,13 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class CreateBusMaps < ActiveRecord::Migration
-  def change
-    create_table :bus_maps do |t|
-      t.string :pattern
+class ConduitRule < ActiveRecord::Base
+  has_many :interface_selectors, :dependent => :destroy
+  has_one :conduit_action, :dependent => :destroy
+  belongs_to :conduit, :inverse_of => :conduit_rules
 
-      t.references :interface_map
-      t.timestamps
-    end
-  end
+  validates :interface_selectors, :presence => true
+  validates :conduit_action, :presence => true
 end

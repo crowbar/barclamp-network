@@ -13,12 +13,14 @@
 # limitations under the License. 
 
 require 'test_helper'
+require 'network_test_helper'
  
 class ConduitFilterTest < ActiveSupport::TestCase
 
   # Test successful creation
   test "ConduitFilter creation: success" do
-    ConduitFilter.create!( :attr => "stuff", :comparitor => "=", :value => "7" )
+    conduit_filter = NetworkTestHelper.create_a_conduit_filter()
+    conduit_filter.save!
   end
 
 
