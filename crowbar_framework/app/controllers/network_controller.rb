@@ -161,11 +161,11 @@ class NetworkController < BarclampController
     nodes = (params[:node] ? NodeObject.find_nodes_by_name(params[:node]) : NodeObject.all)
     nodes.each do |node|
       @sum = @sum + node.name.hash
-      @nodes[node.handle] = { :alias=>node.alias, :description=>node.description(false, true), :status=>node.status }
+      @nodes[node.name] = { :alias=>node.alias, :description=>node.description(false, true), :status=>node.status }
       #build groups
       group = node.group
       @groups[group] = { :automatic=>!node.display_set?('group'), :status=>{"ready"=>0, "failed"=>0, "unknown"=>0, "unready"=>0, "pending"=>0}, :nodes=>{} } unless @groups.key? group
-      @groups[group][:nodes][node.group_order] = node.handle
+      @groups[group][:nodes][node.group_order] = node.name
       @groups[group][:status][node.status] = (@groups[group][:status][node.status] || 0).to_i + 1
       #build switches
       node_nics(node).each do |switch|
@@ -179,7 +179,7 @@ class NetworkController < BarclampController
           end
           @port_start = 0 if port == 0
           @switches[key][:max_port] = port if port>@switches[key][:max_port]
-          @switches[key][:nodes][port] = { :handle=>node.handle, :intf=>switch[:intf] }
+          @switches[key][:nodes][port] = { :handle=>node.name, :intf=>switch[:intf] }
           @switches[key][:status][node.status] = (@switches[key][:status][node.status] || 0).to_i + 1
         end
       end
@@ -195,8 +195,8 @@ class NetworkController < BarclampController
     end
     @nodes = {}
     NodeObject.all.each do |node|
-      @nodes[node.handle] = { :alias=>node.alias, :description=>node.description(false, true), :vlans=>{} }
-      @nodes[node.handle][:vlans] = node_vlans(node)
+      @nodes[node.name] = { :alias=>node.alias, :description=>node.description(false, true), :vlans=>{} }
+      @nodes[node.name][:vlans] = node_vlans(node)
     end
     
   end
@@ -221,7 +221,7 @@ class NetworkController < BarclampController
             
     @nodes = {}
     NodeObject.all.each do |node|
-      @nodes[node.handle] = {:alias=>node.alias, :description=>node.description, :model=>node.hardware, :bus=>node.get_bus_order, :conduits=>node.build_node_map }
+      @nodes[node.name] = {:alias=>node.alias, :description=>node.description, :model=>node.hardware, :bus=>node.get_bus_order, :conduits=>node.build_node_map }
     end
     @conduits = @conduits.sort
     
