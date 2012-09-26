@@ -1,0 +1,456 @@
+{
+  "id": "bc-template-network",
+  "description": "Instantiates network interfaces on the crowbar managed systems. Also manages the address pool",
+  "attributes": {
+    "network": {
+      "start_up_delay": 30,
+      "mode": "single",
+      "teaming": {
+        "mode": 6
+      },
+      "interface_map": [
+        {
+          "pattern": "PowerEdge R610",
+          "bus_order": [
+            "0000:00/0000:00:01",
+            "0000:00/0000:00:03"
+          ]
+        },
+        {
+          "pattern": "PowerEdge R710",
+          "bus_order": [
+            "0000:00/0000:00:01",
+            "0000:00/0000:00:03"
+          ]
+        },
+        {
+          "pattern": "PowerEdge C6145",
+          "bus_order": [
+            "0000:00/0000:00:04",
+            "0000:00/0000:00:02"
+          ]
+        },
+        {
+          "pattern": "PowerEdge C2100",
+          "bus_order": [
+            "0000:00/0000:00:1c",
+            "0000:00/0000:00:07",
+            "0000:00/0000:00:09",
+            "0000:00/0000:00:01"
+          ]
+        },
+        {
+          "pattern": "C6100",
+          "bus_order": [
+            "0000:00/0000:00:01",
+            "0000:00/0000:00:03",
+            "0000:00/0000:00:07"
+          ]
+        },
+        {
+          "pattern": "product",
+          "bus_order": [
+            "0000:00/0000:00:01",
+            "0000:00/0000:00:02"
+          ]
+        }
+      ],
+      "conduit_map": [
+        {
+          "conduit_name" : "intf0",
+          "conduit_rules": [
+            {
+              "conduit_filters": {
+                "NetworkModeFilter" : {
+                  "network_mode": "team"
+                }
+              },
+              "interface_selectors": [
+                {
+                  "SelectBySpeed": {
+                    "comparitor": "=",
+                    "value": "1g"
+                  }
+                },
+                {
+                  "SelectByIndex": {
+                    "value": "1,2"
+                  }
+                }
+              ],
+              "conduit_actions": [
+                {
+                  "CreateBond": {
+                    "team_mode": "6"
+                  }
+                }
+              ]
+            },
+            {
+              "conduit_filters": {
+                "NetworkModeFilter" : {
+                  "network_mode": "dual"
+                }
+              },
+              "interface_selectors": [
+                {
+                  "SelectBySpeed": {
+                    "comparitor": "?",
+                    "value": "1g"
+                  }
+                },
+                {
+                  "SelectByIndex": {
+                    "value": "1"
+                  }
+                }
+              ],
+              "conduit_actions": [
+                {
+                  "MapInterface": {
+                  }
+                }
+              ]
+            },
+            {
+              "conduit_filters": {
+                "NetworkModeFilter" : {
+                  "network_mode": "single"
+                }
+              },
+              "interface_selectors": [
+                {
+                  "SelectBySpeed": {
+                    "comparitor": "?",
+                    "value": "1g"
+                  }
+                },
+                {
+                  "SelectByIndex": {
+                    "value": "1"
+                  }
+                }
+              ],
+              "conduit_actions": [
+                {
+                  "MapInterface": {
+                  }
+                }
+              ]
+            },
+            {
+              "conduit_filters": {
+              },
+              "interface_selectors": [
+                {
+                  "SelectBySpeed": {
+                    "comparitor": "?",
+                    "value": "1g"
+                  }
+                },
+                {
+                  "SelectByIndex": {
+                    "value": "1"
+                  }
+                }
+              ],
+              "conduit_actions": [
+                {
+                  "MapInterface": {
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "conduit_name" : "intf1",
+          "conduit_rules": [
+            {
+              "conduit_filters": {
+                "NetworkModeFilter" : {
+                  "network_mode": "team"
+                }
+              },
+              "interface_selectors": [
+                {
+                  "SelectBySpeed": {
+                    "comparitor": "=",
+                    "value": "1g"
+                  },
+                  "SelectByIndex": {
+                    "value": "1,2"
+                  }
+                }
+              ],
+              "conduit_actions": [
+                {
+                  "CreateBond": {
+                    "team_mode": "6"
+                  }
+                }
+              ]
+            },
+            {
+              "conduit_filters": {
+                "NetworkModeFilter" : {
+                  "network_mode": "dual"
+                }
+              },
+              "interface_selectors": [
+                {
+                  "SelectBySpeed": {
+                    "comparitor": "?",
+                    "value": "1g"
+                  }
+                },
+                {
+                  "SelectByIndex": {
+                    "value": "1"
+                  }
+                }
+              ],
+              "conduit_actions": [
+                {
+                  "MapInterface": {
+                  }
+                }
+              ]
+            },
+            {
+              "conduit_filters": {
+                "NetworkModeFilter" : {
+                  "network_mode": "single"
+                }
+              },
+              "interface_selectors": [
+                {
+                  "SelectBySpeed": {
+                    "comparitor": "?",
+                    "value": "1g"
+                  }
+                },
+                {
+                  "SelectByIndex": {
+                    "value": "1"
+                  }
+                }
+              ],
+              "conduit_actions": [
+                {
+                  "MapInterface": {
+                  }
+                }
+              ]
+            },
+            {
+              "conduit_filters": {
+              },
+              "interface_selectors": [
+                {
+                  "SelectBySpeed": {
+                    "comparitor": "=",
+                    "value": "1g"
+                  }
+                },
+                {
+                  "SelectByIndex": {
+                    "value": "1"
+                  }
+                }
+              ],
+              "conduit_actions": [
+                {
+                  "MapInterface": {
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "conduit_name" : "intf2",
+          "conduit_rules": [
+            {
+              "conduit_filters": {
+                "NetworkModeFilter" : {
+                  "network_mode": "team"
+                }
+              },
+              "interface_selectors": [
+                {
+                  "SelectBySpeed": {
+                    "comparitor": "=",
+                    "value": "1g"
+                  },
+                  "SelectByIndex": {
+                    "value": "1,2"
+                  }
+                }
+              ],
+              "conduit_actions": [
+                {
+                  "CreateBond": {
+                    "team_mode": "6"
+                  }
+                }
+              ]
+            },
+            {
+              "conduit_filters": {
+                "NetworkModeFilter" : {
+                  "network_mode": "dual"
+                }
+              },
+              "interface_selectors": [
+                {
+                  "SelectBySpeed": {
+                    "comparitor": "?",
+                    "value": "1g"
+                  }
+                },
+                {
+                  "SelectByIndex": {
+                    "value": "1"
+                  }
+                }
+              ],
+              "conduit_actions": [
+                {
+                  "MapInterface": {
+                  }
+                }
+              ]
+            },
+            {
+              "conduit_filters": {
+                "NetworkModeFilter" : {
+                  "network_mode": "single"
+                }
+              },
+              "interface_selectors": [
+                {
+                  "SelectBySpeed": {
+                    "comparitor": "?",
+                    "value": "1g"
+                  }
+                },
+                {
+                  "SelectByIndex": {
+                    "value": "1"
+                  }
+                }
+              ],
+              "conduit_actions": [
+                {
+                  "MapInterface": {
+                  }
+                }
+              ]
+            },
+            {
+              "conduit_filters": {
+              },
+              "interface_selectors": [
+                {
+                  "SelectBySpeed": {
+                    "comparitor": "=",
+                    "value": "1g"
+                  }
+                },
+                {
+                  "SelectByIndex": {
+                    "value": "1"
+                  }
+                }
+              ],
+              "conduit_actions": [
+                {
+                  "MapInterface": {
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "networks": {
+        "public": {
+          "conduit": "intf1",
+          "vlan": 300,
+          "use_vlan": true,
+          "add_bridge": false,
+          "subnet": "192.168.122.0",
+          "netmask": "255.255.255.0",
+          "broadcast": "192.168.122.255",
+          "router": "192.168.122.1",
+          "router_pref":  5,
+          "ranges": {
+            "host": { "start": "192.168.122.2", "end": "192.168.122.49" },
+            "dhcp": { "start": "192.168.122.50", "end": "192.168.122.127" }
+          }
+        },
+        "bmc": {
+          "conduit": "bmc",
+          "vlan": 100,
+          "use_vlan": false,
+          "add_bridge": false,
+          "subnet": "192.168.124.0",
+          "netmask": "255.255.255.0",
+          "broadcast": "192.168.124.255",
+          "ranges": {
+            "host": { "start": "192.168.124.162", "end": "192.168.124.240" }
+          }
+        },
+        "bmc_vlan": {
+          "conduit": "intf2",
+          "vlan": 100,
+          "use_vlan": true,
+          "add_bridge": false,
+          "subnet": "192.168.124.0",
+          "netmask": "255.255.255.0",
+          "broadcast": "192.168.124.255",
+          "ranges": {
+            "host": { "start": "192.168.124.161", "end": "192.168.124.161" }
+          }
+        },
+        "admin": {
+          "conduit": "intf0",
+          "vlan": 100,
+          "use_vlan": false,
+          "add_bridge": false,
+          "subnet": "192.168.124.0",
+          "netmask": "255.255.255.0",
+          "broadcast": "192.168.124.255",
+          "router": "192.168.124.1",
+          "router_pref": 10, 
+          "ranges": {
+            "admin": { "start": "192.168.124.10", "end": "192.168.124.11" },
+            "dhcp": { "start": "192.168.124.21", "end": "192.168.124.80" },
+            "host": { "start": "192.168.124.81", "end": "192.168.124.160" },
+            "switch": { "start": "192.168.124.241", "end": "192.168.124.250" }
+          }
+        }
+      }
+    }
+  },
+  "deployment": {
+    "network": {
+      "crowbar-revision": 0,
+      "element_states": {
+        "network": [ "readying", "ready", "applying" ],
+        "switch_config": [ "readying", "ready", "applying" ]
+      },
+      "elements": {},
+      "element_order": [
+        [ "switch_config", "network" ]
+      ],
+      "config": {
+        "environment": "network-base-config",
+        "mode": "full",
+        "transitions": true,
+        "transition_list": [ "discovered", "reset", "delete" ]
+      }
+    }
+  }
+}
