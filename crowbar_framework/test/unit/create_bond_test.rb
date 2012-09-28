@@ -22,14 +22,6 @@ class CreateBondTest < ActiveSupport::TestCase
   end
 
 
-  # Test creation failure due to missing name
-  test "CreateBond creation: failure due to missing name" do
-    assert_raise ActiveRecord::RecordInvalid do
-      CreateBond.create!( :team_mode => 6 )
-    end
-  end
-
-
   # Test creation failure due to missing team_mode
   test "CreateBond creation: failure due to missing team_mode" do
     assert_raise ActiveRecord::RecordInvalid do

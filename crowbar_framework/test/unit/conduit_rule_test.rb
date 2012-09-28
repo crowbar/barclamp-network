@@ -24,6 +24,20 @@ class ConduitRuleTest < ActiveSupport::TestCase
   end
 
 
+  # Test creation failure due to missing conduit filter
+  test "ConduitRule creation: failure due to missing conduit filter" do
+    assert_raise ActiveRecord::RecordInvalid do
+      sbs = SelectBySpeed.new()
+      sbs.comparitor = "="
+      sbs.value = "1g"
+      rule = ConduitRule.new()
+      rule.conduit_actions << NetworkTestHelper.create_a_conduit_action()
+      rule.interface_selectors << sbs
+      rule.save!
+    end
+  end
+
+
   # Test creation failure due to missing conduit action
   test "ConduitRule creation: failure due to missing conduit action" do
     assert_raise ActiveRecord::RecordInvalid do
@@ -31,6 +45,7 @@ class ConduitRuleTest < ActiveSupport::TestCase
       sbs.comparitor = "="
       sbs.value = "1g"
       rule = ConduitRule.new()
+      rule.conduit_filters << NetworkTestHelper.create_a_conduit_filter()
       rule.interface_selectors << sbs
       rule.save!
     end
@@ -40,25 +55,29 @@ class ConduitRuleTest < ActiveSupport::TestCase
   # Test creation failure due to missing interface selectors
   test "ConduitRule creation: failure due to missing interface selectors" do
     assert_raise ActiveRecord::RecordInvalid do
-      create_bond = CreateBond.new()
-      create_bond.name = "intf0"
-      create_bond.team_mode = 6
       rule = ConduitRule.new()
-      rule.conduit_action = create_bond
+      rule.conduit_filters << NetworkTestHelper.create_a_conduit_filter()
+      rule.conduit_actions << NetworkTestHelper.create_a_conduit_action()
       rule.save!
     end    
   end
 
 
   # Test delete cascade
-  test "ConduitRule deletion: cascade to conduit action and interface selectors" do
+  test "ConduitRule deletion: cascade to conduit filter, conduit action, and interface selectors" do
     rule = NetworkTestHelper.create_a_conduit_rule()
     rule.save!
 
-    conduit_action_id = rule.conduit_action.id
+    conduit_filter_id = rule.conduit_filters[0].id
+    conduit_action_id = rule.conduit_actions[0].id
     interface_selector_id = rule.interface_selectors[0].id
 
     rule.destroy
+
+    # Verify conduit filter destroyed on conduit rule destroy
+    assert_raise ActiveRecord::RecordNotFound do
+      ConduitFilter.find(conduit_filter_id)
+    end
 
     # Verify conduit action destroyed on conduit rule destroy
     assert_raise ActiveRecord::RecordNotFound do

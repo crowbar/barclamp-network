@@ -18,14 +18,6 @@ class ConduitActionTest < ActiveSupport::TestCase
 
   # Test successful creation
   test "ConduitAction creation: success" do
-    ConduitAction.create!( :name => "fred" )
-  end
-
-
-  # Test creation failure due to missing name
-  test "ConduitAction creation: failure due to missing name" do
-    assert_raise ActiveRecord::RecordInvalid do
-      ConduitAction.create!()
-    end
+    ConduitAction.create!
   end
 end
