@@ -13,9 +13,5 @@
 # limitations under the License.
 
 class ConduitAction < ActiveRecord::Base
-  belongs_to :conduit_rule, :inverse_of => :conduit_action
-
-  attr_accessible :name
-
-  validates :name, :presence => true
+  belongs_to :conduit_rule, :inverse_of => :conduit_actions
 end

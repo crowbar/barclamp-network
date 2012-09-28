@@ -38,8 +38,8 @@ class NetworkTestHelper
   # Create a conduit
   def self.create_a_conduit
     conduit = Conduit.new()
+    conduit.name = "intf0"
     conduit.conduit_rules << create_a_conduit_rule()
-    conduit.conduit_filters << create_a_conduit_filter()
     conduit
   end
 
@@ -56,18 +56,23 @@ class NetworkTestHelper
 
   # Create a conduit rule
   def self.create_a_conduit_rule
-    create_bond = CreateBond.new()
-    create_bond.name = "intf0"
-    create_bond.team_mode = 6
-
     sbs = SelectBySpeed.new()
     sbs.comparitor = "="
     sbs.value = "1g"
 
     rule = ConduitRule.new()
-    rule.conduit_action = create_bond
+    rule.conduit_filters << create_a_conduit_filter()
+    rule.conduit_actions << create_a_conduit_action()
     rule.interface_selectors << sbs
     rule
+  end
+
+
+  # Create a conduit action
+  def self.create_a_conduit_action
+    create_bond = CreateBond.new()
+    create_bond.team_mode = 6
+    create_bond
   end
   
   

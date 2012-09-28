@@ -14,11 +14,10 @@
 
 class Conduit < ActiveRecord::Base
   has_many :networks, :inverse_of => :conduit, :dependent => :nullify
-  has_many :conduit_filters, :dependent => :destroy
   has_many :conduit_rules, :dependent => :destroy
 
   attr_accessible :name
 
-  validates :conduit_filters, :presence => true
+  validates :name, :presence => true, :uniqueness => true
   validates :conduit_rules, :presence => true
 end
