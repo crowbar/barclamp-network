@@ -24,38 +24,22 @@ class ConduitTest < ActiveSupport::TestCase
   end
 
 
-  # Test creation failure due to missing conduit filter
-  test "Conduit creation: failure due to missing conduit filter" do
-    assert_raise ActiveRecord::RecordInvalid do
-      conduit = Conduit.new
-      conduit.conduit_rules << NetworkTestHelper.create_a_conduit_rule()
-      conduit.save!
-    end
-  end
-
-
   # Test creation failure due to missing conduit rule
   test "Conduit creation: failure due to missing conduit rule" do
     assert_raise ActiveRecord::RecordInvalid do
       conduit = Conduit.new
-      conduit.conduit_filters << NetworkTestHelper.create_a_conduit_filter()
+      conduit.name = "intf0"
       conduit.save!
     end    
   end
 
 
   # Test delete cascade
-  test "Conduit deletion: cascade to conduit filters and conduit rules" do
+  test "Conduit deletion: cascade to conduit rules" do
     conduit = NetworkTestHelper.create_a_conduit()
     conduit.save!
-    conduit_filter_id = conduit.conduit_filters[0].id
     conduit_rule_id = conduit.conduit_rules[0].id
     conduit.destroy
-
-    # Verify conduit filter destroyed on conduit destroy
-    assert_raise ActiveRecord::RecordNotFound do
-      ConduitFilter.find(conduit_filter_id)
-    end
 
     # Verify conduit rules destroyed on conduit destroy
     assert_raise ActiveRecord::RecordNotFound do

@@ -24,7 +24,6 @@ class Network < ActiveRecord::Base
   validates :name, :presence => true, :uniqueness => true
   validates :dhcp_enabled, :presence => true, :inclusion => { :in => ["true", "false"] }
   validates :subnet, :presence => true
-  # TODO
-  #validates :conduit, :presence => true
+  validates :conduit, :presence => true
   validates :ip_ranges, :presence => true
 end

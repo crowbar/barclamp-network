@@ -13,7 +13,7 @@
 # limitations under the License.
 
 class ConduitFilter < ActiveRecord::Base
-  belongs_to :conduit, :inverse_of => :conduit_filters
+  belongs_to :conduit_rule, :inverse_of => :conduit_filters
 
   attr_accessible :attr, :comparitor, :end_value, :start_value, :value
 
