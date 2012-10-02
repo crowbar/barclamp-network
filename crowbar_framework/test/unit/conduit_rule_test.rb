@@ -24,34 +24,6 @@ class ConduitRuleTest < ActiveSupport::TestCase
   end
 
 
-  # Test creation failure due to missing conduit filter
-  test "ConduitRule creation: failure due to missing conduit filter" do
-    assert_raise ActiveRecord::RecordInvalid do
-      sbs = SelectBySpeed.new()
-      sbs.comparitor = "="
-      sbs.value = "1g"
-      rule = ConduitRule.new()
-      rule.conduit_actions << NetworkTestHelper.create_a_conduit_action()
-      rule.interface_selectors << sbs
-      rule.save!
-    end
-  end
-
-
-  # Test creation failure due to missing conduit action
-  test "ConduitRule creation: failure due to missing conduit action" do
-    assert_raise ActiveRecord::RecordInvalid do
-      sbs = SelectBySpeed.new()
-      sbs.comparitor = "="
-      sbs.value = "1g"
-      rule = ConduitRule.new()
-      rule.conduit_filters << NetworkTestHelper.create_a_conduit_filter()
-      rule.interface_selectors << sbs
-      rule.save!
-    end
-  end
-
-
   # Test creation failure due to missing interface selectors
   test "ConduitRule creation: failure due to missing interface selectors" do
     assert_raise ActiveRecord::RecordInvalid do

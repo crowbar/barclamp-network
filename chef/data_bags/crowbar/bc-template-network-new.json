@@ -106,10 +106,6 @@
                 }
               ],
               "conduit_actions": [
-                {
-                  "MapInterface": {
-                  }
-                }
               ]
             },
             {
@@ -132,10 +128,6 @@
                 }
               ],
               "conduit_actions": [
-                {
-                  "MapInterface": {
-                  }
-                }
               ]
             },
             {
@@ -155,10 +147,6 @@
                 }
               ],
               "conduit_actions": [
-                {
-                  "MapInterface": {
-                  }
-                }
               ]
             }
           ]
@@ -211,10 +199,6 @@
                 }
               ],
               "conduit_actions": [
-                {
-                  "MapInterface": {
-                  }
-                }
               ]
             },
             {
@@ -237,10 +221,6 @@
                 }
               ],
               "conduit_actions": [
-                {
-                  "MapInterface": {
-                  }
-                }
               ]
             },
             {
@@ -260,10 +240,6 @@
                 }
               ],
               "conduit_actions": [
-                {
-                  "MapInterface": {
-                  }
-                }
               ]
             }
           ]
@@ -316,10 +292,6 @@
                 }
               ],
               "conduit_actions": [
-                {
-                  "MapInterface": {
-                  }
-                }
               ]
             },
             {
@@ -342,10 +314,6 @@
                 }
               ],
               "conduit_actions": [
-                {
-                  "MapInterface": {
-                  }
-                }
               ]
             },
             {
@@ -365,10 +333,6 @@
                 }
               ],
               "conduit_actions": [
-                {
-                  "MapInterface": {
-                  }
-                }
               ]
             }
           ]
@@ -376,13 +340,11 @@
       ],
       "networks": {
         "bmc": {
-          "conduit": "bmc",
           "vlan": 100,
           "use_vlan": false,
           "add_bridge": false,
-          "subnet": "192.168.124.0",
-          "netmask": "255.255.255.0",
-          "broadcast": "192.168.124.255",
+          "subnet": "192.168.124.0/24",
+          "dhcp_enabled": false,
           "ranges": {
             "host": { "start": "192.168.124.162", "end": "192.168.124.240" }
           }
@@ -392,9 +354,8 @@
           "vlan": 100,
           "use_vlan": true,
           "add_bridge": false,
-          "subnet": "192.168.124.0",
-          "netmask": "255.255.255.0",
-          "broadcast": "192.168.124.255",
+          "subnet": "192.168.124.0/24",
+          "dhcp_enabled": false,
           "ranges": {
             "host": { "start": "192.168.124.161", "end": "192.168.124.161" }
           }
@@ -404,9 +365,8 @@
           "vlan": 100,
           "use_vlan": false,
           "add_bridge": false,
-          "subnet": "192.168.124.0",
-          "netmask": "255.255.255.0",
-          "broadcast": "192.168.124.255",
+          "subnet": "192.168.124.0/24",
+          "dhcp_enabled": false,
           "router": "192.168.124.1",
           "router_pref": 10, 
           "ranges": {

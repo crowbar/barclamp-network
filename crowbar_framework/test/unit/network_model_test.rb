@@ -65,7 +65,7 @@ class NetworkModelTest < ActiveSupport::TestCase
   test "Network creation: failure due to missing name" do
     assert_raise ActiveRecord::RecordInvalid do
       network = Network.new
-      network.dhcp_enabled = "true"
+      network.dhcp_enabled = true
       network.subnet = IpAddress.create!( :cidr => "192.168.130.11/24" )
       network.conduit = Conduit.create!( :name => "intf0" )
       network.ip_ranges << NetworkTestHelper.create_an_ip_range()
@@ -106,21 +106,8 @@ class NetworkModelTest < ActiveSupport::TestCase
     assert_raise ActiveRecord::RecordInvalid do
       network = Network.new
       network.name = "fred"
-      network.dhcp_enabled = "false"
+      network.dhcp_enabled = false
       network.conduit = Conduit.create!( :name => "intf0" )
-      network.ip_ranges << NetworkTestHelper.create_an_ip_range()
-      network.save!
-    end
-  end
-
-
-  # conduit does not exist
-  test "Network creation: failure due to missing conduit" do
-    assert_raise ActiveRecord::RecordInvalid do
-      network = Network.new
-      network.name = "fred"
-      network.dhcp_enabled = "false"
-      network.subnet = IpAddress.create!( :cidr => "192.168.130.11/24" )
       network.ip_ranges << NetworkTestHelper.create_an_ip_range()
       network.save!
     end
@@ -132,7 +119,7 @@ class NetworkModelTest < ActiveSupport::TestCase
     assert_raise ActiveRecord::RecordInvalid do
       network = Network.new
       network.name = "fred"
-      network.dhcp_enabled = "false"
+      network.dhcp_enabled = false
       network.subnet = IpAddress.create!( :cidr => "192.168.130.11/24" )
       network.conduit = Conduit.create!( :name => "intf0" )
       network.save!

@@ -13,6 +13,7 @@
 # limitations under the License. 
 # 
 require 'test_helper'
+require 'network_service'
  
 class NetworkServiceTest < ActiveSupport::TestCase
 
@@ -30,7 +31,7 @@ class NetworkServiceTest < ActiveSupport::TestCase
         "public2",
         "intf0",
         "192.168.122.0/24",
-        "false",
+        false,
         JSON.parse('{ "host": { "start": "192.168.122.2", "end": "192.168.122.49" }, "dhcp": { "start": "192.168.122.50", "end": "192.168.122.127" }}'),
         nil,
         "192.168.122.1" )
@@ -46,7 +47,7 @@ class NetworkServiceTest < ActiveSupport::TestCase
         "public3",
         "intf0",
         "192.168.122.0/24",
-        "false",
+        false,
         JSON.parse('{ "host": { "start": "192.168.122.2", "end": "192.168.122.49" }, "dhcp": { "start": "192.168.122.50", "end": "192.168.122.127" }}'),
         "5",
         nil )
@@ -62,7 +63,7 @@ class NetworkServiceTest < ActiveSupport::TestCase
         "public4",
         "intf0",
         "192.168.122.0/24",
-        "false",
+        false,
         nil,
         5,
         "192.168.122.1" )
@@ -117,7 +118,7 @@ class NetworkServiceTest < ActiveSupport::TestCase
         net_name,
         "intf0",
         "192.168.122.0/24",
-        "false",
+        false,
         JSON.parse('{ "host": { "start": "192.168.122.2", "end": "192.168.122.49" }, "dhcp": { "start": "192.168.122.50", "end": "192.168.122.127" }, "admin": { "start": "192.168.122.128", "end": "192.168.122.149" }}'),
         5,
         "192.168.122.1" )
@@ -138,7 +139,7 @@ class NetworkServiceTest < ActiveSupport::TestCase
         net_name,
         "intf0",
         "192.168.122.0/24",
-        "false",
+        false,
         JSON.parse('{ "host": { "start": "192.168.122.2", "end": "192.168.122.49" }}'),
         5,
         "192.168.122.1" )
@@ -159,7 +160,7 @@ class NetworkServiceTest < ActiveSupport::TestCase
         net_name,
         "intf0",
         "192.168.122.0/24",
-        "false",
+        false,
         '',
         5,
         "192.168.122.1" )
@@ -178,7 +179,7 @@ class NetworkServiceTest < ActiveSupport::TestCase
         net_name,
         "intf0",
         "192.168.122.0/24",
-        "false",
+        false,
         JSON.parse('{ "host": { "end": "192.168.122.49" }, "dhcp": { "start": "192.168.122.50", "end": "192.168.122.127" }}'),
         5,
         "192.168.122.1" )
@@ -197,7 +198,7 @@ class NetworkServiceTest < ActiveSupport::TestCase
         net_name,
         "intf0",
         "192.168.122.0/24",
-        "false",
+        false,
         JSON.parse('{ "host": { "start": "192.168.122.2" }, "dhcp": { "start": "192.168.122.50", "end": "192.168.122.127" }}'),
         5,
         "192.168.122.1" )
@@ -216,7 +217,7 @@ class NetworkServiceTest < ActiveSupport::TestCase
         net_name,
         "intf0",
         "192.168.122.0/24",
-        "false",
+        false,
         JSON.parse('{ "host": { "start": "192.168.122.2", "end": "192.168.122.49" }, "dhcp": { "start": "192.168.122.50", "end": "192.168.122.127" }}'),
         nil,
         "192.168.122.1" )
@@ -235,7 +236,7 @@ class NetworkServiceTest < ActiveSupport::TestCase
         net_name,
         "intf0",
         "192.168.122.0/24",
-        "false",
+        false,
         JSON.parse('{ "host": { "start": "192.168.122.2", "end": "192.168.122.49" }, "dhcp": { "start": "192.168.122.50", "end": "192.168.122.127" }}'),
         "5",
         nil )
@@ -265,6 +266,20 @@ class NetworkServiceTest < ActiveSupport::TestCase
   end
 
 
+  # Test population of network defaults
+  test "network_defaults_populate" do
+    template_file = "barclamps/templates/bc-template-network-new.json"
+    json = JSON::load File.open(template_file, 'r')
+
+    network_service = NetworkService.new(Rails.logger)
+    network_service.populate_network_defaults( json["attributes"]["network"] )
+
+    assert Conduit.count > 0, "There are no Conduits"
+    assert InterfaceMap.count == 1, "There is no InterfaceMap"
+    assert Network.count > 0, "There are no Networks"
+  end
+
+
   private
   # Create a Network
   def create_a_network(net_service, name)
@@ -276,7 +291,7 @@ class NetworkServiceTest < ActiveSupport::TestCase
         name,
         "intf0",
         "192.168.122.0/24",
-        "false",
+        false,
         JSON.parse('{ "host": { "start": "192.168.122.2", "end": "192.168.122.49" }, "dhcp": { "start": "192.168.122.50", "end": "192.168.122.127" }}'),
         "5",
         "192.168.122.1" )

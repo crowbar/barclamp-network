@@ -15,6 +15,142 @@
 
 class NetworkService < ServiceObject
 
+
+
+  #def apply_role( prop_config, in_queue )
+    # Access config info from where?
+    # Create objects from template
+    # When to create the objects?
+    # - Only on creation
+    # - Does in_queue come into play here???
+    # Objects need to be tied to barclamp instance/proposal
+
+    #network_attributes_config = JSON::parse( prop_config )["network"]
+
+    #create_interface_map( network_attributes_config )
+
+    #super( prop_config, in_queue )
+  #end
+
+
+  def populate_network_defaults( network_attributes_config )
+    create_interface_map( network_attributes_config )
+    create_conduits( network_attributes_config )
+    create_networks( network_attributes_config )
+  end
+
+
+  def create_interface_map( network_attributes_config )
+    interface_map = InterfaceMap.new()
+    interface_map_config = network_attributes_config["interface_map"]
+    interface_map_config.each { |bus_map_config|
+      bus_map = BusMap.new()
+      bus_map.pattern = bus_map_config["pattern"]
+      interface_map.bus_maps << bus_map
+
+      bus_index = 1
+      bus_order_config = bus_map_config["bus_order"]
+      bus_order_config.each { |bus_config|
+        bus = Bus.new()
+        bus.designator = bus_config
+        bus.order = bus_index
+        bus_index += 1
+        bus_map.buses << bus
+      }
+    }
+
+    interface_map.save!
+  end
+
+
+  def create_conduits( network_attributes_config )
+    conduits_config = network_attributes_config["conduit_map"]
+    conduits_config.each { |conduit_config|
+      conduit = Conduit.new()
+      conduit.name = conduit_config["conduit_name"]
+
+      conduit_rules_config = conduit_config["conduit_rules"]
+      conduit_rules_config.each { |conduit_rule_config|
+        conduit_rule = ConduitRule.new()
+        conduit.conduit_rules << conduit_rule
+
+        conduit_filters_config = conduit_rule_config["conduit_filters"]
+        conduit_filters_config.each { |conduit_filter_name, conduit_filter_parms|
+          conduit_filter = Object.const_get(conduit_filter_name).new()
+          conduit_rule.conduit_filters << conduit_filter
+          conduit_filter_parms.each { |param_name, param_value|
+            conduit_filter.send( "#{param_name}=", param_value )
+          }
+          conduit_filter.save!
+        }
+
+        interface_selectors_config = conduit_rule_config["interface_selectors"]
+        interface_selectors_config.each { |interface_selector_config|
+          interface_selector_config.each { |interface_selector_name, interface_selector_parms|
+            interface_selector = Object.const_get(interface_selector_name).new()
+            conduit_rule.interface_selectors << interface_selector
+            interface_selector_parms.each { |param_name, param_value|
+              interface_selector.send( "#{param_name}=", param_value )
+            }
+            interface_selector.save!
+          }
+        }
+
+        conduit_actions_config = conduit_rule_config["conduit_actions"]
+        conduit_actions_config.each { |conduit_action_config|
+          conduit_action_config.each { |conduit_action_name, conduit_action_parms|
+            conduit_action = Object.const_get(conduit_action_name).new()
+            conduit_rule.conduit_actions << conduit_action
+            conduit_action_parms.each { |param_name, param_value|
+              conduit_action.send( "#{param_name}=", param_value )
+            }
+            conduit_action.save!
+          }
+        }
+        conduit_rule.save!
+      }
+
+      conduit.save!
+    }
+  end
+
+
+  def create_networks( network_attributes_config )
+    networks_config = network_attributes_config["networks"]
+    networks_config.each { |network_name, network_config|
+      network = Network.new()
+      network.name = network_name
+      network_config.each { |param_name, param_value|
+        case param_name
+        when "conduit"
+          network.conduit = get_object(Conduit, param_value)
+        when "subnet"
+          network.subnet = IpAddress.new(:cidr => param_value)
+        when "dhcp_enabled"
+          network.dhcp_enabled = "F" #param_value
+        when "router"
+          network.router = Router.new() if network.router.nil?
+          network.router.ip = IpAddress.new(:cidr => param_value)
+        when "router_pref"
+          network.router = Router.new() if network.router.nil?
+          network.router.pref = param_value.to_i
+        when "ranges"
+          param_value.each { |range_name, range|
+            ip_range = IpRange.new(:name => range_name)
+            start_address = range["start"]
+            ip_range.start_address = IpAddress.new(:cidr => start_address)
+            end_address = range["end"]
+            ip_range.end_address = IpAddress.new(:cidr => end_address)
+            network.ip_ranges << ip_range
+          }
+        end
+      }
+
+      network.save!
+    }
+  end
+
+
   def acquire_ip_lock
     acquire_lock "ip"
   end

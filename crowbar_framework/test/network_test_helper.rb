@@ -17,7 +17,7 @@ class NetworkTestHelper
   def self.create_a_network
     network = Network.new
     network.name = "fred"
-    network.dhcp_enabled = "true"
+    network.dhcp_enabled = true
     network.subnet = IpAddress.create!( :cidr => "192.168.130.11/24" )
     network.conduit = create_a_conduit()
     network.router = create_a_router()

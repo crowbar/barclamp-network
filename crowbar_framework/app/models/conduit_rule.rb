@@ -18,7 +18,5 @@ class ConduitRule < ActiveRecord::Base
   has_many :conduit_actions, :dependent => :destroy
   belongs_to :conduit, :inverse_of => :conduit_rules
 
-  validates :conduit_filters, :presence => true
   validates :interface_selectors, :presence => true
-  validates :conduit_actions, :presence => true
 end

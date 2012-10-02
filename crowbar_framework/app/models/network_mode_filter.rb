@@ -13,4 +13,14 @@
 # limitations under the License.
 
 class NetworkModeFilter < ConduitFilter
+  def initialize()
+    super()
+    self.attr="network_mode"
+    self.comparitor="="
+  end
+
+
+  def network_mode=( mode )
+    self.value="mode"
+  end
 end
