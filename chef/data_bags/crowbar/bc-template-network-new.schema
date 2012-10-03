@@ -117,7 +117,7 @@
                     "vlan": { "type": "int", "required": true },
                     "use_vlan": { "type": "bool", "required": true },
                     "add_bridge": { "type": "bool", "required": true },
-                    "subnet": { "type": "str", "required": true, "name": "IpAddress" },
+                    "subnet": { "type": "str", "required": true },
                     "dhcp_enabled": { "type": "bool", "required": true },
                     "router": { "type": "str", "name": "IpAddress" },
                     "router_pref": { "type": "int", "required": false },
