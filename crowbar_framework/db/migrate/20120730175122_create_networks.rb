@@ -16,7 +16,7 @@ class CreateNetworks < ActiveRecord::Migration
   def change
     create_table :networks do |t|
       t.string :name
-      t.binary :dhcp_enabled
+      t.boolean :dhcp_enabled
       t.references :conduit
 
       t.timestamps

@@ -53,7 +53,7 @@ class NetworkController < BarclampController
     name = params[:name]
     conduit_id = params[:conduit_id]
     subnet = params[:subnet]
-    dhcp_enabled = params[:dhcp_enabled]
+    dhcp_enabled = to_bool( params[:dhcp_enabled] )
     ip_ranges_json = params[:ip_ranges]
     if !ip_ranges_json.nil?
       ip_ranges = JSON.parse(ip_ranges_json)
@@ -77,7 +77,7 @@ class NetworkController < BarclampController
     id = params[:id]
     conduit_id = params[:conduit_id]
     subnet = params[:subnet]
-    dhcp_enabled = params[:dhcp_enabled]
+    dhcp_enabled = to_bool( params[:dhcp_enabled] )
     ip_ranges_json = params[:ip_ranges]
     if !ip_ranges_json.nil?
       ip_ranges = JSON.parse(ip_ranges_json)
@@ -228,6 +228,11 @@ class NetworkController < BarclampController
   end
     
   private 
+  def to_bool(value)
+    return true if value == true || value =~ /^true|t$/i
+    return false if value == false || value =~ /^false|f$/i
+    raise ArgumentError.new("Invalid boolean value")
+  end    
   
   def node_vlans(node)
     nv = {}

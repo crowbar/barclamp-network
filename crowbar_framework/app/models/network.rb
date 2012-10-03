@@ -22,8 +22,7 @@ class Network < ActiveRecord::Base
   attr_accessible :name, :dhcp_enabled
 
   validates :name, :presence => true, :uniqueness => true
-  validates :dhcp_enabled, :presence => true, :inclusion => { :in => ["true", "false"] }
+  validates :dhcp_enabled, :inclusion => { :in => [true, false] }
   validates :subnet, :presence => true
-  validates :conduit, :presence => true
   validates :ip_ranges, :presence => true
 end
