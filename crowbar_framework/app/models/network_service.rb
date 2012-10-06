@@ -152,11 +152,11 @@ class NetworkService < ServiceObject
 
 
   def acquire_ip_lock
-    acquire_lock "ip"
+    CrowbarUtils.acquire_lock "ip"
   end
 
   def release_ip_lock(f)
-    release_lock f
+    CrowbarUtils.release_lock f
   end
 
   def allocate_ip(bc_instance, network, range, name, suggestion = nil)
