@@ -406,6 +406,27 @@ if (not new_interfaces) or new_interfaces.empty?
   Chef::Log.fatal("Refusing to do so.")
   raise ::RangeError.new("Not enough active network interfaces.")
 end
+
+
+# rewrite the network configuration to match the new config.
+# do this while we have stable connectivity to the server.
+case node[:platform]
+when "ubuntu","debian"
+  template "/etc/network/interfaces" do
+    source "interfaces.erb"
+    variables :interfaces => new_interfaces.values.sort{|a,b| 
+      a[:order] <=> b[:order]
+    }
+  end
+when "centos","redhat"
+  new_interfaces.values.each do |iface|
+    template "/etc/sysconfig/network-scripts/ifcfg-#{iface[:interface]}" do
+      source "redhat-cfg.erb"
+      variables :iface => iface
+    end
+  end
+end
+
 # First, tear down any interfaces that are going to be deleted in 
 # reverse order in which they appear in the current /etc/network/interfaces
 (old_interfaces.keys - new_interfaces.keys).sort {|a,b| 
@@ -483,25 +504,7 @@ end
   end
 end
 
-# Third, rewrite the network configuration to match the new config.
-case node[:platform]
-when "ubuntu","debian"
-  template "/etc/network/interfaces" do
-    source "interfaces.erb"
-    variables :interfaces => new_interfaces.values.sort{|a,b| 
-      a[:order] <=> b[:order]
-    }
-  end
-when "centos","redhat"
-  new_interfaces.values.each do |iface|
-    template "/etc/sysconfig/network-scripts/ifcfg-#{iface[:interface]}" do
-      source "redhat-cfg.erb"
-      variables :iface => iface
-    end
-  end
-end
-
-# Fourth, bring up any new or changed interfaces
+# Third, bring up any new or changed interfaces
 new_interfaces.values.sort{|a,b|a[:order] <=> b[:order]}.each do |i|
   next if i[:interface] == "bmc"
   case
