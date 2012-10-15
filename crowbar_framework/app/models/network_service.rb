@@ -15,34 +15,28 @@
 
 class NetworkService < ServiceObject
 
+  def apply_role( prop_config, in_queue )
+    super( prop_config, in_queue )
 
+    proposal = prop_config.proposal
+    attrs_config = proposal.barclamp.template.current_config.config
+    network_attrs_config = attrs_config["network"]
 
-  #def apply_role( prop_config, in_queue )
-    # Access config info from where?
-    # Create objects from template
-    # When to create the objects?
-    # - Only on creation
-    # - Does in_queue come into play here???
-    # Objects need to be tied to barclamp instance/proposal
-
-    #network_attributes_config = JSON::parse( prop_config )["network"]
-
-    #create_interface_map( network_attributes_config )
-
-    #super( prop_config, in_queue )
-  #end
-
-
-  def populate_network_defaults( network_attributes_config )
-    create_interface_map( network_attributes_config )
-    create_conduits( network_attributes_config )
-    create_networks( network_attributes_config )
+    populate_network_defaults( network_attrs_config, proposal )
   end
 
 
-  def create_interface_map( network_attributes_config )
+  def populate_network_defaults( network_attrs_config, proposal )
+    create_interface_map( network_attrs_config, proposal )
+    create_conduits( network_attrs_config, proposal )
+    create_networks( network_attrs_config, proposal )
+  end
+
+
+  def create_interface_map( network_attrs_config, proposal )
     interface_map = InterfaceMap.new()
-    interface_map_config = network_attributes_config["interface_map"]
+    interface_map.proposal = proposal
+    interface_map_config = network_attrs_config["interface_map"]
     interface_map_config.each { |bus_map_config|
       bus_map = BusMap.new()
       bus_map.pattern = bus_map_config["pattern"]
@@ -60,13 +54,15 @@ class NetworkService < ServiceObject
     }
 
     interface_map.save!
+    interface_map
   end
 
 
-  def create_conduits( network_attributes_config )
-    conduits_config = network_attributes_config["conduit_map"]
+  def create_conduits( network_attrs_config, proposal )
+    conduits_config = network_attrs_config["conduit_map"]
     conduits_config.each { |conduit_config|
       conduit = Conduit.new()
+      conduit.proposal = proposal
       conduit.name = conduit_config["conduit_name"]
 
       conduit_rules_config = conduit_config["conduit_rules"]
@@ -115,10 +111,11 @@ class NetworkService < ServiceObject
   end
 
 
-  def create_networks( network_attributes_config )
-    networks_config = network_attributes_config["networks"]
+  def create_networks( network_attrs_config, proposal )
+    networks_config = network_attrs_config["networks"]
     networks_config.each { |network_name, network_config|
       network = Network.new()
+      network.proposal = proposal
       network.name = network_name
       network_config.each { |param_name, param_value|
         case param_name
