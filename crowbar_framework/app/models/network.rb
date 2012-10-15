@@ -18,6 +18,7 @@ class Network < ActiveRecord::Base
   belongs_to :conduit, :inverse_of => :networks
   has_one :router, :inverse_of => :network, :dependent => :destroy
   has_many :ip_ranges, :dependent => :destroy
+  belongs_to :proposal, inverse_of => :networks
 
   attr_accessible :name, :dhcp_enabled
 
