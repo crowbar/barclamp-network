@@ -272,7 +272,7 @@ class NetworkServiceTest < ActiveSupport::TestCase
     json = JSON::load File.open(template_file, 'r')
 
     network_service = NetworkService.new(Rails.logger)
-    network_service.populate_network_defaults( json["attributes"]["network"] )
+    network_service.populate_network_defaults( json["attributes"]["network"], nil )
 
     assert Conduit.count > 0, "There are no Conduits"
     assert InterfaceMap.count == 1, "There is no InterfaceMap"

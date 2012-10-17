@@ -15,6 +15,7 @@
 class Conduit < ActiveRecord::Base
   has_many :networks, :inverse_of => :conduit, :dependent => :nullify
   has_many :conduit_rules, :dependent => :destroy
+  belongs_to :proposal, :inverse_of => :conduits
 
   attr_accessible :name
 
