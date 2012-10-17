@@ -15,6 +15,7 @@
 class CreateInterfaceMaps < ActiveRecord::Migration
   def change
     create_table :interface_maps do |t|
+      t.references :proposal
 
       t.timestamps
     end

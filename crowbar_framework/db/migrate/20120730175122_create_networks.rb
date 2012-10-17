@@ -18,6 +18,7 @@ class CreateNetworks < ActiveRecord::Migration
       t.string :name
       t.boolean :dhcp_enabled
       t.references :conduit
+      t.references :proposal
 
       t.timestamps
     end
