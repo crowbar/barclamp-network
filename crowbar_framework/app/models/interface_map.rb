@@ -14,6 +14,7 @@
 
 class InterfaceMap < ActiveRecord::Base
   has_many :bus_maps, :dependent => :destroy
+  belongs_to :proposal, :inverse_of => :interface_map
 
   validates :bus_maps, :presence => true
 end
