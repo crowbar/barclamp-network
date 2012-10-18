@@ -17,4 +17,5 @@ class InterfaceMap < ActiveRecord::Base
   belongs_to :proposal, :inverse_of => :interface_map
 
   validates :bus_maps, :presence => true
+  validates :proposal, :presence => true
 end
