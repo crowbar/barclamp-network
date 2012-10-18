@@ -458,7 +458,7 @@ class NetworkService < ServiceObject
   end
 
 
-  def network_create(name, conduit_id, subnet, dhcp_enabled, ip_ranges, router_pref, router_ip)
+  def network_create(name, proposal_id, conduit_id, subnet, dhcp_enabled, ip_ranges, router_pref, router_ip)
     @logger.debug("Entering service network_create #{name}")
 
     network = nil
@@ -469,6 +469,7 @@ class NetworkService < ServiceObject
             :name => name,
             :dhcp_enabled => dhcp_enabled)
         network.subnet = subnet
+        network.proposal = get_object( Proposal, proposal_id )
         network.conduit = get_object( Conduit, conduit_id )
 
         # Either both router_pref and router_ip are passed, or neither are

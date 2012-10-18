@@ -21,4 +21,5 @@ class Conduit < ActiveRecord::Base
 
   validates :name, :presence => true, :uniqueness => true
   validates :conduit_rules, :presence => true
+  validates :proposal, :presence => true
 end

@@ -48,9 +48,10 @@ class NetworkController < BarclampController
     end
   end
 
-  add_help(:network_create,[:name, :conduit_id, :subnet, :dhcp_enabled, :ip_ranges, :router_pref, :router_ip],[:post])
+  add_help(:network_create,[:name, :proposal_id, :conduit_id, :subnet, :dhcp_enabled, :ip_ranges, :router_pref, :router_ip],[:post])
   def network_create
     name = params[:name]
+    proposal_id = params[:proposal_id]
     conduit_id = params[:conduit_id]
     subnet = params[:subnet]
     dhcp_enabled = to_bool( params[:dhcp_enabled] )
@@ -63,7 +64,7 @@ class NetworkController < BarclampController
 
     Rails.logger.debug("Creating network #{name}");
 
-    ret = operations.network_create(name, conduit_id, subnet, dhcp_enabled, ip_ranges, router_pref, router_ip)
+    ret = operations.network_create(name, proposal_id, conduit_id, subnet, dhcp_enabled, ip_ranges, router_pref, router_ip)
 
     return render :text => ret[1], :status => ret[0] if ret[0] != 200
 

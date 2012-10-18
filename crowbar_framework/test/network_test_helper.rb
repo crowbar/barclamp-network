@@ -22,6 +22,7 @@ class NetworkTestHelper
     network.conduit = create_a_conduit()
     network.router = create_a_router()
     network.ip_ranges << create_an_ip_range()
+    network.proposal = create_or_get_proposal()
     network
   end
   
@@ -40,6 +41,7 @@ class NetworkTestHelper
     conduit = Conduit.new()
     conduit.name = "intf0"
     conduit.conduit_rules << create_a_conduit_rule()
+    conduit.proposal = create_or_get_proposal()
     conduit
   end
 
@@ -91,6 +93,7 @@ class NetworkTestHelper
   def self.create_an_interface_map
     interface_map = InterfaceMap.new()
     interface_map.bus_maps << create_a_bus_map()
+    interface_map.proposal = create_or_get_proposal()
     interface_map
   end
   
@@ -106,5 +109,20 @@ class NetworkTestHelper
   # Create a bus
   def self.create_a_bus
     Bus.new( :order => 1, :designator => "0000:00/0000:00:1c" )
+  end
+
+
+  def self.create_or_get_proposal( proposal_name = "network_proposal" )
+    proposal = nil
+
+    proposals = Proposal.where( :name => proposal_name )
+    if proposals.size == 0
+      proposal = Proposal.new( :name=> proposal_name )
+      proposal.save!
+    else
+      proposal = proposals[0]
+    end
+
+    proposal
   end
 end

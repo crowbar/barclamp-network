@@ -24,7 +24,7 @@ require File.join(File.expand_path(File.dirname(__FILE__)), "barclamp_lib")
 @commands["disable_interface"] = [ "disable_interface(ARGV.shift,ARGV.shift,ARGV.shift)", "disable_interface <name> <node> <network> - Ensure that an interface is not enabled for the specified network" ]
 @commands["network_list"] = [ "network_list()", "network_list - Show a list of current networks" ]
 @commands["network_show"] = [ "network_show(ARGV.shift)", "network_show <name_or_id> - Show a specific network" ]
-@commands["network_create"] = [ "network_create(ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift)", "network_create <name> <conduit_id> <subnet> <dhcp_enabled> <ip_ranges> <router_pref> <router_ip> - Create a network" ]
+@commands["network_create"] = [ "network_create(ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift)", "network_create <name> <proposal_id> <conduit_id> <subnet> <dhcp_enabled> <ip_ranges> <router_pref> <router_ip> - Create a network" ]
 @commands["network_edit"] = [ "network_edit(ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift)", "network_edit <name_or_id> <conduit_id> <subnet> <dhcp_enabled> <ip_ranges> <router_pref> <router_ip> - Edit a network" ]
 @commands["network_delete"] = [ "network_delete(ARGV.shift)", "network_delete <name_or_id> - Delete a network" ]
 
@@ -133,8 +133,9 @@ def network_show(id)
   end
 end
 
-def network_create(name, conduit_id, subnet, dhcp_enabled, ip_ranges, router_pref, router_ip)
+def network_create(name, proposal_id, conduit_id, subnet, dhcp_enabled, ip_ranges, router_pref, router_ip)
   usage -1 if name.nil? or name == ""
+  usage -1 if proposal_id.nil? or proposal_id == ""
   usage -1 if conduit_id.nil? or conduit_id == ""
   usage -1 if dhcp_enabled.nil? or dhcp_enabled == ""
   usage -1 if ip_ranges.nil? or ip_ranges == ""
@@ -143,6 +144,7 @@ def network_create(name, conduit_id, subnet, dhcp_enabled, ip_ranges, router_pre
 
   @data = {
       "name" => name,
+      "proposal_id" => proposal_id,
       "conduit_id" => conduit_id,
       "subnet" => subnet,
       "dhcp_enabled" => dhcp_enabled,
