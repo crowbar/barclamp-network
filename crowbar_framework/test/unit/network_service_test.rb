@@ -27,8 +27,12 @@ class NetworkServiceTest < ActiveSupport::TestCase
   # Test failed network creation due to missing router_pref
   test "network_create: missing router_pref" do
     net_service = NetworkService.new(Rails.logger)
+
+    proposal = NetworkTestHelper.create_or_get_proposal()
+
     http_error, network = net_service.network_create(
         "public2",
+        proposal.id,
         "intf0",
         "192.168.122.0/24",
         false,
@@ -43,8 +47,12 @@ class NetworkServiceTest < ActiveSupport::TestCase
   # Test failed network creation due to missing router_ip
   test "network_create: missing router_ip" do
     net_service = NetworkService.new(Rails.logger)
+
+    proposal = NetworkTestHelper.create_or_get_proposal()
+
     http_error, network = net_service.network_create(
         "public3",
+        proposal.id,
         "intf0",
         "192.168.122.0/24",
         false,
@@ -59,8 +67,12 @@ class NetworkServiceTest < ActiveSupport::TestCase
   # Test failed network creation due to missing ip range
   test "network_create: missing no ip range" do
     net_service = NetworkService.new(Rails.logger)
+
+    proposal = NetworkTestHelper.create_or_get_proposal()
+
     http_error, network = net_service.network_create(
         "public4",
+        proposal.id,
         "intf0",
         "192.168.122.0/24",
         false,
@@ -271,8 +283,9 @@ class NetworkServiceTest < ActiveSupport::TestCase
     template_file = "barclamps/templates/bc-template-network-new.json"
     json = JSON::load File.open(template_file, 'r')
 
+    proposal = NetworkTestHelper.create_or_get_proposal()
     network_service = NetworkService.new(Rails.logger)
-    network_service.populate_network_defaults( json["attributes"]["network"], nil )
+    network_service.populate_network_defaults( json["attributes"]["network"], proposal )
 
     assert Conduit.count > 0, "There are no Conduits"
     assert InterfaceMap.count == 1, "There is no InterfaceMap"
@@ -287,8 +300,11 @@ class NetworkServiceTest < ActiveSupport::TestCase
     conduit = NetworkTestHelper.create_a_conduit()
     conduit.save!
 
+    proposal = NetworkTestHelper.create_or_get_proposal()
+
     http_error, network = net_service.network_create(
         name,
+        proposal.id,
         "intf0",
         "192.168.122.0/24",
         false,
