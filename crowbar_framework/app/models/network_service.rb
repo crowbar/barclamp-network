@@ -325,9 +325,9 @@ class NetworkService < ServiceObject
     [200, nil]
   end
 
-  def create_proposal
+  def create_proposal(name)
     @logger.debug("Network create_proposal: entering")
-    base = super
+    base = super(name)
 
     networks = base.current_config.config_hash["network"]["networks"] rescue nil
     unless networks
