@@ -151,15 +151,6 @@ class NetworkService < ServiceObject
     }
   end
 
-
-  def acquire_ip_lock
-    CrowbarUtils.acquire_lock "ip"
-  end
-
-  def release_ip_lock(f)
-    CrowbarUtils.release_lock f
-  end
-
   def allocate_ip(bc_instance, network, range, name, suggestion = nil)
     @logger.debug("Network allocate_ip: entering #{name} #{network} #{range}")
 
@@ -185,62 +176,61 @@ class NetworkService < ServiceObject
 
     net_info={}
     found = false
-    begin # Rescue block
-      f = acquire_ip_lock
-      db = ProposalObject.find_data_bag_item "crowbar/#{network}_network"
-      net_info = build_net_info(network, name, db)
+    CrowbarUtils.with_lock("ip") do
+      begin # Rescue block
+        db = ProposalObject.find_data_bag_item "crowbar/#{network}_network"
+        net_info = build_net_info(network, name, db)
 
-      rangeH = db["network"]["ranges"][range]
-      rangeH = db["network"]["ranges"]["host"] if rangeH.nil?
+        rangeH = db["network"]["ranges"][range]
+        rangeH = db["network"]["ranges"]["host"] if rangeH.nil?
 
-      index = IPAddr.new(rangeH["start"]) & ~IPAddr.new(net_info["netmask"])
-      index = index.to_i
-      stop_address = IPAddr.new(rangeH["end"]) & ~IPAddr.new(net_info["netmask"])
-      stop_address = IPAddr.new(net_info["subnet"]) | (stop_address.to_i + 1)
-      address = IPAddr.new(net_info["subnet"]) | index
+        index = IPAddr.new(rangeH["start"]) & ~IPAddr.new(net_info["netmask"])
+        index = index.to_i
+        stop_address = IPAddr.new(rangeH["end"]) & ~IPAddr.new(net_info["netmask"])
+        stop_address = IPAddr.new(net_info["subnet"]) | (stop_address.to_i + 1)
+        address = IPAddr.new(net_info["subnet"]) | index
 
-      if suggestion
-        @logger.error("Allocating with suggestion: #{suggestion}")
-        subsug = IPAddr.new(suggestion) & IPAddr.new(net_info["netmask"])
-        subnet = IPAddr.new(net_info["subnet"]) & IPAddr.new(net_info["netmask"])
-        if subnet == subsug
-          if db["allocated"][suggestion].nil?
-            @logger.error("Using suggestion: #{name} #{network} #{suggestion}")
-            address = suggestion
-            found = true
+        if suggestion
+          @logger.error("Allocating with suggestion: #{suggestion}")
+          subsug = IPAddr.new(suggestion) & IPAddr.new(net_info["netmask"])
+          subnet = IPAddr.new(net_info["subnet"]) & IPAddr.new(net_info["netmask"])
+          if subnet == subsug
+            if db["allocated"][suggestion].nil?
+              @logger.error("Using suggestion: #{name} #{network} #{suggestion}")
+              address = suggestion
+              found = true
+            end
           end
         end
-      end
 
-      unless found
-        # Did we already allocate this, but the node lose it?
-        unless db["allocated_by_name"][node.name].nil?
-          found = true
-          address = db["allocated_by_name"][node.name]["address"]
+        unless found
+          # Did we already allocate this, but the node lose it?
+          unless db["allocated_by_name"][node.name].nil?
+            found = true
+            address = db["allocated_by_name"][node.name]["address"]
+          end
         end
-      end
 
-      # Let's search for an empty one.
-      while !found do
-        if db["allocated"][address.to_s].nil?
-          found = true
-          break
+        # Let's search for an empty one.
+        while !found do
+          if db["allocated"][address.to_s].nil?
+            found = true
+            break
+          end
+          index = index + 1
+          address = IPAddr.new(net_info["subnet"]) | index
+          break if address == stop_address
         end
-        index = index + 1
-        address = IPAddr.new(net_info["subnet"]) | index
-        break if address == stop_address
-      end
 
-      if found
-        net_info["address"] = address.to_s
-        db["allocated_by_name"][node.name] = { "machine" => node.name, "interface" => net_info["conduit"], "address" => address.to_s }
-        db["allocated"][address.to_s] = { "machine" => node.name, "interface" => net_info["conduit"], "address" => address.to_s }
-        db.save
+        if found
+          net_info["address"] = address.to_s
+          db["allocated_by_name"][node.name] = { "machine" => node.name, "interface" => net_info["conduit"], "address" => address.to_s }
+          db["allocated"][address.to_s] = { "machine" => node.name, "interface" => net_info["conduit"], "address" => address.to_s }
+          db.save
+        end
+      rescue Exception => e
+        @logger.error("Error finding address: #{e.message}")
       end
-    rescue Exception => e
-      @logger.error("Error finding address: #{e.message}")
-    ensure
-      release_ip_lock(f)
     end
 
     @logger.info("Network allocate_ip: no address available: #{name} #{network} #{range}") if !found
@@ -278,39 +268,38 @@ class NetworkService < ServiceObject
     end
 
     save = false
-    begin # Rescue block
-      f = acquire_ip_lock
-      db = ProposalObject.find_data_bag_item "crowbar/#{network}_network"
+    CrowbarUtils.with_lock("ip") do
+      begin # Rescue block
+        db = ProposalObject.find_data_bag_item "crowbar/#{network}_network"
 
-      address = net_info["address"]
+        address = net_info["address"]
  
-      # Did we already allocate this, but the node lose it?
-      unless db["allocated_by_name"][node.name].nil?
-        save = true
+        # Did we already allocate this, but the node lose it?
+        unless db["allocated_by_name"][node.name].nil?
+          save = true
 
-        newhash = {}
-        db["allocated_by_name"].each do |k,v|
-          newhash[k] = v unless k == node.name
+          newhash = {}
+          db["allocated_by_name"].each do |k,v|
+            newhash[k] = v unless k == node.name
+          end
+          db["allocated_by_name"] = newhash
         end
-        db["allocated_by_name"] = newhash
-      end
 
-      unless db["allocated"][address.to_s].nil?
-        save = true
-        newhash = {}
-        db["allocated"].each do |k,v|
-          newhash[k] = v unless k == address.to_s
+        unless db["allocated"][address.to_s].nil?
+          save = true
+          newhash = {}
+          db["allocated"].each do |k,v|
+            newhash[k] = v unless k == address.to_s
+          end
+          db["allocated"] = newhash
         end
-        db["allocated"] = newhash
-      end
 
-      if save
-        db.save
+        if save
+          db.save
+        end
+      rescue Exception => e
+        @logger.error("Error finding address: #{e.message}")
       end
-    rescue Exception => e
-      @logger.error("Error finding address: #{e.message}")
-    ensure
-      release_ip_lock(f)
     end
 
     # Save the information.
