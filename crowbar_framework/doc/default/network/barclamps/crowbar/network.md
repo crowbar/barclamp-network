@@ -1,9 +1,10 @@
-# Rules #
+-###Network Barclamp
+### Rules ###
 * External or Public network: When this is reference, the definition is the network that is not internall to the this solution.  it could be an internet routerable IP, Private Lab, or even Corporate network.
 * router_pref: When this is used it must unique to each network.  No two or more networks can have teh same number, even if they are on the same vlan.
 * router_pref: the lowest number is used to set the default route on the host in quesiton
 
-# Sections #
+### Sections ###
 * Storage
  * Used by the Swift System to handle all interactions between Swift nodes and Swift-Proxy.
  * External Access: Ineternal Only.  Highly recommended to not have external connectivity as it has all the storage data on it.
@@ -56,7 +57,7 @@
  * Ranges - requires "host", "dhcp", "switch", and "admin"
  * Rules - no special rules
 
-# Stanza #
+### Stanza ###
  *  conduit - Name of the conduit this network is to use.? 
       *  When more than one network can uses the same conduit, the interfaces can become dual homed depending on the add_bridge and use_vlan
  * vlan - the Vlan Number assigned to that network.? This comes into play when the use_vlan is set to 'true'.
