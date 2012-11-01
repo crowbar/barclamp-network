@@ -1,4 +1,4 @@
--###Network Barclamp
+### Network Barclamp ###
 ### Rules ###
 * External or Public network: When this is reference, the definition is the network that is not internall to the this solution.  it could be an internet routerable IP, Private Lab, or even Corporate network.
 * router_pref: When this is used it must unique to each network.  No two or more networks can have teh same number, even if they are on the same vlan.
