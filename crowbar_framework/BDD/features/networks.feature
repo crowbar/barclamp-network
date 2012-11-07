@@ -5,3 +5,7 @@ Feature: Networks
   Scenario: Retrieve a network via the network API
     When REST requests the network "admin"
     Then the network is properly formatted
+
+  Scenario: Delete a network via the network API
+    When REST removes the network "admin"
+    Then there is not a network "admin"
