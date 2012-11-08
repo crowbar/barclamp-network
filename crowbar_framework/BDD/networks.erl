@@ -61,8 +61,17 @@ validate(JSON) ->
 	end. 
 
 
+% Retrieve a network
 step(_Config, _Given, {step_when, _N, ["REST requests the network",Name]}) ->
   bdd_restrat:step(_Config, _Given, {step_when, _N, ["REST requests the", eurl:path("2.0/crowbar/2.0/network/networks",Name),"page"]});
 
 step(_Config, Result, {step_then, _N, ["the network is properly formatted"]}) ->
-  crowbar_rest:step(_Config, Result, {step_then, _N, ["the", networks, "object is properly formatted"]}).
+  crowbar_rest:step(_Config, Result, {step_then, _N, ["the", networks, "object is properly formatted"]});
+
+
+% Delete a network
+step(Config, _Given, {step_when, _N, ["REST removes the network",Network]}) ->
+  eurl:delete(Config, "2.0/crowbar/2.0/network/networks", Network);
+
+step(Config, _Result, {step_then, _N, ["there is not a network",Network]}) -> 
+  crowbar_rest:get_id(Config, "2.0/crowbar/2.0/network/networks", Network) == "-1".
