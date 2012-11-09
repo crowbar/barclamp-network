@@ -10,12 +10,10 @@ g(Item) ->
 
 
 rangeTester(_Range) -> 
-  { _Index, _Content } = _Range,
-
-  {"name",_IpRangeName}  = lists:keyfind("name", 1, _Content),
-  {"start_address",_IpRangeStartAddress}  = lists:keyfind("start_address", 1, _Content),
+  {"name",_IpRangeName}  = lists:keyfind("name", 1, _Range),
+  {"start_address",_IpRangeStartAddress}  = lists:keyfind("start_address", 1, _Range),
   {"cidr",_IpRangeStartAddr}  = lists:keyfind("cidr", 1, _IpRangeStartAddress),
-  {"end_address",_IpRangeEndAddress}  = lists:keyfind("end_address", 1, _Content),
+  {"end_address",_IpRangeEndAddress}  = lists:keyfind("end_address", 1, _Range),
   {"cidr",_IpRangeEndAddr}  = lists:keyfind("cidr", 1, _IpRangeEndAddress),
 
   [bdd_utils:is_a(string, _IpRangeName),
@@ -43,7 +41,7 @@ validate(JSON) ->
 
     R = [bdd_utils:is_a(boolean, _DhcpEnabled),
          bdd_utils:is_a(dbid, _ProposalId),
-             bdd_utils:is_a(dbid, _ConduitId),
+         bdd_utils:is_a(dbid, _ConduitId),
          bdd_utils:is_a(cidr, _SubnetAddr),
          bdd_utils:is_a(ip, _RouterAddr),
          bdd_utils:is_a(number, _RouterPref),
