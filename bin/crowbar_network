@@ -148,7 +148,7 @@ def network_create(name, proposal_id, conduit_id, subnet, dhcp_enabled, ip_range
       "conduit_id" => conduit_id,
       "subnet" => subnet,
       "dhcp_enabled" => dhcp_enabled,
-      "ip_ranges" => ip_ranges,
+      "ip_ranges" => JSON.parse(ip_ranges),
       "router_pref" => router_pref,
       "router_ip" => router_ip
     }.to_json
@@ -176,7 +176,7 @@ def network_edit(name_or_id, conduit_id, subnet, dhcp_enabled, ip_ranges, router
       "conduit_id" => conduit_id,
       "subnet" => subnet,
       "dhcp_enabled" => dhcp_enabled,
-      "ip_ranges" => ip_ranges,
+      "ip_ranges" => JSON.parse(ip_ranges),
       "router_pref" => router_pref,
       "router_ip" => router_ip
     }.to_json
