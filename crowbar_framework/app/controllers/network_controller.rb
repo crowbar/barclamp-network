@@ -37,7 +37,7 @@ class NetworkController < BarclampController
   def network_show
     id = params[:id]
 
-    Rails.logger.debug("Showing network #{id}");
+    Rails.logger.debug("Showing network #{id}")
 
     ret = operations.network_get(id)
 
@@ -55,10 +55,7 @@ class NetworkController < BarclampController
     conduit_id = params[:conduit_id]
     subnet = params[:subnet]
     dhcp_enabled = to_bool( params[:dhcp_enabled] )
-    ip_ranges_json = params[:ip_ranges]
-    if !ip_ranges_json.nil?
-      ip_ranges = JSON.parse(ip_ranges_json)
-    end
+    ip_ranges = params[:ip_ranges]
     router_pref = params[:router_pref]
     router_ip = params[:router_ip]
 
@@ -79,10 +76,7 @@ class NetworkController < BarclampController
     conduit_id = params[:conduit_id]
     subnet = params[:subnet]
     dhcp_enabled = to_bool( params[:dhcp_enabled] )
-    ip_ranges_json = params[:ip_ranges]
-    if !ip_ranges_json.nil?
-      ip_ranges = JSON.parse(ip_ranges_json)
-    end
+    ip_ranges = params[:ip_ranges]
     router_pref = params[:router_pref]
     router_ip = params[:router_ip]
 

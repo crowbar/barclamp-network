@@ -1,5 +1,6 @@
 -module(networks).
--export([step/3, validate/1]).
+-export([step/3, validate/1, g/1, network_json/8]).
+
 
 % This method is used to define constants
 g(Item) ->
@@ -7,6 +8,20 @@ g(Item) ->
     path -> "2.0/crowbar/2.0/network/networks";
     _ -> crowbar:g(Item)
   end.
+
+
+network_json(Name, Proposal_id, Conduit_id, Subnet, Dhcp_enabled, Ip_ranges, Router_pref, Router_ip) ->
+  J = [
+      {"name", Name},
+      {"proposal_id", Proposal_id},
+      {"conduit_id", Conduit_id},
+      {"subnet", Subnet},
+      {"dhcp_enabled", Dhcp_enabled},
+      {"ip_ranges", Ip_ranges},
+      {"router_pref", Router_pref},
+      {"router_ip", Router_ip}
+    ],
+  json:output(J).
 
 
 rangeTester(_Range) -> 
@@ -64,6 +79,21 @@ step(_Config, _Given, {step_when, _N, ["REST requests the list of networks"]}) -
   bdd_restrat:step(_Config, _Given, {step_when, _N, ["REST requests the", g(path),"page"]});
 
 
+% Create a network
+step(_Config, _Given, {step_given, _N, ["there is a network",Name]}) ->
+  bdd_utils:log(_Config, debug, "Entering there is a network: Name: ~p~n", [Name]),
+  JSON = networks:network_json(
+    Name,
+    "",
+    "intf0",
+    "192.168.124.0/24",
+    "false",
+    json:parse("{\"host\": {\"start\":\"192.168.124.61\", \"end\":\"192.168.124.169\"}}"),
+    "10",
+    "192.168.124.1"),
+  crowbar_rest:create(_Config, g(path), network1, Name, JSON);
+
+
 % Retrieve a network
 step(_Config, _Given, {step_when, _N, ["REST requests the network",Name]}) ->
   bdd_restrat:step(_Config, _Given, {step_when, _N, ["REST requests the", eurl:path(g(path),Name),"page"]});
@@ -74,6 +104,9 @@ step(_Config, Result, {step_then, _N, ["the network is properly formatted"]}) ->
 
 % Delete a network
 step(Config, _Given, {step_when, _N, ["REST removes the network",Network]}) ->
+  eurl:delete(Config, g(path), Network);
+
+step(Config, _Given, {step_finally, _N, ["REST removes the network",Network]}) ->
   eurl:delete(Config, g(path), Network);
 
 step(Config, _Result, {step_then, _N, ["there is not a network",Network]}) -> 

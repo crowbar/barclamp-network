@@ -124,7 +124,7 @@ class NetworkService < ServiceObject
       network_config.each { |param_name, param_value|
         case param_name
         when "conduit"
-          network.conduit = get_object(Conduit, param_value)
+          network.conduit = NetworkService.get_object(Conduit, param_value)
         when "subnet"
           network.subnet = IpAddress.new(:cidr => param_value)
         when "dhcp_enabled"
@@ -436,7 +436,7 @@ class NetworkService < ServiceObject
 
   def network_get(id)
     begin
-      [200, get_object(Network, id)]
+      [200, NetworkService.get_object(Network, id)]
     rescue ActiveRecord::RecordNotFound => ex
       @logger.warn(ex.message)
       [404, ex.message]
@@ -458,8 +458,8 @@ class NetworkService < ServiceObject
             :name => name,
             :dhcp_enabled => dhcp_enabled)
         network.subnet = subnet
-        network.proposal = get_object( Proposal, proposal_id )
-        network.conduit = get_object( Conduit, conduit_id )
+        #network.proposal = NetworkService.get_object( Proposal, proposal_id )
+        network.conduit = NetworkService.get_object( Conduit, conduit_id )
 
         # Either both router_pref and router_ip are passed, or neither are
         if !((router_pref.nil? and router_ip.nil?) or
@@ -499,8 +499,8 @@ class NetworkService < ServiceObject
     network = nil
     begin
       Network.transaction do
-        network = get_object( Network, id )
-        conduit = get_object( Conduit, conduit_id )
+        network = NetworkService.get_object( Network, id )
+        conduit = NetworkService.get_object( Conduit, conduit_id )
         if conduit.name != network.conduit.name
           @logger.debug("Updating conduit to #{conduit_id}")
           network.conduit = conduit
@@ -603,7 +603,7 @@ class NetworkService < ServiceObject
     @logger.debug("Entering service network_delete #{id}")
 
     begin
-      network = get_object(Network, id)
+      network = NetworkService.get_object(Network, id)
 
       @logger.debug("Deleting network #{network.id}/\"#{network.name}\"")
       network.destroy
@@ -620,22 +620,6 @@ class NetworkService < ServiceObject
 
 
   private
-  def get_object(type, object_id )
-    object = nil
-    object_id = object_id.to_s
-    if object_id.match('^[0-9]+')
-      object = type.find(object_id)
-    else
-      objects = type.where( :name => object_id )
-      raise ActiveRecord::RecordNotFound, "Unable to find #{type} with id=#{object_id}" if objects.size == 0
-      object = objects[0] if objects.size == 1
-      raise "There are #{objects.size} #{type}s with the name #{object_id}" if objects.size > 1
-    end
-
-    object
-  end
-
-
   def create_ip_range( ip_range_name, ip_range_hash )
     @logger.debug("Creating ip_range #{ip_range_name}")
     ip_range = IpRange.new( :name => ip_range_name )

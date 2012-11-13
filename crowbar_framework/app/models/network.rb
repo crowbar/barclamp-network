@@ -26,5 +26,5 @@ class Network < ActiveRecord::Base
   validates :dhcp_enabled, :inclusion => { :in => [true, false] }
   validates :subnet, :presence => true
   validates :ip_ranges, :presence => true
-  validates :proposal, :presence => true
+  #validates :proposal, :presence => true
 end
