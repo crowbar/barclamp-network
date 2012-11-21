@@ -94,7 +94,7 @@ class NetworkController < BarclampController
           end
           @port_start = 0 if port == 0
           @switches[key][:max_port] = port if port>@switches[key][:max_port]
-          @switches[key][:nodes][port] = { :handle=>node.handle, :intf=>switch[:intf] }
+          @switches[key][:nodes][port] = { :handle=>node.handle, :intf=>switch[:intf], :mac=>switch[:mac] }
           @switches[key][:status][node.status] = (@switches[key][:status][node.status] || 0).to_i + 1
         end
       end
@@ -172,7 +172,7 @@ class NetworkController < BarclampController
         end
         if connected
           s_name= "#{s_name}:#{s_unit}" unless s_unit.nil?
-          switches << { :switch=>s_name, :intf=>intf, :port=>raw['switch_port'].to_i }
+          switches << { :switch=>s_name, :intf=>intf, :port=>raw['switch_port'].to_i, :mac=>raw['mac'] }
         end
       end
     rescue Exception=>e

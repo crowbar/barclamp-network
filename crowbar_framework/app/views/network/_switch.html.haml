@@ -2,6 +2,7 @@
   - unless sw_details[:nodes][port].nil?
     - node = sw_details[:nodes][port][:handle]
     - intf = sw_details[:nodes][port][:intf]
+    - mac = sw_details[:nodes][port][:mac]
     %div.port{ :id=>"#{switch}-#{port}", :node=>node, :title=>@nodes[node][:description] }
       %div.port_number= "#{port}-#{intf}"
       %div.led{ :id=>node, :style=>'float:right', :class =>"#{@nodes[node][:status]}", :title=>t("state.#{@nodes[node][:status]}")}
@@ -9,6 +10,9 @@
       %div.node
         %a{:href => "/nodes/#{node}"}
           = (@nodes[node][:alias] || t('.nc'))
+      %br
+      %div.mac
+        = mac
   - else
     %div.port_nc
       %div.port_number= port
