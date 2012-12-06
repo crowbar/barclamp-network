@@ -25,7 +25,7 @@ Feature: Networks
     Then the object id list is properly formatted
     Finally REST deletes the {object:networks} "bdd_net"
   
-  Scenario: %Delete a network
+  Scenario: Delete a network
     Given REST creates the {object:networks} "bdd_net"
     When REST deletes the {object:networks} "bdd_net"
     Then there is not a network "bdd_net"
