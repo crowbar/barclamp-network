@@ -54,7 +54,6 @@ rangeTester(_Range) ->
 
 
 validate(JSON) ->
-  bdd_utils:log(debug, "validate: JSON: ~p", [JSON]),
   RangeTester = fun(Value) -> rangeTester(Value) end,
   try 
     {"dhcp_enabled",_DhcpEnabled} = lists:keyfind("dhcp_enabled", 1, JSON),
@@ -85,11 +84,11 @@ validate(JSON) ->
 
     case bdd_utils:assert(FlatteR) of
       true -> true;
-      false -> bdd_utils:log(error, "FAIL: JSON did not comply with object format ~p", [JSON]), false
+      false -> io:format("FAIL: JSON did not comply with object format ~p", [JSON]), false
     end
   catch
-    X: Y -> bdd_utils:log(error, "ERROR: unable to parse returned network JSON: ~p:~p", [X, Y]),
-            bdd_utils:log(error, "Stacktrace: ~p", [erlang:get_stacktrace()]),
+    X: Y -> io:format("ERROR: unable to parse returned network JSON: ~p:~p", [X, Y]),
+            io:format("Stacktrace: ~p", [erlang:get_stacktrace()]),
     false
 	end. 
 
