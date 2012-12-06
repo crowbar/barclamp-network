@@ -1,5 +1,6 @@
 -module(networks).
--export([step/3, validate/1, g/1, network_json/8]).
+-export([step/3, validate/1, g/1, json/3, network_json/2, network_json/8]).
+-define(IP_RANGE, "\"host\": {\"start\":\"192.168.124.61\", \"end\":\"192.168.124.169\"}").
 
 
 % This method is used to define constants
@@ -8,6 +9,22 @@ g(Item) ->
     path -> "2.0/crowbar/2.0/network/networks";
     _ -> crowbar:g(Item)
   end.
+
+
+json(Name, Description, Order) ->
+  network_json(Name, "{" ++ ?IP_RANGE ++ "}").
+
+
+network_json(Name, Ip_ranges) ->
+  network_json(
+    Name,
+    "",
+    "intf0",
+    "192.168.124.0/24",
+    "false",
+    json:parse(Ip_ranges),
+    "10",
+    "192.168.124.1").
 
 
 network_json(Name, Proposal_id, Conduit_id, Subnet, Dhcp_enabled, Ip_ranges, Router_pref, Router_ip) ->
@@ -65,12 +82,14 @@ validate(JSON) ->
        ],
     FlatteR = lists:flatten(R),
 
-    case bdd_utils:assert(FlatteR)of
+    case bdd_utils:assert(FlatteR) of
       true -> true;
-      false -> io:format("FAIL: JSON did not comply with object format ~p~n", [JSON]), false
+      false -> io:format("FAIL: JSON did not comply with object format ~p", [JSON]), false
     end
   catch
-    X: Y -> io:format("ERROR: unable to parse returned network JSON: ~p:~p~n", [X, Y]), false
+    X: Y -> io:format("ERROR: unable to parse returned network JSON: ~p:~p", [X, Y]),
+            io:format("Stacktrace: ~p", [erlang:get_stacktrace()]),
+    false
 	end. 
 
 
@@ -79,35 +98,27 @@ step(_Config, _Given, {step_when, _N, ["REST requests the list of networks"]}) -
   bdd_restrat:step(_Config, _Given, {step_when, _N, ["REST requests the", g(path),"page"]});
 
 
-% Create a network
-step(_Config, _Given, {step_given, _N, ["there is a network",Name]}) ->
-  bdd_utils:log(_Config, debug, "Entering there is a network: Name: ~p~n", [Name]),
-  JSON = networks:network_json(
-    Name,
-    "",
-    "intf0",
-    "192.168.124.0/24",
-    "false",
-    json:parse("{\"host\": {\"start\":\"192.168.124.61\", \"end\":\"192.168.124.169\"}}"),
-    "10",
-    "192.168.124.1"),
-  crowbar_rest:create(_Config, g(path), network1, Name, JSON);
+% Add an ip range to a network
+step(_Config, _Given, {step_when, _N, ["the ip range",Range,"is added to the network",Name]}) ->
+  bdd_utils:log(_Config, trace, "the ip range ~p is added to the network ~p", [Range,Name]),
+  JSON = network_json(Name, "{" ++ ?IP_RANGE ++ ", " ++ Range ++ "}"),
+  bdd_utils:log(_Config, debug, "update JSON: ~p", [JSON]),
+  Results = bdd_restrat:step(_Config, _Given, {step_when, _N, ["REST updates an object at",eurl:path(g(path),Name),"with",JSON]}),
+  bdd_utils:log(_Config, debug, "update Results: ~p",[Results]),
+  Results;
 
 
 % Retrieve a network
 step(_Config, _Given, {step_when, _N, ["REST requests the network",Name]}) ->
+  bdd_utils:log(_Config, trace, "REST requests the network ~p", [Name]),
   bdd_restrat:step(_Config, _Given, {step_when, _N, ["REST requests the", eurl:path(g(path),Name),"page"]});
 
+
+% Validate a network
 step(_Config, Result, {step_then, _N, ["the network is properly formatted"]}) ->
+  bdd_utils:log(_Config, trace, "the network is properly formatted, Result: ~p",[Result]),
   crowbar_rest:step(_Config, Result, {step_then, _N, ["the", networks, "object is properly formatted"]});
 
-
-% Delete a network
-step(Config, _Given, {step_when, _N, ["REST removes the network",Network]}) ->
-  eurl:delete(Config, g(path), Network);
-
-step(Config, _Given, {step_finally, _N, ["REST removes the network",Network]}) ->
-  eurl:delete(Config, g(path), Network);
 
 step(Config, _Result, {step_then, _N, ["there is not a network",Network]}) -> 
   crowbar_rest:get_id(Config, g(path), Network) == "-1".
