@@ -66,7 +66,7 @@ class NetworkController < BarclampController
     return render :text => ret[1], :status => ret[0] if ret[0] != 200
 
     respond_to do |format|
-      format.json { render :json => ret[1] }
+      format.json { render :json => ret[1].to_json( :include => {:subnet => {:only => :cidr}, :router => {:only => :pref, :include => {:ip => {:only => :cidr}}}, :ip_ranges => {:only => :name, :include => {:start_address => {:only => :cidr}, :end_address => {:only => :cidr}}}})}
     end
   end
 
@@ -87,7 +87,7 @@ class NetworkController < BarclampController
     return render :text => ret[1], :status => ret[0] if ret[0] != 200
 
     respond_to do |format|
-      format.json { render :json => ret[1] }
+      format.json { render :json => ret[1].to_json( :include => {:subnet => {:only => :cidr}, :router => {:only => :pref, :include => {:ip => {:only => :cidr}}}, :ip_ranges => {:only => :name, :include => {:start_address => {:only => :cidr}, :end_address => {:only => :cidr}}}})}
     end
   end
 
