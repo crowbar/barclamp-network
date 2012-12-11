@@ -19,16 +19,16 @@ class ConduitTest < ActiveSupport::TestCase
 
   # Test successful creation
   test "Conduit creation: success" do
-    conduit = NetworkTestHelper.create_a_conduit()
+    conduit = NetworkTestHelper.create_or_get_conduit("intf0")
     conduit.save!
   end
 
 
   # Test creation failure due to missing conduit rule
   test "Conduit creation: failure due to missing conduit rule" do
+    conduit = Conduit.new
+    conduit.name = "intf0"
     assert_raise ActiveRecord::RecordInvalid do
-      conduit = Conduit.new
-      conduit.name = "intf0"
       conduit.save!
     end    
   end
@@ -36,7 +36,7 @@ class ConduitTest < ActiveSupport::TestCase
 
   # Test delete cascade
   test "Conduit deletion: cascade to conduit rules" do
-    conduit = NetworkTestHelper.create_a_conduit()
+    conduit = NetworkTestHelper.create_or_get_conduit("intf0")
     conduit.save!
     conduit_rule_id = conduit.conduit_rules[0].id
     conduit.destroy

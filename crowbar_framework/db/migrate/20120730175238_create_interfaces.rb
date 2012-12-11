@@ -15,7 +15,13 @@
 class CreateInterfaces < ActiveRecord::Migration
   def change
     create_table :interfaces do |t|
+      t.string :type
       t.string :name
+      t.integer :team_mode
+      t.references :vlan_interface
+      t.references :bond
+      t.references :vlan
+      t.references :node
 
       t.timestamps
     end

@@ -12,14 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class Conduit < ActiveRecord::Base
-  has_many :networks, :inverse_of => :conduit, :dependent => :nullify
-  has_many :conduit_rules, :dependent => :destroy
-  belongs_to :proposal
-
-  attr_accessible :name
-
-  validates_uniqueness_of :name, :presence => true, :scope => :proposal_id
-  validates :conduit_rules, :presence => true
-  validates :proposal, :presence => true
+class BmcInterface < Interface
 end
