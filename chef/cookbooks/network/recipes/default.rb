@@ -297,8 +297,13 @@ def fixup_mtu(node, networks, intfs)
   mtus = {}
   intfs.each { |intf_name,intf|
     next if intf[:slave] # skip enslaved interfaces.
+
+    #skip interfaces no associated with networks.. they'll be handled by thier owner
+    #networks
     net = networks[intf[:associated_network]]
-    mtu =  net["mtu"]
+    Chef::Log.info("intf #{intf_name} not associated with network") && next unless net
+
+    mtu =  net["mtu"] rescue nil
     # skip if no MTU specified for the network
     Chef::Log.info("no MTU for network: #{net["usage"]}") && next unless mtu
 
