@@ -175,9 +175,10 @@ def crowbar_interfaces()
     end
   }
   Chef::Log.info("will allow routers from #{net_pref}")
-  node["crowbar"]["network"].each do |netname, network|
+  node["crowbar"]["network"].keys.sort.each do |netname|
     next if netname == "bmc"
     allow_gw = (netname == net_pref)
+    network=node["crowbar"]["network"][netname]
 
     conduit = network["conduit"]
     ## get info about the network:
