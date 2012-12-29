@@ -11,7 +11,7 @@ g(Item) ->
   end.
 
 
-json(Name, Description, Order) ->
+json(Name, _Description, _Order) ->
   network_json(Name, "{" ++ ?IP_RANGE ++ "}").
 
 
