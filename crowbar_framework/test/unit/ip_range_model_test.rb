@@ -75,9 +75,9 @@ class IpRangeModelTest < ActiveSupport::TestCase
     ip_range.destroy()
 
     ip_ranges = IpAddress.where( :start_ip_range_id => ip_range_id )
-    assert 0, ip_ranges.size
+    assert_equal 0, ip_ranges.size
 
     ip_ranges = IpAddress.where( :end_ip_range_id => ip_range_id )
-    assert 0, ip_ranges.size
+    assert_equal 0, ip_ranges.size
   end
 end
