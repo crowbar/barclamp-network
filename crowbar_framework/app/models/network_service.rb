@@ -22,7 +22,9 @@ class NetworkService < ServiceObject
 
     # TODO Remove the below HACK and uncomment the line above when we switch to the new network json
     # Start HACK
-    new_json = JSON.load File.open("/opt/dell/barclamps/network/chef/data_bags/crowbar/bc-template-network-new.json", "r")
+    # on admin, should result in:"/opt/dell/barclamps/network/chef/data_bags/crowbar/bc-template-network-new.json"
+    fp = File.join(Rails.root,"..","barclamps","network","chef","data_bags","crowbar","bc-template-network-new.json")
+    new_json = JSON.load File.open(fp, "r")
     attrs_config = new_json["attributes"]
     # End HACK
 
