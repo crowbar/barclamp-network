@@ -15,7 +15,8 @@
 
 class IpAddress < ActiveRecord::Base
   belongs_to :interface, :inverse_of => :ip_addresses
-  attr_accessible :cidr
+  attr_protected :id
+  # attr_accessible :cidr
 
   validates :cidr, :presence => true, :format => { :with => /^([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])(\/([0-9]|1[0-9]|2[0-9]|3[0-2]))?$/, :message => "not a valid IP" }
 

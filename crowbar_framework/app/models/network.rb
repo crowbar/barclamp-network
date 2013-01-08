@@ -13,6 +13,7 @@
 # limitations under the License.
 
 class Network < ActiveRecord::Base
+  attr_protected :id
   has_many :allocated_ips, :class_name => "IpAddress", :dependent => :nullify
   has_one :subnet, :foreign_key => "subnet_id", :class_name => "IpAddress", :dependent => :destroy
   belongs_to :conduit, :inverse_of => :networks
@@ -21,7 +22,7 @@ class Network < ActiveRecord::Base
   belongs_to :proposal
   has_one :vlan, :inverse_of => :network, :dependent => :destroy
 
-  attr_accessible :name, :dhcp_enabled, :use_vlan
+  # attr_accessible :name, :dhcp_enabled, :use_vlan
 
   validates_uniqueness_of :name, :presence => true, :scope => :proposal_id
   validates :use_vlan, :inclusion => { :in => [true, false] }
