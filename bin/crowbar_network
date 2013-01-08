@@ -19,13 +19,15 @@ require File.join(File.expand_path(File.dirname(__FILE__)), "barclamp_lib")
 @barclamp = "network"
 
 @commands["deallocate_ip"] = [ "deallocate_ip(ARGV.shift,ARGV.shift,ARGV.shift)", "deallocate_ip <name> <node> <network> - Deallocate an ip from a node on a network" ]
+@commands["network_deallocate_ip"] = [ "network_deallocate_ip(ARGV.shift,ARGV.shift,ARGV.shift)", "network_deallocate_ip <proposal_id> <node_id> <network_id> - Deallocate an ip from a node on a network" ]
 @commands["allocate_ip"] = [ "allocate_ip(ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift)", "allocate_ip <name> <node> <network> <range> [<suggestion>] - Allocate an ip for a node on a network from a range" ]
+@commands["network_allocate_ip"] = [ "network_allocate_ip(ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift)", "network_allocate_ip <proposal_id> <node_id> <network_id> <range> [suggestion] - Allocate an ip for a node on a network from a range" ]
 @commands["enable_interface"] = [ "enable_interface(ARGV.shift,ARGV.shift,ARGV.shift)", "enable_interface <name> <node> <network> - Ensure that an interface is present for the specified network" ]
 @commands["disable_interface"] = [ "disable_interface(ARGV.shift,ARGV.shift,ARGV.shift)", "disable_interface <name> <node> <network> - Ensure that an interface is not enabled for the specified network" ]
 @commands["network_list"] = [ "network_list()", "network_list - Show a list of current networks" ]
 @commands["network_show"] = [ "network_show(ARGV.shift)", "network_show <name_or_id> - Show a specific network" ]
-@commands["network_create"] = [ "network_create(ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift)", "network_create <name> <proposal_id> <conduit_id> <subnet> <dhcp_enabled> <ip_ranges> <router_pref> <router_ip> - Create a network" ]
-@commands["network_edit"] = [ "network_edit(ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift)", "network_edit <name_or_id> <conduit_id> <subnet> <dhcp_enabled> <ip_ranges> <router_pref> <router_ip> - Edit a network" ]
+@commands["network_create"] = [ "network_create(ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift)", "network_create <name> <proposal_id> <conduit_id> <subnet> <dhcp_enabled> <use_vlan> <ip_ranges> <router_pref> <router_ip> - Create a network" ]
+@commands["network_edit"] = [ "network_edit(ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift)", "network_edit <name_or_id> <conduit_id> <subnet> <dhcp_enabled> <use_vlan> <ip_ranges> <router_pref> <router_ip> - Edit a network" ]
 @commands["network_delete"] = [ "network_delete(ARGV.shift)", "network_delete <name_or_id> - Delete a network" ]
 
 def enable_interface(name, node, network)
@@ -69,6 +71,31 @@ def allocate_ip(name, node, network, range, suggestion)
   end
 end
 
+
+def network_allocate_ip(proposal_id, node_id, network_id, range, suggestion)
+  usage -1 if proposal_id.nil? or proposal_id == ""
+  usage -1 if node_id.nil? or node_id == ""
+  usage -1 if network_id.nil? or network_id == ""
+  usage -1 if range.nil? or range == ""
+
+  @data = { "network_id" => network_id, "node_id" => node_id, "range" => range }
+  @data["suggestion"] = suggestion if suggestion
+  @data = @data.to_json
+
+  struct = post_json2("2.0/crowbar/2.0/network/networks/#{proposal_id}/allocate_ip", @data)
+
+  if struct[1] == 200
+    [ "Allocated IP address #{struct[0].inspect} for proposal #{proposal_id}, network #{network_id}, node #{node_id}", 0 ]
+  elsif struct[1] == 404
+    [ "Failed to allocate IP for proposal #{proposal_id}, network #{network_id}, node #{node_id}: Not Found", 1 ]
+  elsif struct[1] == 400
+    [ "Failed to allocate IP for proposal #{proposal_id}, network #{network_id}, node #{node_id}: Errors in data\n#{struct[0]}", 1 ]
+  else
+    [ "Failed to talk to service network_allocate_ip for proposal #{proposal_id}, network #{network_id}, node #{node_id}: #{struct[1]}: #{struct[0]}", 1 ]
+  end
+end
+
+
 def deallocate_ip(name, node, network)
   usage -1 if name.nil? or name == ""
   usage -1 if network.nil? or network == ""
@@ -87,6 +114,26 @@ def deallocate_ip(name, node, network)
     [ "Failed to talk to service deallocate_ip: #{struct[1]}: #{struct[0]}", 1 ]
   end
 end
+
+
+def network_deallocate_ip(proposal_id, node_id, network_id)
+  usage -1 if proposal_id.nil? or proposal_id == ""
+  usage -1 if node_id.nil? or node_id == ""
+  usage -1 if network_id.nil? or network_id == ""
+
+  struct = delete_json2("2.0/crowbar/2.0/network/networks/#{proposal_id}/deallocate_ip/#{network_id}/#{node_id}")
+
+  if struct[1] == 200
+    [ "Deallocated IP address for network barclamp #{proposal_id}, network #{network_id}, node #{node_id}", 0 ]
+  elsif struct[1] == 404
+    [ "Failed to deallocate IP address for network barclamp #{proposal_id}, network #{network_id}, node #{node_id}: Not Found", 1 ]
+  elsif struct[1] == 400
+    [ "Failed to deallocate IP address for network barclamp #{proposal_id}, network #{network_id}, node #{node_id}: Errors in data\n#{struct[0]}", 1 ]
+  else
+    [ "Failed to talk to service network_deallocate_ip for network barclamp #{proposal_id}, network #{network_id}, node #{node_id}: #{struct[1]}: #{struct[0]}", 1 ]
+  end
+end
+
 
 def disable_interface(name, node, network)
   usage -1 if name.nil? or name == ""
@@ -133,11 +180,12 @@ def network_show(id)
   end
 end
 
-def network_create(name, proposal_id, conduit_id, subnet, dhcp_enabled, ip_ranges, router_pref, router_ip)
+def network_create(name, proposal_id, conduit_id, subnet, dhcp_enabled, use_vlan, ip_ranges, router_pref, router_ip)
   usage -1 if name.nil? or name == ""
   usage -1 if proposal_id.nil? or proposal_id == ""
   usage -1 if conduit_id.nil? or conduit_id == ""
   usage -1 if dhcp_enabled.nil? or dhcp_enabled == ""
+  usage -1 if use_vlan.nil? or use_vlan == ""
   usage -1 if ip_ranges.nil? or ip_ranges == ""
   # router_pref is not required
   # router_ip is not required
@@ -148,6 +196,7 @@ def network_create(name, proposal_id, conduit_id, subnet, dhcp_enabled, ip_range
       "conduit_id" => conduit_id,
       "subnet" => subnet,
       "dhcp_enabled" => dhcp_enabled,
+      "use_vlan" => use_vlan,
       "ip_ranges" => JSON.parse(ip_ranges),
       "router_pref" => router_pref,
       "router_ip" => router_ip
@@ -163,10 +212,11 @@ def network_create(name, proposal_id, conduit_id, subnet, dhcp_enabled, ip_range
   end
 end
 
-def network_edit(name_or_id, conduit_id, subnet, dhcp_enabled, ip_ranges, router_pref, router_ip)
+def network_edit(name_or_id, conduit_id, subnet, dhcp_enabled, use_vlan, ip_ranges, router_pref, router_ip)
   usage -1 if name_or_id.nil? or name_or_id == ""
   usage -1 if conduit_id.nil? or conduit_id == ""
   usage -1 if dhcp_enabled.nil? or dhcp_enabled == ""
+  usage -1 if use_vlan.nil? or use_vlan == ""
   usage -1 if ip_ranges.nil? or ip_ranges == ""
   # router_pref is not required
   # router_ip is not required
@@ -176,6 +226,7 @@ def network_edit(name_or_id, conduit_id, subnet, dhcp_enabled, ip_ranges, router
       "conduit_id" => conduit_id,
       "subnet" => subnet,
       "dhcp_enabled" => dhcp_enabled,
+      "use_vlan" => use_vlan,
       "ip_ranges" => JSON.parse(ip_ranges),
       "router_pref" => router_pref,
       "router_ip" => router_ip

@@ -17,6 +17,7 @@ class CreateNetworks < ActiveRecord::Migration
     create_table :networks do |t|
       t.string :name
       t.boolean :dhcp_enabled
+      t.boolean :use_vlan
       t.references :conduit
       t.references :proposal
 

@@ -17,8 +17,6 @@ require 'network_test_helper'
  
 class NetworkModelTest < ActiveSupport::TestCase
 
-  # TODO: Need to add tests around allocated_ips
-
   # Successful create
   test "Network creation: success" do
     network = NetworkTestHelper.create_a_network()
@@ -35,6 +33,7 @@ class NetworkModelTest < ActiveSupport::TestCase
     conduit_id = network.conduit.id
     router_id = network.router.id
     ip_range_ids = network.ip_ranges.collect { |ip_range| ip_range.id }
+    allocated_ip_ids = network.allocated_ips.collect { |allocated_ip| allocated_ip.id }
 
     network.destroy
 
@@ -56,6 +55,13 @@ class NetworkModelTest < ActiveSupport::TestCase
     ip_range_ids.each { |ip_range_id|
       assert_raise ActiveRecord::RecordNotFound do
         IpRange.find( ip_range_id )
+      end
+    }
+
+    # Verify allocated_ips destroyed on network destroy
+    allocated_ip_ids.each { |allocated_ip_id|
+      assert_raise ActiveRecord::RecordNotFound do
+        IpAddress.find( allocated_ip_id )
       end
     }
   end
@@ -124,5 +130,19 @@ class NetworkModelTest < ActiveSupport::TestCase
       network.conduit = Conduit.create!( :name => "intf0" )
       network.save!
     end
+  end
+
+
+  # Test cascade Vlan deletion on Network deletion
+  test "Network deletion: cascade delete to Vlans" do
+    network = NetworkTestHelper.create_a_network()
+    network.vlan = Vlan.new(:tag => 100)
+    network.save!
+
+    vlan_id = network.vlan.id
+    network.destroy()
+
+    vlans = Vlan.where( :id => vlan_id )
+    assert_equal 0, vlans.size
   end
 end

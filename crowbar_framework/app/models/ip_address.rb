@@ -18,4 +18,24 @@ class IpAddress < ActiveRecord::Base
   attr_accessible :cidr
 
   validates :cidr, :presence => true, :format => { :with => /^([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])(\/([0-9]|1[0-9]|2[0-9]|3[0-2]))?$/, :message => "not a valid IP" }
+
+
+  def get_ip
+    cidr_parts = cidr.split('/')
+    cidr_parts[0]
+  end
+
+
+  def get_netmask
+    cidr_parts = cidr.split('/')
+    IPAddr.new("255.255.255.255").mask(cidr_parts[1])
+  end
+
+
+  def get_broadcast
+    netmask = get_netmask()
+
+    cidr_parts = cidr.split('/')
+    IPAddr.new(cidr_parts[0]) | ~netmask
+  end
 end

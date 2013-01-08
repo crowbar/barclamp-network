@@ -18,11 +18,13 @@ class Network < ActiveRecord::Base
   belongs_to :conduit, :inverse_of => :networks
   has_one :router, :inverse_of => :network, :dependent => :destroy
   has_many :ip_ranges, :dependent => :destroy
-  belongs_to :proposal, :inverse_of => :networks
+  belongs_to :proposal
+  has_one :vlan, :inverse_of => :network, :dependent => :destroy
 
-  attr_accessible :name, :dhcp_enabled
+  attr_accessible :name, :dhcp_enabled, :use_vlan
 
-  validates :name, :presence => true, :uniqueness => true
+  validates_uniqueness_of :name, :presence => true, :scope => :proposal_id
+  validates :use_vlan, :inclusion => { :in => [true, false] }
   validates :dhcp_enabled, :inclusion => { :in => [true, false] }
   validates :subnet, :presence => true
   validates :ip_ranges, :presence => true

@@ -18,8 +18,9 @@ class NetworkTestHelper
     network = Network.new
     network.name = "fred"
     network.dhcp_enabled = true
+    network.use_vlan = false
     network.subnet = IpAddress.create!( :cidr => "192.168.130.11/24" )
-    network.conduit = create_a_conduit()
+    network.conduit = create_or_get_conduit("intf0")
     network.router = create_a_router()
     network.ip_ranges << create_an_ip_range()
     network.proposal = create_or_get_proposal()
@@ -37,11 +38,19 @@ class NetworkTestHelper
 
   
   # Create a conduit
-  def self.create_a_conduit
-    conduit = Conduit.new()
-    conduit.name = "intf0"
-    conduit.conduit_rules << create_a_conduit_rule()
-    conduit.proposal = create_or_get_proposal()
+  def self.create_or_get_conduit( conduit_name )
+    conduit = nil
+
+    conduits = Conduit.where( :name => conduit_name )
+    if conduits.size == 0
+      conduit = Conduit.new()
+      conduit.name = conduit_name
+      conduit.conduit_rules << create_a_conduit_rule()
+      conduit.proposal = create_or_get_proposal()
+    else
+      conduit = conduits[0]
+    end
+
     conduit
   end
 
@@ -125,4 +134,6 @@ class NetworkTestHelper
 
     proposal
   end
+
+
 end
