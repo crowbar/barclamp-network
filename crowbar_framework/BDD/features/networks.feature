@@ -29,3 +29,20 @@ Feature: Networks
     Given REST creates the {object:networks} "bdd_net"
     When REST deletes the {object:networks} "bdd_net"
     Then there is not a network "bdd_net"
+
+  Scenario: Allocate an IP to a node
+    Given REST creates the {object:networks} "bdd_net"
+      And there is a {object:node} "node.net.com"
+    When an IP address is allocated to node "node.net.com" on {object:networks} "bdd_net" from range "host"
+    Then the net info response is properly formatted
+    Finally REST deletes the {object:networks} "bdd_net"
+      And REST removes {object:node} "node.net.com"
+
+  Scenario: Deallocate an IP from a node
+    Given REST creates the {object:networks} "bdd_net"
+      And there is a {object:node} "node.net.com"
+      And an IP address is allocated to node "node.net.com" on {object:networks} "bdd_net" from range "host"
+    When an IP address is deallocated from node "node.net.com" on {object:networks} "bdd_net"
+    Then REST call returned success
+    Finally REST deletes the {object:networks} "bdd_net"
+      And REST removes {object:node} "node.net.com"

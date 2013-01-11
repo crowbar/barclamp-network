@@ -45,6 +45,7 @@ Shows details about a selected network.
         }
       },
       "dhcp_enabled": "false",
+      "use_vlan": "false",
       "subnet": {
         "cidr": "192.168.122.0/24"
       },
@@ -91,6 +92,7 @@ Creates a new network.
       "conduit_id":"1",
       "subnet":"192.168.122.0/24",
       "dhcp_enabled":"false",
+      "use_vlan":"false",
       "ip_ranges":"{ "host": { "start": "192.168.122.2", "end": "192.168.122.49" }, "dhcp": { "start": "192.168.122.50", "end": "192.168.122.127" }}",
       "router_pref":"5",
       "router_ip":"192.168.122.1"
@@ -102,6 +104,7 @@ Details:
 * conduit_id - the ID or name of the conduit to associate with the network
 * subnet - the subnet and netmask of the network in CIDR format
 * dhcp_enabled - a boolean indicating if an external DHCP server should be used to provide IP addresses
+* use_vlan - a boolean indicating if a vlan should be used
 * ip_ranges - the IP ranges to associate with the network (in JSON format)
 * router_pref - the router preference
 * router_ip - the IP of the router
@@ -124,6 +127,7 @@ Updates a new network.
       "conduit_id":"1",
       "subnet":"192.168.122.0/24",
       "dhcp_enabled":"false",
+      "use_vlan":"false",
       "ip_ranges":"{ "host": { "start": "192.168.122.2", "end": "192.168.122.49" }, "dhcp": { "start": "192.168.122.50", "end": "192.168.122.127" }}",
       "router_pref":"5",
       "router_ip":"192.168.122.1"
@@ -150,6 +154,46 @@ Deletes a network.
 <tr><td> DELETE  </td><td>crowbar/2.0/network/2.0/networks/[id]</td><td> Database ID or name </td><td>HTTP error code 200 on success</td><td></td></tr>
 </table>
 
+
+No body.
+
+**Output:**
+
+None.
+
+
+#### Network Actions: IP Allocate
+
+Allocates a free IP address in a network.
+
+**Input:**
+
+<table border=1>
+<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
+<tr><td>POST</td><td>crowbar/2.0/network/2.0/networks/[id]/allocate_ip</td><td> Database ID or name of the network barclamp </td><td>HTTP error code 200 on success</td><td></td></tr>
+</table>
+
+    {
+      "node_id":"1",
+      "network_id":"2",
+      "range":"host",
+    }
+
+**Output:**
+
+None.
+
+
+#### Network Actions: IP Deallocate
+
+Deallocates a used IP address in a network.
+
+**Input:**
+
+<table border=1>
+<tr><th> Verb </th><th> URL </th><th> Options </th><th> Returns </th><th> Comments </th></tr>
+<tr><td>DELETE</td><td>crowbar/2.0/network/2.0/networks/[id]/deallocate_ip/[network_id]/[node_id]</td><td>id: Database ID or name of proposal<br>network_id: Database ID or name of network<br>node_id: Database ID or name of node</td><td>HTTP error code 200 on success</td><td></td></tr>
+</table>
 
 No body.
 

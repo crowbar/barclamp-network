@@ -26,15 +26,15 @@ class IpRangeModelTest < ActiveSupport::TestCase
 
   # Test creation failure due to missing name
   test "IpRange creation: failure due to missing name" do
+    ip_range = IpRange.new()
+
+    ip = IpAddress.new( :cidr => "192.168.24.23/24" )
+    ip_range.start_address = ip
+
+    ip = IpAddress.new( :cidr => "192.168.24.99/24" )
+    ip_range.end_address = ip
+
     assert_raise ActiveRecord::RecordInvalid do
-      ip_range = IpRange.new()
-
-      ip = IpAddress.new( :cidr => "192.168.24.23/24" )
-      ip_range.start_address = ip
-
-      ip = IpAddress.new( :cidr => "192.168.24.99/24" )
-      ip_range.end_address = ip
-
       ip_range.save!
     end
   end
@@ -42,12 +42,12 @@ class IpRangeModelTest < ActiveSupport::TestCase
 
   # Test creation failure due to missing start_address
   test "IpRange creation: failure due to start address" do
+    ip_range = IpRange.new( :name => "dhcp" )
+
+    ip = IpAddress.new( :cidr => "192.168.24.99/24" )
+    ip_range.end_address = ip
+
     assert_raise ActiveRecord::RecordInvalid do
-      ip_range = IpRange.new( :name => "dhcp" )
-
-      ip = IpAddress.new( :cidr => "192.168.24.99/24" )
-      ip_range.end_address = ip
-
       ip_range.save!
     end
   end
@@ -55,12 +55,12 @@ class IpRangeModelTest < ActiveSupport::TestCase
 
   # Test creation failure due to missing end_address
   test "IpRange creation: failure due to end address" do
+    ip_range = IpRange.new( :name => "dhcp" )
+
+    ip = IpAddress.new( :cidr => "192.168.24.99/24" )
+    ip_range.start_address = ip
+
     assert_raise ActiveRecord::RecordInvalid do
-      ip_range = IpRange.new( :name => "dhcp" )
-
-      ip = IpAddress.new( :cidr => "192.168.24.99/24" )
-      ip_range.start_address = ip
-
       ip_range.save!
     end
   end

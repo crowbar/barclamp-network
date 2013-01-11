@@ -26,10 +26,10 @@ class ConduitRuleTest < ActiveSupport::TestCase
 
   # Test creation failure due to missing interface selectors
   test "ConduitRule creation: failure due to missing interface selectors" do
+    rule = ConduitRule.new()
+    rule.conduit_filters << NetworkTestHelper.create_a_conduit_filter()
+    rule.conduit_actions << NetworkTestHelper.create_a_conduit_action()
     assert_raise ActiveRecord::RecordInvalid do
-      rule = ConduitRule.new()
-      rule.conduit_filters << NetworkTestHelper.create_a_conduit_filter()
-      rule.conduit_actions << NetworkTestHelper.create_a_conduit_action()
       rule.save!
     end    
   end
