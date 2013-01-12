@@ -23,4 +23,9 @@ class IpRange < ActiveRecord::Base
   validates :name, :presence => true
   validates :start_address, :presence => true
   validates :end_address, :presence => true
+  
+
+  def self.find_by_network_and_range(network_id, range)
+    IpRange.where("network_id = ? AND name = ?", network_id, range).first
+  end
 end

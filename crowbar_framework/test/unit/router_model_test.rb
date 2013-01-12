@@ -34,10 +34,10 @@ class RouterModelTest < ActiveSupport::TestCase
 
   # Test validation: creation failed due to no pref
   test "Router creation: failure due to no pref" do
+    ip = IpAddress.new(:cidr => "192.168.130.12")
+    router = Router.new()
+    router.ip = ip
     assert_raise ActiveRecord::RecordInvalid do
-      ip = IpAddress.new(:cidr => "192.168.130.12")
-      router = Router.new()
-      router.ip = ip
       router.save!()
     end
   end
@@ -45,11 +45,11 @@ class RouterModelTest < ActiveSupport::TestCase
 
   # Test validation: creation failed due to alpha pref
   test "Router creation: failure due to alpha pref" do
+    ip = IpAddress.new(:cidr => "192.168.130.12")
+    router = Router.new()
+    router.pref = "asdf"
+    router.ip = ip
     assert_raise ActiveRecord::RecordInvalid do
-      ip = IpAddress.new(:cidr => "192.168.130.12")
-      router = Router.new()
-      router.pref = "asdf"
-      router.ip = ip
       router.save!()
     end
   end

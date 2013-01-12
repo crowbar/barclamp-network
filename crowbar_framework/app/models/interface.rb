@@ -13,6 +13,11 @@
 # limitations under the License.
 
 class Interface < ActiveRecord::Base
-  has_many :ip_addresses, :inverse_of => :interface, :dependent => :nullify
+  has_many :ip_addresses, :inverse_of => :interface, :dependent => :destroy
+  belongs_to :vlan_interface, :inverse_of => :interfaces
+  belongs_to :node
+  
   attr_accessible :name
+
+  validates :name, :presence => true
 end

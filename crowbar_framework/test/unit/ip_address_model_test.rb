@@ -80,4 +80,14 @@ class IpAddressModelTest < ActiveSupport::TestCase
       IpAddress.create!( :cidr => "192.168.130.256/33" )
     end
   end
+
+
+  # Test netmask retrieval: failure due to no /99
+  test "IpAddress netmask retrieval: failure" do
+    ip = IpAddress.create!( :cidr => "192.168.130.10" )
+
+    assert_raise( RuntimeError ) do
+      ip.get_netmask
+    end
+  end
 end

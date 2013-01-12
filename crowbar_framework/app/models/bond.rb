@@ -12,14 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class Conduit < ActiveRecord::Base
-  has_many :networks, :inverse_of => :conduit, :dependent => :nullify
-  has_many :conduit_rules, :dependent => :destroy
-  belongs_to :proposal
+class Bond < Interface
+  attr_accessible :team_mode
 
-  attr_accessible :name
+  has_many :physical_interfaces, :dependent => :nullify
 
-  validates_uniqueness_of :name, :presence => true, :scope => :proposal_id
-  validates :conduit_rules, :presence => true
-  validates :proposal, :presence => true
+  validates :team_mode, :presence => true, :numericality => { :only_integer => true, :greater_than_or_equal_to => 0, :less_than_or_equal_to => 6 }
+  validate :has_two_or_more_physical_interfaces
+
+
+  def has_two_or_more_physical_interfaces
+    if physical_interfaces.size < 2
+      errors.add(:two_or_more_physical_interfaces, "A Bond must have at least two physical interfaces")
+    end
+  end
 end

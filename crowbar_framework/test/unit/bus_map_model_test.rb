@@ -25,9 +25,9 @@ class BusMapModelTest < ActiveSupport::TestCase
 
   # Test creation failure due to missing pattern
   test "BusMap creation: failure due to missing pattern" do
+    bus_map = BusMap.new()
+    bus_map.buses << NetworkTestHelper.create_a_bus()
     assert_raise ActiveRecord::RecordInvalid do
-      bus_map = BusMap.new()
-      bus_map.buses << NetworkTestHelper.create_a_bus()
       bus_map.save!
     end
   end
@@ -35,8 +35,8 @@ class BusMapModelTest < ActiveSupport::TestCase
 
   # Test creation failure due to missing bus
   test "BusMap creation: failure due to missing bus" do
+    bus_map = BusMap.new( :pattern => "PowerEdge C2100")
     assert_raise ActiveRecord::RecordInvalid do
-      bus_map = BusMap.new( :pattern => "PowerEdge C2100")
       bus_map.save!
     end
   end
