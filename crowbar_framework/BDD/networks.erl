@@ -148,7 +148,7 @@ step(Config, Result, {step_then, _N, ["the network is properly formatted"]}) ->
 
 
 step(Config, _Result, {step_then, _N, ["there is not a network",Network]}) -> 
-  crowbar_rest:get_id(Config, g(path), Network) == "-1";
+  bdd_restrat:get_id(Config, g(path), Network) == "-1";
 
 
 % Ip address allocation
