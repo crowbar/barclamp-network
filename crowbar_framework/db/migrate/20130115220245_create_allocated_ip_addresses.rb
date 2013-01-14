@@ -12,12 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class Interface < ActiveRecord::Base
-  has_many :allocated_ip_addresses, :inverse_of => :interface, :dependent => :destroy
-  belongs_to :vlan_interface, :inverse_of => :interfaces
-  belongs_to :node
-  
-  attr_accessible :name
+class CreateAllocatedIpAddresses < ActiveRecord::Migration
+  def change
+    create_table :allocated_ip_addresses do |t|
+      t.string :ip
+      t.references :interface
+      t.references :network
 
-  validates :name, :presence => true
+      t.timestamps
+    end
+
+    add_index(:allocated_ip_addresses, [:ip, :network_id], :unique => true, :name => "by_ip_network")
+  end
 end
