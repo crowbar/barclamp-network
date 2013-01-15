@@ -3,34 +3,40 @@ Feature: Networks
   wants to be able to list, show, create, edit, and delete networks
 
   Scenario: Update a network
+    Unless interactive
     Given REST creates the {object:networks} "bdd_net"
     When the ip range "\"dhcp\":{\"start\":\"192.168.124.21\",\"end\":\"192.168.124.80\"}" is added to the network "bdd_net"
     Then the network is properly formatted
     Finally REST deletes the {object:networks} "bdd_net"
   
   Scenario: Create a network
+    Unless interactive
     When REST creates the {object:networks} "bdd_net"
     Then the network is properly formatted
     Finally REST deletes the {object:networks} "bdd_net"
 
   Scenario: Show a network
+    Unless interactive
     Given REST creates the {object:networks} "bdd_net"
     When REST requests the network "bdd_net"
     Then the network is properly formatted
     Finally REST deletes the {object:networks} "bdd_net"
 
   Scenario: Retrieve the list of networks
+    Unless interactive
     Given REST creates the {object:networks} "bdd_net"
     When REST requests the list of networks
     Then the object id list is properly formatted
     Finally REST deletes the {object:networks} "bdd_net"
   
   Scenario: Delete a network
+    Unless interactive
     Given REST creates the {object:networks} "bdd_net"
     When REST deletes the {object:networks} "bdd_net"
     Then there is not a network "bdd_net"
 
   Scenario: Allocate an IP to a node
+    Unless interactive
     Given REST creates the {object:networks} "bdd_net"
       And there is a {object:node} "node.net.com"
     When an IP address is allocated to node "node.net.com" on {object:networks} "bdd_net" from range "host"
@@ -39,6 +45,7 @@ Feature: Networks
       And REST removes {object:node} "node.net.com"
 
   Scenario: Deallocate an IP from a node
+    Unless interactive
     Given REST creates the {object:networks} "bdd_net"
       And there is a {object:node} "node.net.com"
       And an IP address is allocated to node "node.net.com" on {object:networks} "bdd_net" from range "host"
