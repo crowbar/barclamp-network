@@ -241,6 +241,7 @@ class NetworkService < ServiceObject
 
       nets = node.crowbar["crowbar"]["network"].keys
       nets.each do |net|
+        next if net == "admin"
         ret, msg = self.deallocate_ip(inst, net, name)
         return [ ret, msg ] if ret != 200
       end
