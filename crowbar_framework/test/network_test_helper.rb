@@ -1,4 +1,4 @@
-# Copyright 2012, Dell 
+# Copyright 2013, Dell 
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); 
 # you may not use this file except in compliance with the License. 
@@ -19,7 +19,7 @@ class NetworkTestHelper
     network.name = "fred"
     network.dhcp_enabled = true
     network.use_vlan = false
-    network.subnet = IpAddress.create!( :cidr => "192.168.130.11/24" )
+    network.subnet = IpAddress.create!( :cidr => "192.168.122.11/24" )
     network.conduit = create_or_get_conduit("intf0")
     network.router = create_a_router()
     network.ip_ranges << create_an_ip_range()
@@ -87,10 +87,10 @@ class NetworkTestHelper
   
   # Create an IpRange
   def self.create_an_ip_range
-    ip_range = IpRange.new( :name => "dhcp" )
-    ip = IpAddress.new( :cidr => "192.168.24.50/24" )
+    ip_range = IpRange.new( :name => "host" )
+    ip = IpAddress.new( :cidr => "192.168.122.2" )
     ip_range.start_address = ip
-    ip = IpAddress.new( :cidr => "192.168.24.99/24" )
+    ip = IpAddress.new( :cidr => "192.168.122.5" )
     ip_range.end_address = ip
     ip_range
   end

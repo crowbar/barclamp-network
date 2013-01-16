@@ -1,4 +1,4 @@
-# Copyright 2012, Dell
+# Copyright 2013, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@ class CreateIpAddresses < ActiveRecord::Migration
   def change
     create_table :ip_addresses do |t|
       t.string :cidr
-      t.references :interface
-      t.integer :network_id
       t.integer :subnet_id
       t.integer :router_id
       t.integer :start_ip_range_id

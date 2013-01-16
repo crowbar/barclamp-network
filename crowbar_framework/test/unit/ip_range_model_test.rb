@@ -1,4 +1,4 @@
-# Copyright 2012, Dell 
+# Copyright 2013, Dell 
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); 
 # you may not use this file except in compliance with the License. 
@@ -28,10 +28,10 @@ class IpRangeModelTest < ActiveSupport::TestCase
   test "IpRange creation: failure due to missing name" do
     ip_range = IpRange.new()
 
-    ip = IpAddress.new( :cidr => "192.168.24.23/24" )
+    ip = IpAddress.new( :cidr => "192.168.24.23" )
     ip_range.start_address = ip
 
-    ip = IpAddress.new( :cidr => "192.168.24.99/24" )
+    ip = IpAddress.new( :cidr => "192.168.24.99" )
     ip_range.end_address = ip
 
     assert_raise ActiveRecord::RecordInvalid do
@@ -44,7 +44,7 @@ class IpRangeModelTest < ActiveSupport::TestCase
   test "IpRange creation: failure due to start address" do
     ip_range = IpRange.new( :name => "dhcp" )
 
-    ip = IpAddress.new( :cidr => "192.168.24.99/24" )
+    ip = IpAddress.new( :cidr => "192.168.24.99" )
     ip_range.end_address = ip
 
     assert_raise ActiveRecord::RecordInvalid do
@@ -57,7 +57,7 @@ class IpRangeModelTest < ActiveSupport::TestCase
   test "IpRange creation: failure due to end address" do
     ip_range = IpRange.new( :name => "dhcp" )
 
-    ip = IpAddress.new( :cidr => "192.168.24.99/24" )
+    ip = IpAddress.new( :cidr => "192.168.24.99" )
     ip_range.start_address = ip
 
     assert_raise ActiveRecord::RecordInvalid do

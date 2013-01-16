@@ -1,4 +1,4 @@
-# Copyright 2012, Dell
+# Copyright 2013, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,9 +23,4 @@ class IpRange < ActiveRecord::Base
   validates :name, :presence => true
   validates :start_address, :presence => true
   validates :end_address, :presence => true
-  
-
-  def self.find_by_network_and_range(network_id, range)
-    IpRange.where("network_id = ? AND name = ?", network_id, range).first
-  end
 end

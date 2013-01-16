@@ -1,4 +1,4 @@
-# Copyright 2012, Dell 
+# Copyright 2013, Dell 
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); 
 # you may not use this file except in compliance with the License. 
@@ -253,111 +253,25 @@ class NetworkService < ServiceObject
 
 
   def network_allocate_ip(proposal_id, network_id, range, node_id, suggestion = nil)
-    @logger.debug("Entering network_allocate_ip(proposal_id: #{proposal_id}, node_id: #{node_id}, network_id: #{network_id}, range: #{range}, suggestion: #{suggestion}")
+    @logger.debug("Entering network_allocate_ip(proposal_id: #{proposal_id}, network_id: #{network_id}, range: #{range}, node_id: #{node_id}, suggestion: #{suggestion}")
 
     proposal_id = nil if !proposal_id.nil? and proposal_id.empty?
 
     # Validate inputs
     return [400, "No network_id specified"] if network_id.nil?
     return [400, "No node_id specified"] if node_id.nil?
-    return [400, "No range specified"] if range.nil?
 
     # Find the node
     node = get_object_safe(Node, node_id)
     return [404, "Node #{node_id} does not exist"] if node.nil?
 
-    network = nil
-    found = false
-    #CrowbarUtils.with_lock("ip") do
-        # Find the proposal and network
-        error_code, *rest = find_proposal_and_network(proposal_id, network_id)
-        return [error_code, rest[0]] if error_code != 200
-        proposal = rest[0]
-        network = rest[1]
+    # Find the proposal and network
+    error_code, *rest = find_proposal_and_network(proposal_id, network_id)
+    return [error_code, rest[0]] if error_code != 200
+    proposal = rest[0]
+    network = rest[1]
 
-        # If the node already has an IP on this proposal/network then just return success
-        results = IpAddress.joins(:interface).where(:interfaces => {:node_id => node.id}).where(:network_id => network.id)
-        if results.length > 0
-          allocated_ip = results.first.cidr
-          @logger.error("network_allocate_ip: node #{node_id} already has address #{allocated_ip} on network #{network_id}, range #{range}")
-          net_info = build_net_info2(network, node.name)
-          net_info["address"] = allocated_ip
-          return [200, net_info]
-        end
-
-        subnet = network.subnet
-        subnet_addr = IPAddr.new(subnet.cidr)
-        netmask_addr = subnet.get_netmask()
-
-        # Find the ip range
-        ip_range = IpRange.find_by_network_and_range(network.id, range)
-        return [404, "No network found"] if ip_range.nil?
-
-        index = IPAddr.new(ip_range.start_address.cidr) & ~netmask_addr
-        index = index.to_i
-        stop_address = IPAddr.new(ip_range.end_address.cidr) & ~netmask_addr
-        stop_address = subnet_addr | (stop_address.to_i + 1)
-        address = subnet_addr | index
-    
-        if suggestion
-          @logger.info("Allocating with suggestion: #{suggestion}")
-          subsug = IPAddr.new(suggestion) & netmask_addr
-          if subnet_addr == subsug
-            if IpAddress.where("network_id = ? AND cidr = ?", network.id, suggestion).length == 0
-              @logger.info("Using suggestion: #{node_id} #{network_id} #{suggestion}")
-              address = suggestion
-              found = true
-            end
-          end
-        end
-
-        # Snag all the allocated IPs for this network and convert to a hash
-        ips = {}
-        for ip in network.allocated_ips do
-          ips[ip.cidr] = true
-        end
-
-        while !found do
-          unless ips.key?(address.to_s)
-            found = true
-            break
-          end
-          index = index + 1
-          address = subnet_addr | index
-          break if address == stop_address
-        end
-
-        net_info = build_net_info2(network, node.name)
-
-        if found
-          net_info["address"] = address.to_s
-          ip_addr = IpAddress.new( :cidr => address.to_s )
-          network.allocated_ips << ip_addr
-
-          # TODO - Interfaces should be discovered, not created on the fly
-          interfaces = Interface.where( "node_id = ?", node.id )
-          @logger.debug("Found #{interfaces.size} interfaces")
-          interface = nil
-          if interfaces.size == 0
-            interface = PhysicalInterface.create!(:name => "eth0", :node => node)
-            @logger.debug("Created interface #{interface.id}")
-          else
-            interface = interfaces[0]
-          end
-          ip_addr.interface = interface
-          ip_addr.save!
-
-          network.save!
-        end
-    #end
-
-    if !found
-      @logger.info("network_allocate_ip: no address available: #{node_id} #{network} #{range}")
-      return [404, "No Address Available"]
-    end
-
-    @logger.info("network_allocate_ip: Assigned: #{node_id} #{network_id} #{range} #{address}")
-    [200, net_info]
+    network.allocate_ip(range, node, suggestion)
   end
 
 
@@ -433,7 +347,7 @@ class NetworkService < ServiceObject
 
 
   def network_deallocate_ip(proposal_id, network_id, node_id)
-    @logger.debug("Entering network_deallocate_ip(proposal_id: #{proposal_id}, node_id: #{node_id}, network_id: #{network_id}")
+    @logger.debug("Entering network_deallocate_ip(proposal_id: #{proposal_id}, network_id: #{network_id}, node_id: #{node_id}")
 
     proposal_id = nil if !proposal_id.nil? and proposal_id.empty?
     
@@ -450,21 +364,7 @@ class NetworkService < ServiceObject
     proposal = rest[0]
     network = rest[1]
 
-    # If we don't have one allocated, return success
-    results = IpAddress.joins(:interface).where(:interfaces => {:node_id => node.id}).where(:network_id => network.id)
-    if results.length == 0
-      @logger.warn("network_deallocate_ip: node #{node_id} does not have an address allocated on network #{network}")
-      return [200, nil]
-    end
-
-    save = false
-    #CrowbarUtils.with_lock("ip") do
-        allocated_ip = results.first
-        allocated_ip.destroy
-        @logger.info("network_deallocate_ip: deallocated ip #{allocated_ip.cidr} for node #{node_id} on network #{network}")
-    #end
-
-    [200, nil]
+    network.deallocate_ip(node)
   end
 
 
@@ -586,34 +486,6 @@ class NetworkService < ServiceObject
     net_info["router_pref"] = router_pref unless router_pref.nil?
     net_info
   end
-
-
-  def build_net_info2(network, node)
-    subnet = network.subnet
-
-    router_addr = nil
-    router_pref = nil
-    router = network.router
-    unless router.nil?
-      router_addr = router.ip.cidr
-      router_pref = router.pref
-    end
-
-    vlan = network.vlan
-
-    net_info = { 
-      "conduit" => network.conduit.name,
-      "netmask" => subnet.get_netmask().to_s,
-      "node" => node,
-      "router" => router_addr,
-      "subnet" => subnet.get_ip,
-      "broadcast" => subnet.get_broadcast().to_s,
-      "usage" => network.name, 
-      "use_vlan" => "#{network.use_vlan}",
-      "vlan" => vlan.nil? ? "" :"#{vlan.tag}" }
-    net_info["router_pref"] = "#{router_pref}" unless router_pref.nil?
-    net_info
-  end
   
 
   def network_get(id)
@@ -641,7 +513,7 @@ class NetworkService < ServiceObject
             :dhcp_enabled => dhcp_enabled,
             :use_vlan => use_vlan)
         network.subnet = subnet
-        #network.proposal = get_object( Proposal, proposal_id )
+        network.proposal = get_object( Proposal, proposal_id ) if proposal_id != "-1" and !proposal_id.empty?
         network.conduit = get_object( Conduit, conduit_id )
 
         # Either both router_pref and router_ip are passed, or neither are

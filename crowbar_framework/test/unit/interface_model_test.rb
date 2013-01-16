@@ -1,4 +1,4 @@
-# Copyright 2012, Dell 
+# Copyright 2013, Dell 
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); 
 # you may not use this file except in compliance with the License. 
@@ -34,14 +34,20 @@ class InterfaceModelTest < ActiveSupport::TestCase
 
   # Test cascade allocated ip deletion on interface deletion
   test "Interface deletion: cascade delete to allocated ips" do
+    network = NetworkTestHelper.create_a_network()
+    network.save!
+
+    allocated_ip = AllocatedIpAddress.new(:ip => "192.168.130.24")
+    allocated_ip.network = network
+
     interface = Interface.new(:name => "fred")
-    interface.ip_addresses << IpAddress.new( :cidr => "192.168.130.24" )
+    interface.allocated_ip_addresses << allocated_ip
     interface.save!
 
-    ip_id = interface.ip_addresses.first.id
+    ip_id = interface.allocated_ip_addresses.first.id
     interface.destroy()
 
-    ips = IpAddress.where( :id => ip_id )
+    ips = AllocatedIpAddress.where( :id => ip_id )
     assert_equal 0, ips.size
   end
 end
