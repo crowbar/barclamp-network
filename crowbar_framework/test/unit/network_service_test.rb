@@ -1,4 +1,4 @@
-# Copyright 2012, Dell 
+# Copyright 2013, Dell 
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); 
 # you may not use this file except in compliance with the License. 
@@ -401,14 +401,6 @@ class NetworkServiceTest < ActiveSupport::TestCase
   end
 
 
-  # Allocate IP failure due to missing range
-  test "network_allocate_ip: failure due to missing range" do
-    net_service = NetworkService.new(Rails.logger)
-    http_error, message = net_service.network_allocate_ip("proposal1","network1",nil,"fred")
-    assert_equal 400, http_error
-  end
-
-
   # Allocate IP failure due to bad node_id
   test "network_allocate_ip: failure due to bad node_id" do
     net_service = NetworkService.new(Rails.logger)
@@ -427,43 +419,6 @@ class NetworkServiceTest < ActiveSupport::TestCase
   end
 
 
-  # Allocate IP success due to node already having allocated IP
-  test "network_allocate_ip: success due to node already has allocated IP" do
-    net_service = NetworkService.new(Rails.logger)
-
-    node = Node.new(:name => "fred.flintstone.org")
-    node.save!
-
-    intf = PhysicalInterface.new(:name => "eth0")
-    intf.node = node
-    ip = IpAddress.new(:cidr => "192.168.122.4")
-    intf.ip_addresses << ip
-    intf.save!
-
-    network = create_a_network(net_service, "public")
-    network.allocated_ips << ip
-    network.save!
-
-    http_error, message = net_service.network_allocate_ip(nil,network.id,"host","fred.flintstone.org")
-    assert_equal 200, http_error
-  end
-
-
-  # Allocate IP success due to suggested IP being available
-  test "network_allocate_ip: success due to suggested IP being available" do
-    net_service = NetworkService.new(Rails.logger)
-
-    node = Node.new(:name => "fred.flintstone.org")
-    node.save!
-
-    network = create_a_network(net_service, "public")
-    network.save!
-
-    http_error, message = net_service.network_allocate_ip(nil,network.id,"host","fred.flintstone.org","192.168.122.30")
-    assert_equal 200, http_error
-  end
-  
-
   # Allocate IP success - perfect path
   test "network_allocate_ip: success" do
     net_service = NetworkService.new(Rails.logger)
@@ -476,27 +431,6 @@ class NetworkServiceTest < ActiveSupport::TestCase
 
     http_error, message = net_service.network_allocate_ip(nil,network.id,"host","fred.flintstone.org")
     assert_equal 200, http_error
-  end
-
-
-  # Allocate IP failure due to out of addresses
-  test "network_allocate_ip: failure due to out of addresses" do
-    net_service = NetworkService.new(Rails.logger)
-
-    network = create_a_network(net_service, "public")
-    network.save!
-
-    create_a_node_and_allocate_ip(net_service, network, "fred1.flintstone.org") # .2
-    create_a_node_and_allocate_ip(net_service, network, "fred2.flintstone.org") # .3
-    create_a_node_and_allocate_ip(net_service, network, "fred3.flintstone.org") # .4
-    create_a_node_and_allocate_ip(net_service, network, "fred4.flintstone.org") # .5
-
-    # All IPs in the range are allocated, so the test below should blow up
-    node = Node.new(:name => "fred5.flintstone.org")
-    node.save!
-
-    http_error, message = net_service.network_allocate_ip(nil,network.id,"host",node.id)
-    assert_equal 404, http_error
   end
 
 
@@ -534,25 +468,6 @@ class NetworkServiceTest < ActiveSupport::TestCase
   end
   
 
-  # Deallocate IP success due to no IP allocated to node
-  test "network_deallocate_ip: success due to no IP allocated" do
-    net_service = NetworkService.new(Rails.logger)
-
-    node = Node.new(:name => "fred.flintstone.org")
-    node.save!
-
-    intf = PhysicalInterface.new(:name => "eth0")
-    intf.node = node
-    intf.save!
-    
-    network = create_a_network(net_service, "public")
-    network.save!
-    
-    http_error, message = net_service.network_deallocate_ip(nil,network.id,"fred.flintstone.org")
-    assert_equal 200, http_error
-  end
-
-
   # Deallocate IP success - perfect path
   test "network_deallocate_ip: success" do
     net_service = NetworkService.new(Rails.logger)
@@ -560,15 +475,15 @@ class NetworkServiceTest < ActiveSupport::TestCase
     node = Node.new(:name => "fred.flintstone.org")
     node.save!
 
+    network = create_a_network(net_service, "public")
+    network.save!
+
     intf = PhysicalInterface.new(:name => "eth0")
     intf.node = node
-    ip = IpAddress.new(:cidr => "192.168.122.2")
-    intf.ip_addresses << ip
+    ip = AllocatedIpAddress.new(:ip => "192.168.122.2")
+    ip.network = network
+    intf.allocated_ip_addresses << ip
     intf.save!
-
-    network = create_a_network(net_service, "public")
-    network.allocated_ips << ip
-    network.save!
 
     http_error, message = net_service.network_deallocate_ip(nil,network.id,"fred.flintstone.org")
     assert_equal 200, http_error
@@ -617,9 +532,4 @@ class NetworkServiceTest < ActiveSupport::TestCase
   end
 
 
-  def create_a_node_and_allocate_ip(net_service, network, node_name)
-    node = Node.new(:name => node_name).save!
-    http_error, message = net_service.network_allocate_ip(nil,network.id,"host",node_name)
-    assert_equal 200, http_error
-  end
 end

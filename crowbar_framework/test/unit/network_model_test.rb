@@ -1,4 +1,4 @@
-# Copyright 2012, Dell 
+# Copyright 2013, Dell 
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); 
 # you may not use this file except in compliance with the License. 
@@ -144,5 +144,173 @@ class NetworkModelTest < ActiveSupport::TestCase
 
     vlans = Vlan.where( :id => vlan_id )
     assert_equal 0, vlans.size
+  end
+
+
+  # Test ip alloc failure due to no range
+  test "Network allocate ip: failure due to no range" do
+    network = NetworkTestHelper.create_a_network()
+    network.save!
+
+    node = Node.new(:name => "fred.flintstone.org")
+    node.save!
+    
+    error_code, result = network.allocate_ip(nil, node)
+    assert_equal 400, error_code
+  end
+
+
+  # Test ip alloc failure due to no node
+  test "Network allocate ip: failure due to no node" do
+    network = NetworkTestHelper.create_a_network()
+    network.save!
+
+    http_error, result = network.allocate_ip("host", nil)
+    assert_equal 400, http_error
+  end
+
+
+  # Test ip alloc success due to node already has an ip
+  test "Network allocate_ip: success due to node already has allocated IP" do
+    node = Node.new(:name => "fred.flintstone.org")
+    node.save!
+
+    network = NetworkTestHelper.create_a_network()
+    network.save!
+
+    ip = AllocatedIpAddress.new(:ip => "192.168.122.4")
+    ip.network = network
+    ip.save!
+
+    intf = PhysicalInterface.new(:name => "eth0")
+    intf.node = node
+    intf.allocated_ip_addresses << ip
+    intf.save!
+
+    http_error, message = network.allocate_ip("host",node)
+    assert_equal 200, http_error
+  end
+
+
+  # Test ip alloc success due to suggested ip ok
+  test "Network allocate_ip: success due to suggested IP being available" do
+    node = Node.new(:name => "fred.flintstone.org")
+    node.save!
+
+    network = NetworkTestHelper.create_a_network()
+    network.save!
+
+    http_error, message = network.allocate_ip("host",node,"192.168.122.3")
+    assert_equal 200, http_error
+  end
+
+
+  # Test ip alloc success
+  test "Network allocate_ip: success" do
+    node = Node.new(:name => "fred.flintstone.org")
+    node.save!
+
+    network = NetworkTestHelper.create_a_network()
+    network.save!
+
+    http_error, message = network.allocate_ip("host",node)
+    assert_equal 200, http_error
+  end
+
+
+  # Test ip alloc success when suggested ip already allocated
+  test "Network allocate_ip: success due when suggested IP unavailable" do
+    network = NetworkTestHelper.create_a_network()
+    network.save!
+
+    node1 = Node.new(:name => "fred1.flintstone.org")
+    node1.save!
+
+    # First allocate a selected ip
+    http_error, message = network.allocate_ip("host",node1,"192.168.122.3")
+    assert_equal 200, http_error
+
+    node2 = Node.new(:name => "fred2.flintstone.org")
+    node2.save!
+
+    # Try to allocate it again
+    http_error, message = network.allocate_ip("host",node2,"192.168.122.3")
+    assert_equal 200, http_error
+  end
+
+
+  # Test ip alloc failure due to out of addresses
+  test "Network allocate_ip: failure due to out of addresses" do
+    network = NetworkTestHelper.create_a_network()
+    network.save!
+
+    create_a_node_and_allocate_ip(network, "fred3.flintstone.org") # .2
+    create_a_node_and_allocate_ip(network, "fred4.flintstone.org") # .3
+    create_a_node_and_allocate_ip(network, "fred5.flintstone.org") # .4
+    create_a_node_and_allocate_ip(network, "fred6.flintstone.org") # .5
+
+    # All IPs in the range are allocated, so the test below should blow up
+    node = Node.new(:name => "fred7.flintstone.org")
+    node.save!
+
+    http_error, message = network.allocate_ip("host",node)
+    assert_equal 404, http_error
+  end
+
+
+  # Deallocate IP failure due to missing node
+  test "Network deallocate_ip: failure due to missing node" do
+    network = NetworkTestHelper.create_a_network()
+    network.save!
+
+    http_error, message = network.deallocate_ip(nil)
+    assert_equal 400, http_error
+  end
+  
+
+  # Deallocate IP success due to no IP allocated to node
+  test "Network deallocate_ip: success due to no IP allocated" do
+    node = Node.new(:name => "fred.flintstone.org")
+    node.save!
+
+    intf = PhysicalInterface.new(:name => "eth0")
+    intf.node = node
+    intf.save!
+    
+    network = NetworkTestHelper.create_a_network()
+    network.save!
+    
+    http_error, message = network.deallocate_ip(node)
+    assert_equal 200, http_error
+  end
+
+
+  # Deallocate IP success - perfect path
+  test "Network deallocate_ip: success" do
+    node = Node.new(:name => "fred.flintstone.org")
+    node.save!
+
+    network = NetworkTestHelper.create_a_network()
+    network.save!
+
+    ip = AllocatedIpAddress.new(:ip => "192.168.122.2")
+    ip.network = network
+    ip.save!
+
+    intf = PhysicalInterface.new(:name => "eth0")
+    intf.node = node
+    intf.allocated_ip_addresses << ip
+    intf.save!
+
+    http_error, message = network.deallocate_ip(node)
+    assert_equal 200, http_error
+  end
+  
+
+  private
+  def create_a_node_and_allocate_ip(network, node_name)
+    node = Node.create!(:name => node_name)
+    http_error, message = network.allocate_ip("host",node)
+    assert_equal 200, http_error
   end
 end
