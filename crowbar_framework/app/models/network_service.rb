@@ -513,7 +513,7 @@ class NetworkService < ServiceObject
             :dhcp_enabled => dhcp_enabled,
             :use_vlan => use_vlan)
         network.subnet = subnet
-        network.proposal = get_object( Proposal, proposal_id ) if proposal_id != "-1" and !proposal_id.empty?
+        network.proposal = get_object_safe( Proposal, proposal_id ) if proposal_id != "-1"
         network.conduit = get_object( Conduit, conduit_id )
 
         # Either both router_pref and router_ip are passed, or neither are
