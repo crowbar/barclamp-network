@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class Interface < ActiveRecord::Base
-  has_many :allocated_ip_addresses, :inverse_of => :interface, :dependent => :destroy
-  belongs_to :vlan_interface, :inverse_of => :interfaces
-  belongs_to :node
-  
-  attr_accessible :name
+class AllocatedIpAddress < ActiveRecord::Base
+  belongs_to :interface, :inverse_of => :allocated_ip_addresses
+  belongs_to :network, :inverse_of => :allocated_ips
+  attr_accessible :ip
 
-  validates :name, :presence => true
+  validates :ip,
+    :presence => true,
+    :format => { :with => /^([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])$/, :message => "not a valid IP" }
+  validates :network, :presence => true
 end
