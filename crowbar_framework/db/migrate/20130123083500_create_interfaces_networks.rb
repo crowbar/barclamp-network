@@ -11,14 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-class Interface < ActiveRecord::Base
-  has_many :allocated_ip_addresses, :inverse_of => :interface, :dependent => :destroy
-  belongs_to :vlan_interface, :inverse_of => :interfaces
-  belongs_to :node
-  has_and_belongs_to_many :networks
-  
-  attr_accessible :name
-
-  validates :name, :presence => true
+#
+class CreateInterfacesNetworks < ActiveRecord::Migration
+  def change
+    create_table :interfaces_networks, :id=>false do |t|
+      t.references  :interface
+      t.references  :network
+    end
+    add_index(:interfaces_networks, [:interface_id, :network_id], :unique => true)
+  end
 end
