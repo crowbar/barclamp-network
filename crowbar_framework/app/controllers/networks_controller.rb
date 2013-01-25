@@ -37,16 +37,21 @@ class NetworksController < BarclampController
   end
   
   
-  def show
+   def show
     Rails.logger.debug("Network Controller Show sxxxxxxxxxxxxxxxxxxxxxxxxx");
-    @network = Network.find(params[:id]) unless params[:id].nil? 
-  
-       
+    begin
+      @network = Network.find(params[:id]) unless params[:id].nil?
+    rescue
+      @network = Network.find_by_name(params[:id])
+    end
+    Rails.logger.debug("Network Controller Show inspect #{@network.inspect}");
     respond_to do |format|
-      format.json { render :json => network_refs }
-      format.xml { render :xml => network_refs }
-      format.html { 
-        Rails.logger.debug("Format HTML show::::::::::: #{@network.inspect}"); 
+      format.json {
+        Rails.logger.debug("Format JSON show:::::::::::wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww #{@network.inspect}");
+        render :json => @network
+      }
+      format.html {
+        Rails.logger.debug("Format HTML show::::::::::: #{@network.inspect}");
       }
     end
   end
@@ -59,7 +64,6 @@ class NetworksController < BarclampController
     
     respond_to do |format|
       format.json { render :json => network_refs }
-      format.xml { render :xml => network_refs }
       format.html { 
         Rails.logger.debug("Format HTML index::::::::::: #{@networks.inspect}"); 
       }

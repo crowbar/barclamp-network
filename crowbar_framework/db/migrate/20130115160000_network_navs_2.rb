@@ -15,7 +15,7 @@
 #
 class NetworkNavs2 < ActiveRecord::Migration
   def self.up
-    
+    Nav.find_or_create_by_item :item=>'network', :parent_item=>'root', :name=>'nav.network', :description=>'nav.network_description', :path=>"networks_path", :order=>2000, :development=>true
     Nav.find_or_create_by_item :item=>'networks', :parent_item=>'network', :name=>'nav.networks', :description=>'nav.networks_description', :path=>"networks_path", :order=>100
     Nav.find_or_create_by_item :item=>'conduits', :parent_item=>'network', :name=>'nav.conduits', :description=>'nav.conduits_description', :path=>"conduits_path", :order=>200
 
@@ -24,5 +24,6 @@ class NetworkNavs2 < ActiveRecord::Migration
   def self.down
     Nav.delete_by_item 'networks'
     Nav.delete_by_item 'conduits'
+    Nav.delete_by_item 'network'
   end
 end

@@ -25,14 +25,12 @@
       %th{ :style=>'width:10px' }
   %tbody
     - @networks.sort.each do |network|
-      %tr
+      %tr.network{ :class => cycle(:odd, :even)}
         %td{ :style=>'width:10px' }
         %td=network.id
         %td
-          %a{:href => network_path(network.id), :class => 'network_details', :id => network.id}= network.name
+          %a{:href => networks_path+"/#{network.id}", :class => 'network_details', :id => network.id}= network.name
         %td=network.dhcp_enabled
         %td=network.conduit.name unless network.conduit.nil?
         %td=network.updated_at
         %td{ :style=>'width:10px' }
-
-

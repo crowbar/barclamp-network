@@ -1,4 +1,4 @@
-# Copyright 2013, Dell
+# Copyright 2012, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,15 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
-class Interface < ActiveRecord::Base
-  attr_protected :id
-  
-  has_many :allocated_ip_addresses, :inverse_of => :interface, :dependent => :destroy
-  belongs_to :vlan_interface, :inverse_of => :interfaces
-  belongs_to :node
-  
-  # attr_accessible :name
-
-  validates :name, :presence => true
+class Scaffolds::BmcInterfacesController < ApplicationController
+  active_scaffold :bmc_interface do |conf|
+  end
 end
