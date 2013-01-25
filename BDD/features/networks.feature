@@ -53,6 +53,15 @@ Feature: Networks
     Then REST call returned success
     Finally REST deletes the {object:networks} "bdd_net"
       And REST removes {object:node} "node.net.com"
+	  
+  Scenario: Enable an interface on a node
+    While interactive
+    Given REST creates the {object:networks} "bdd_net"
+      And there is a {object:node} "node.net.com"
+    When an interface is enabled on node "node.net.com" on {object:networks} "bdd_net"
+    Then the enable interface net info response is properly formatted
+    Finally REST deletes the {object:networks} "bdd_net"
+      And REST removes {object:node} "node.net.com"
       
   Scenario: Network Table Renders
     While interactive
@@ -70,3 +79,4 @@ Feature: Networks
     Then I should see "<dd>bdd_net</dd>"
       And I should see "VLAN Tag"
     Finally REST deletes the {object:networks} "bdd_net"
+

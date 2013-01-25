@@ -11,24 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-class InterfaceMap < ActiveRecord::Base
-  has_many :bus_maps, :dependent => :destroy
-  belongs_to :proposal
-
-  validates :bus_maps, :presence => true
-  validates :proposal, :presence => true
-
-
-  def self.get_bus_order(node)
-    buses = nil
-    product_name_attrib = node.get_attrib("product_name")
-
-    BusMap.all.each do |bus_map|
-      buses = bus_map.buses if product_name_attrib.value =~ /#{bus_map.pattern}/
-      break if buses
+#
+class CreateInterfacesNetworks < ActiveRecord::Migration
+  def change
+    create_table :interfaces_networks, :id=>false do |t|
+      t.references  :interface
+      t.references  :network
     end
-    buses.sort! {|bus1,bus2| bus1.order.to_i <=> bus2.order.to_i} if !buses.nil?
-    buses
+    add_index(:interfaces_networks, [:interface_id, :network_id], :unique => true)
   end
 end

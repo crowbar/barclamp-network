@@ -18,6 +18,7 @@ class Interface < ActiveRecord::Base
   has_many :allocated_ip_addresses, :inverse_of => :interface, :dependent => :destroy
   belongs_to :vlan_interface, :inverse_of => :interfaces
   belongs_to :node
+  has_and_belongs_to_many :networks
   
   # attr_accessible :name
 
