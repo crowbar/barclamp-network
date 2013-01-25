@@ -490,6 +490,55 @@ class NetworkServiceTest < ActiveSupport::TestCase
   end
 
 
+  # Enable interface failure due to missing network_id
+  test "network_enable_interface: failure due to missing network_id" do
+    net_service = NetworkService.new(Rails.logger)
+    http_error, message = net_service.network_enable_interface("proposal1",nil,"fred")
+    assert_equal 400, http_error
+  end
+
+
+  # Enable interface failure due to missing node_id
+  test "network_enable_interface: failure due to missing node_id" do
+    net_service = NetworkService.new(Rails.logger)
+    http_error, message = net_service.network_enable_interface("proposal1","network1",nil)
+    assert_equal 400, http_error
+  end
+
+
+  # Enable interface failure due to bad node_id
+  test "network_enable_interface: failure due to bad node_id" do
+    net_service = NetworkService.new(Rails.logger)
+    http_error, message = net_service.network_enable_interface("proposal1","network1","fred")
+    assert_equal 404, http_error
+  end
+
+
+  # Enable interface failure due to unable to lookup proposal or network
+  test "network_enable_interface: failure due to unable to lookup proposal or network" do
+    node = Node.new(:name => "fred.flintstone.org")
+    node.save!
+    net_service = NetworkService.new(Rails.logger)
+    http_error, message = net_service.network_enable_interface("betty","wilma","fred.flintstone.org")
+    assert_not_equal 200, http_error
+  end
+  
+
+  # Enable interface success - perfect path
+  test "network_enable_interface: success" do
+    net_service = NetworkService.new(Rails.logger)
+
+    node = Node.new(:name => "fred.flintstone.org")
+    node.save!
+
+    network = create_a_network(net_service, "public")
+    network.save!
+    
+    http_error, message = net_service.network_enable_interface(nil,network.id,"fred.flintstone.org")
+    assert_equal 200, http_error
+  end
+  
+
   private
   # Create a Network
   def create_a_network(net_service, name)

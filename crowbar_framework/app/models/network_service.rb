@@ -253,9 +253,10 @@ class NetworkService < ServiceObject
 
 
   def network_allocate_ip(proposal_id, network_id, range, node_id, suggestion = nil)
-    @logger.debug("Entering network_allocate_ip(proposal_id: #{proposal_id}, network_id: #{network_id}, range: #{range}, node_id: #{node_id}, suggestion: #{suggestion}")
+    @logger.debug("Entering network_allocate_ip(proposal_id: #{proposal_id}, network_id: #{network_id}, range: #{range}, node_id: #{node_id}, suggestion: #{suggestion})")
 
-    proposal_id = nil if !proposal_id.nil? and proposal_id.empty?
+    proposal_id = proposal_id.to_s
+    proposal_id = nil if proposal_id.empty?
 
     # Validate inputs
     return [400, "No network_id specified"] if network_id.nil?
@@ -349,7 +350,8 @@ class NetworkService < ServiceObject
   def network_deallocate_ip(proposal_id, network_id, node_id)
     @logger.debug("Entering network_deallocate_ip(proposal_id: #{proposal_id}, network_id: #{network_id}, node_id: #{node_id}")
 
-    proposal_id = nil if !proposal_id.nil? and proposal_id.empty?
+    proposal_id = proposal_id.to_s
+    proposal_id = nil if proposal_id.empty?
     
     return [400, "No network_id specified"] if network_id.nil?
     return [400, "No node_id specified"] if node_id.nil?
@@ -463,6 +465,29 @@ class NetworkService < ServiceObject
 
     @logger.info("Network enable_interface: Assigned: #{name} #{network}")
     [200, net_info]
+  end
+
+
+  def network_enable_interface(proposal_id, network_id, node_id)
+    @logger.debug("Entering network_enable_interface(proposal_id: #{proposal_id}, network_id: #{network_id}, node_id: #{node_id})")
+
+    proposal_id = proposal_id.to_s
+    proposal_id = nil if proposal_id.empty?
+    
+    return [400, "No network_id specified"] if network_id.nil?
+    return [400, "No node_id specified"] if node_id.nil?
+
+    # Find the node
+    node = get_object_safe(Node, node_id)
+    return [404, "Node #{node_id} does not exist"] if node.nil?
+
+    # Find the proposal and network
+    error_code, *rest = find_proposal_and_network(proposal_id, network_id)
+    return [error_code, rest[0]] if error_code != 200
+    proposal = rest[0]
+    network = rest[1]
+
+    network.enable_interface(node)
   end
 
 

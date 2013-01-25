@@ -13,7 +13,7 @@
 % limitations under the License. 
 % 
 -module(networks).
--export([step/3, validate/1, validate_allocate_response/1, g/1, json/3, network_json/2, network_json/9]).
+-export([step/3, validate/1, validate_base_net_info/1, validate_net_info/1, g/1, json/3, network_json/2, network_json/9]).
 -define(IP_RANGE, "\"host\": {\"start\":\"192.168.124.61\", \"end\":\"192.168.124.169\"}").
 
 
@@ -104,13 +104,12 @@ validate(JSON) ->
 	end. 
 
 
-validate_allocate_response(JSON) ->
-  bdd_utils:log(debug, "validate_allocate_response: JSON: ~p", [JSON]),
+validate_base_net_info(JSON) ->
+  bdd_utils:log(debug, "validate_base_net_info: JSON: ~p", [JSON]),
   try 
     R = [bdd_utils:is_a(JSON, name, conduit),
          bdd_utils:is_a(JSON, ip, netmask),
          bdd_utils:is_a(JSON, name, node),
-         bdd_utils:is_a(JSON, ip, address),
          bdd_utils:is_a(JSON, ip, router),
          bdd_utils:is_a(JSON, ip, subnet),
          bdd_utils:is_a(JSON, ip, broadcast),
@@ -120,7 +119,28 @@ validate_allocate_response(JSON) ->
          bdd_utils:is_a(JSON, number, router_pref) orelse bdd_utils:is_a(JSON, empty, router_pref)
        ],
 
-    bdd_utils:log(debug, "validate_allocate_response: R: ~p", [R]),
+    bdd_utils:log(debug, "validate_base_net_info: R: ~p", [R]),
+
+    case bdd_utils:assert(R) of
+      true -> true;
+      false -> bdd_utils:log(warn, "JSON did not comply with object format ~p", [JSON]),
+        false
+    end
+  catch
+    X: Y -> bdd_utils:log(warn, "Unable to parse returned network JSON: ~p:~p", [X, Y]),
+            bdd_utils:log(warn, "Stacktrace: ~p", [erlang:get_stacktrace()]),
+    false
+	end. 
+
+
+validate_net_info(JSON) ->
+  bdd_utils:log(debug, "validate_net_info: JSON: ~p", [JSON]),
+  try 
+    R = [bdd_utils:is_a(JSON, ip, address),
+          validate_base_net_info(JSON)
+       ],
+
+    bdd_utils:log(debug, "validate_net_info: R: ~p", [R]),
 
     case bdd_utils:assert(R) of
       true -> true;
@@ -185,11 +205,29 @@ step(Config, _Given, {step_when, _N, ["an IP address is allocated to node",Node,
 
 step(_Config, Results, {step_then, _N, ["the net info response is properly formatted"]}) ->
   [Result | _] = Results,
-  validate_allocate_response(Result);
+  validate_net_info(Result);
 
 
 % Ip address deallocation
 step(Config, _Given, {step_when, _N, ["an IP address is deallocated from node",Node,"on",Object,Network]}) ->
   bdd_utils:log(Config, trace, "an IP address is deallocated from node ~p on network ~p", [Node, Network]),
   URL = eurl:uri(Config, eurl:path(apply(Object, g, [path]), "-1/deallocate_ip/" ++ Network ++ "/" ++ eurl:encode(Node))),
-  eurl:delete(Config, URL).
+  {Code,Result} = eurl:delete(Config, URL),
+  bdd_restrat:ajax_return(URL, delete, Code, Result);
+
+
+step(Config, _Given, {step_when, _N, ["an interface is enabled on node",Node,"on",Object,Network]}) ->
+  bdd_utils:log(Config, trace, "an interface is enabled on node ~p on network ~p", [Node, Network]),
+  URI = eurl:path(apply(Object, g, [path]), "-1/enable_interface"),
+  J = [
+        {"network_id", Network},
+        {"node_id", Node}
+      ],
+  JSON = json:output(J),
+  Result = eurl:post(Config, URI, JSON),
+  json:parse(Result);
+
+
+step(_Config, Results, {step_then, _N, ["the enable interface net info response is properly formatted"]}) ->
+  [Result | _] = Results,
+  validate_base_net_info(Result).

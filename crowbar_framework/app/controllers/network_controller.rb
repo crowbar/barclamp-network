@@ -163,6 +163,18 @@ class NetworkController < BarclampController
     render :json => ret[1]
   end
 
+  add_help(:network_enable_interface,[:id,:network_id,:node_id],[:post])
+  def network_enable_interface
+    proposal_id = params[:id]
+    proposal_id = nil if proposal_id == "-1"
+    network_id = params[:network_id]
+    node_id = params[:node_id]
+
+    ret = operations.network_enable_interface(proposal_id, network_id, node_id)
+    return render :text => ret[1], :status => ret[0] if ret[0] != 200
+    render :json => ret[1]
+  end
+  
   add_help(:disable_interface,[:id,:network,:name],[:post])
   def disable_interface
     id = params[:id]       # Network id

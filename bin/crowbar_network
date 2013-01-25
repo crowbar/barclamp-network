@@ -23,6 +23,7 @@ require File.join(File.expand_path(File.dirname(__FILE__)), "barclamp_lib")
 @commands["allocate_ip"] = [ "allocate_ip(ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift)", "allocate_ip <name> <node> <network> <range> [<suggestion>] - Allocate an ip for a node on a network from a range" ]
 @commands["network_allocate_ip"] = [ "network_allocate_ip(ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift)", "network_allocate_ip <proposal_id> <node_id> <network_id> <range> [suggestion] - Allocate an ip for a node on a network from a range" ]
 @commands["enable_interface"] = [ "enable_interface(ARGV.shift,ARGV.shift,ARGV.shift)", "enable_interface <name> <node> <network> - Ensure that an interface is present for the specified network" ]
+@commands["network_enable_interface"] = [ "network_enable_interface(ARGV.shift,ARGV.shift,ARGV.shift)", "network_enable_interface <proposal_id> <node_id> <network_id> - Ensure that an interface is present for the specified network" ]
 @commands["disable_interface"] = [ "disable_interface(ARGV.shift,ARGV.shift,ARGV.shift)", "disable_interface <name> <node> <network> - Ensure that an interface is not enabled for the specified network" ]
 @commands["network_list"] = [ "network_list()", "network_list - Show a list of current networks" ]
 @commands["network_show"] = [ "network_show(ARGV.shift)", "network_show <name_or_id> - Show a specific network" ]
@@ -46,6 +47,26 @@ def enable_interface(name, node, network)
     [ "Failed to enable interface: #{name} : Errors in data\n#{struct[0]}", 1 ]
   else
     [ "Failed to talk to service enable_interface: #{struct[1]}: #{struct[0]}", 1 ]
+  end
+end
+
+def network_enable_interface(proposal_id, node_id, network_id)
+  usage -1 if proposal_id.nil? or proposal_id == ""
+  usage -1 if node_id.nil? or node_id == ""
+  usage -1 if network_id.nil? or network_id == ""
+
+  @data = { "node_id" => node_id, "network_id" => network_id }.to_json
+  struct = post_json2("2.0/crowbar/2.0/network/networks/#{proposal_id}/enable_interface", @data)
+
+  case struct[1]
+  when 200
+    [ "Enabled interface #{struct[0].inspect} for proposal #{proposal_id}, network #{network_id}, node #{node_id}", 0 ]
+  when 404
+    [ "Failed to enable interface for proposal #{proposal_id}, network #{network_id}, node #{node_id}: Not Found", 1 ]
+  when 400
+    [ "Failed to enable interface for proposal #{proposal_id}, network #{network_id}, node #{node_id}: Errors in data\n#{struct[0]}", 1 ]
+  else
+    [ "Failed to talk to service network_enable_interface for proposal #{proposal_id}, network #{network_id}, node #{node_id}: #{struct[1]}: #{struct[0]}", 1 ]
   end
 end
 
