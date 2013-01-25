@@ -19,99 +19,17 @@ class NetworksController < BarclampController
  
   add_help(:network_list,[],[:get])
   def networks
-    Rails.logger.debug("Listing networks sxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+    Rails.logger.debug("Listing networks");
 
     network_refs = []
-    @networks = Network.all
-    @networks.each { |network|
+
+    Network.all.each { |network|
       network_refs << network.id
     }
-    
+
     respond_to do |format|
       format.json { render :json => network_refs }
       format.xml { render :xml => network_refs }
-      format.html { 
-        Rails.logger.debug("Format HTML networks::::::::::: #{@networks.inspect}"); 
-      }
-    end
-  end
-  
-  
-   def show
-    Rails.logger.debug("Network Controller Show sxxxxxxxxxxxxxxxxxxxxxxxxx");
-    begin
-      @network = Network.find(params[:id]) unless params[:id].nil?
-    rescue
-      @network = Network.find_by_name(params[:id])
-    end
-    Rails.logger.debug("Network Controller Show inspect #{@network.inspect}");
-    respond_to do |format|
-      format.json {
-        Rails.logger.debug("Format JSON show:::::::::::wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww #{@network.inspect}");
-        render :json => @network
-      }
-      format.html {
-        Rails.logger.debug("Format HTML show::::::::::: #{@network.inspect}");
-      }
-    end
-  end
-  
-  def index
-    Rails.logger.debug("Listing networks");
-
-    @networks = Network.all
-
-    
-    respond_to do |format|
-      format.json { render :json => network_refs }
-      format.html { 
-        Rails.logger.debug("Format HTML index::::::::::: #{@networks.inspect}"); 
-      }
-    end
-  end
-  
-  def edit
-    Rails.logger.debug("Edit Network");
-    @network = Network.find(params[:id]) unless params[:id].nil? 
-    @conduits = Conduit.all
-    respond_to do |format|
-      format.html { 
-        Rails.logger.debug("Format HTML edit network:::::::::: #{@network.inspect}");
-        Rails.logger.debug("Format HTML allocated_ips:::::::::: #{@network.allocated_ips}");
-      }
-    end
-  end
-  
-  def update
-   # network_update
-
-    @network = Network.find(params[:id])
-    if @network.update_attributes(params[:network])
-      Rails.logger.debug("updateupdateupdateupdateupdate update:::::::::: #{@network.allocated_ips}");
-      redirect_to :action => :index
-    else
-      render 'edit'
-    end
-
-  end
-  
-  add_help(:conduit_list,[],[:get])
-  def conduit
-    Rails.logger.debug("Listing conduits");
-
-    conduit_refs = []
-    
-    @conduits = Conduit.all
-    @conduits.each { |conduit|
-      conduit_refs << conduit.id
-    }
-    
-    respond_to do |format|
-      format.json { render :json => conduit_refs }
-      format.xml { render :xml => conduit_refs }
-      format.html { 
-        Rails.logger.debug("Format HTML conduits#{@conduits.inspect}");
-      }
     end
   end
 
@@ -119,7 +37,7 @@ class NetworksController < BarclampController
   def network_show
     id = params[:id]
 
-    Rails.logger.debug("Showing network #{id}");
+    Rails.logger.debug("Showing network #{id}")
 
     ret = operations.network_get(id)
 
@@ -130,51 +48,48 @@ class NetworksController < BarclampController
     end
   end
 
-  add_help(:network_create,[:name, :conduit_id, :subnet, :dhcp_enabled, :ip_ranges, :router_pref, :router_ip],[:post])
+  add_help(:network_create,[:name, :proposal_id, :conduit_id, :subnet, :dhcp_enabled, :use_vlan, :ip_ranges, :router_pref, :router_ip],[:post])
   def network_create
     name = params[:name]
+    proposal_id = params[:proposal_id]
     conduit_id = params[:conduit_id]
     subnet = params[:subnet]
-    dhcp_enabled = params[:dhcp_enabled]
-    ip_ranges_json = params[:ip_ranges]
-    if !ip_ranges_json.nil?
-      ip_ranges = JSON.parse(ip_ranges_json)
-    end
+    dhcp_enabled = to_bool( params[:dhcp_enabled] )
+    use_vlan = to_bool( params[:use_vlan] )
+    ip_ranges = params[:ip_ranges]
     router_pref = params[:router_pref]
     router_ip = params[:router_ip]
 
     Rails.logger.debug("Creating network #{name}");
 
-    ret = operations.network_create(name, conduit_id, subnet, dhcp_enabled, ip_ranges, router_pref, router_ip)
+    ret = operations.network_create(name, proposal_id, conduit_id, subnet, dhcp_enabled, use_vlan, ip_ranges, router_pref, router_ip)
 
     return render :text => ret[1], :status => ret[0] if ret[0] != 200
 
     respond_to do |format|
-      format.json { render :json => ret[1] }
+      format.json { render :json => ret[1].to_json( :include => {:subnet => {:only => :cidr}, :router => {:only => :pref, :include => {:ip => {:only => :cidr}}}, :ip_ranges => {:only => :name, :include => {:start_address => {:only => :cidr}, :end_address => {:only => :cidr}}}})}
     end
   end
 
-  add_help(:network_update,[:id, :conduit_id, :subnet, :dhcp_enabled, :ip_ranges, :router_pref, :router_ip],[:put])
+  add_help(:network_update,[:id, :conduit_id, :subnet, :dhcp_enabled, :use_vlan, :ip_ranges, :router_pref, :router_ip],[:put])
   def network_update
     id = params[:id]
     conduit_id = params[:conduit_id]
     subnet = params[:subnet]
-    dhcp_enabled = params[:dhcp_enabled]
-    ip_ranges_json = params[:ip_ranges]
-    if !ip_ranges_json.nil?
-      ip_ranges = JSON.parse(ip_ranges_json)
-    end
+    dhcp_enabled = to_bool( params[:dhcp_enabled] )
+    use_vlan = to_bool( params[:use_vlan] )
+    ip_ranges = params[:ip_ranges]
     router_pref = params[:router_pref]
     router_ip = params[:router_ip]
 
     Rails.logger.debug("Updating network #{id}");
 
-    ret = operations.network_update(id, conduit_id, subnet, dhcp_enabled, ip_ranges, router_pref, router_ip)
+    ret = operations.network_update(id, conduit_id, subnet, dhcp_enabled, use_vlan, ip_ranges, router_pref, router_ip)
 
     return render :text => ret[1], :status => ret[0] if ret[0] != 200
 
     respond_to do |format|
-      format.json { render :json => ret[1] }
+      format.json { render :json => ret[1].to_json( :include => {:subnet => {:only => :cidr}, :router => {:only => :pref, :include => {:ip => {:only => :cidr}}}, :ip_ranges => {:only => :name, :include => {:start_address => {:only => :cidr}, :end_address => {:only => :cidr}}}})}
     end
   end
 
@@ -200,6 +115,20 @@ class NetworksController < BarclampController
     render :json => ret[1]
   end
 
+  add_help(:network_allocate_ip,[:id,:network_id,:node_id,:range],[:post])
+  def network_allocate_ip
+    proposal_id = params[:id]
+    proposal_id = nil if proposal_id == "-1"
+    network_id = params[:network_id]
+    node_id = params[:node_id]
+    range = params[:range]
+    suggestion = params[:suggestion]
+
+    ret = operations.network_allocate_ip(proposal_id, network_id, range, node_id, suggestion)
+    return render :text => ret[1], :status => ret[0] if ret[0] != 200
+    render :json => ret[1]
+  end
+  
   add_help(:deallocate_ip,[:id,:network,:name],[:post])
   def deallocate_ip
     id = params[:id]       # Network id
@@ -211,6 +140,18 @@ class NetworksController < BarclampController
     render :json => ret[1]
   end
 
+  add_help(:network_deallocate_ip,[:id,:network_id,:node_id],[:delete])
+  def network_deallocate_ip
+    proposal_id = params[:id]
+    proposal_id = nil if proposal_id == "-1"
+    network_id = params[:network_id]
+    node_id = params[:node_id]
+
+    ret = operations.network_deallocate_ip(proposal_id, network_id, node_id)
+    return render :text => ret[1], :status => ret[0] if ret[0] != 200
+    render :json => ret[1]
+  end
+  
   add_help(:enable_interface,[:id,:network,:name],[:post])
   def enable_interface
     id = params[:id]       # Network id
@@ -308,8 +249,85 @@ class NetworksController < BarclampController
     @conduits = @conduits.sort
     
   end
+  
+  #UI Methods
+  def show
+    Rails.logger.debug("NetworksController.show");
+    begin
+      @network = Network.find(params[:id]) unless params[:id].nil?
+    rescue
+      @network = Network.find_by_name(params[:id])
+    end
+    Rails.logger.debug("NetworksController.show inpect found network: #{@network.inspect}");
+    respond_to do |format|
+      format.json {
+        Rails.logger.debug("NetworksController.show format JSON: #{@network.inspect}");
+        render :json => @network
+      }
+      format.html {
+        Rails.logger.debug("NetworksController.show format HTML: #{@network.inspect}");
+      }
+    end
+  end
+  
+  def index
+    Rails.logger.debug("NetworksController.index");
+    @networks = Network.all
+    respond_to do |format|
+      format.json { render :json => network_refs }
+      format.html { 
+        Rails.logger.debug("NetworksController.index Format HTML: #{@networks.inspect}"); 
+      }
+    end
+  end
+  
+  def edit
+    Rails.logger.debug("NetworksController.edit");
+    @network = Network.find(params[:id]) unless params[:id].nil? 
+    @conduits = Conduit.all
+    respond_to do |format|
+      format.html { 
+        Rails.logger.debug("NetworksController.edit Format HTML: #{@network.inspect}");
+      }
+    end
+  end
+  
+  def update
+    Rails.logger.debug("NetworksController.update!");
+    @network = Network.find(params[:id])
+    if @network.update_attributes(params[:network])
+      redirect_to :action => :index
+    else
+      render 'edit'
+    end
+  end
+
+  add_help(:conduit_list,[],[:get])
+  def conduit
+    Rails.logger.debug("Listing conduits");
+
+    conduit_refs = []
+
+    @conduits = Conduit.all
+    @conduits.each { |conduit|
+      conduit_refs << conduit.id
+    }
+
+    respond_to do |format|
+      format.json { render :json => conduit_refs }
+      format.xml { render :xml => conduit_refs }
+      format.html {
+        Rails.logger.debug("Format HTML conduits#{@conduits.inspect}");
+      }
+    end
+  end
     
   private 
+  def to_bool(value)
+    return true if value == true || value =~ /^true|t$/i
+    return false if value == false || value =~ /^false|f$/i
+    raise ArgumentError.new("Invalid boolean value")
+  end    
   
   def node_vlans(node)
     nv = {}

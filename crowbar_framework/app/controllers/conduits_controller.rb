@@ -22,8 +22,6 @@ class ConduitsController < BarclampController
   def show
     Rails.logger.debug("Show sxxxxxxxxxxxxxxxxxxxxxxxxx id: #{params[:id]}");
     @conduit = Conduit.find(params[:id]) unless params[:id].nil? 
-  
-       
     respond_to do |format|
       format.json { render :json => network_refs }
       format.xml { render :xml => network_refs }
