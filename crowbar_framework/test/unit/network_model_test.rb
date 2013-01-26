@@ -305,7 +305,36 @@ class NetworkModelTest < ActiveSupport::TestCase
     http_error, message = network.deallocate_ip(node)
     assert_equal 200, http_error
   end
+
+
+  # Enable interface success due to no existing interface
+  test "Network enable_ip: success" do
+    node = Node.new(:name => "fred.flintstone.org")
+    node.save!
+
+    network = NetworkTestHelper.create_a_network()
+    network.save!
   
+    http_error, net_info = network.enable_interface(node)
+    assert_equal 200, http_error
+  end
+
+
+  # Enable interface success due to existing interface
+  test "Network enable_ip: success due to existing interface" do
+    node = Node.new(:name => "fred.flintstone.org")
+    node.save!
+
+    network = NetworkTestHelper.create_a_network()
+    network.save!
+  
+    http_error, net_info = network.enable_interface(node)
+    assert_equal 200, http_error
+
+    http_error, net_info = network.enable_interface(node)
+    assert_equal 200, http_error
+  end
+
 
   private
   def create_a_node_and_allocate_ip(network, node_name)

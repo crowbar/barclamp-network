@@ -20,6 +20,7 @@ class Network < ActiveRecord::Base
   has_many :ip_ranges, :dependent => :destroy
   belongs_to :proposal
   has_one :vlan, :inverse_of => :network, :dependent => :destroy
+  has_and_belongs_to_many :interfaces
 
   attr_accessible :name, :dhcp_enabled, :use_vlan
 
@@ -108,8 +109,9 @@ class Network < ActiveRecord::Base
             logger.debug("Found #{interfaces.size} interfaces")
             interface = nil
             if interfaces.size == 0
-              interface = PhysicalInterface.create!(:name => "eth0")
+              interface = PhysicalInterface.new(:name => "eth0")
               interface.node = node
+              interface.networks << self
               interface.save!
               logger.debug("Created interface #{interface.id}")
             else
@@ -161,7 +163,28 @@ class Network < ActiveRecord::Base
     
     [200, nil]
   end
-  
+
+
+  def enable_interface(node)
+    net_info = build_net_info(node)
+
+    # If we already have an enabled inteface then return success
+    intf = Interface.where(:node_id => node.id).first
+    if !intf.nil? and intf.networks.where( :id => id).exists?
+      logger.info("Network.enable_interface: node #{log_name(node)} already has an enabled interface on network #{log_name(self)}")
+      return [200, net_info]
+    end
+
+    # TODO: Remove this hack when interfaces are discovered
+    interface = PhysicalInterface.new(:name => "eth0")
+    interface.node = node
+    interface.networks << self
+    interface.save!
+
+    logger.info("Network.enable_interface: Enabled interface: node #{node.id}, network #{id}")
+    [200, net_info]
+  end
+
 
   def build_net_info(node)
     unless router.nil?
