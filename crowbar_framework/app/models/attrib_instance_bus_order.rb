@@ -12,23 +12,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class InterfaceMap < ActiveRecord::Base
-  has_many :bus_maps, :dependent => :destroy
-  belongs_to :proposal
+class AttribInstanceBusOrder < AttribInstance
+  def state 
+    AttribInstance.calc_state(value_actual , value_request, jig_run_id)
+  end
+  
 
-  validates :bus_maps, :presence => true
-  validates :proposal, :presence => true
+  def request=(value)
+    # Discard since this attribute is a facade over AR objects
+    raise "Not implemented"
+  end
+  
 
+  def request
+    raise "Not implemented"
+  end
+  
 
-  def self.get_bus_order(node)
-    buses = nil
-    product_name_attrib = node.get_attrib("product_name")
+  def actual=(value)
+    # Discard since this attribute is a facade over AR objects
+  end
+  
 
-    BusMap.all.each do |bus_map|
-      buses = bus_map.buses if product_name_attrib.value =~ /#{bus_map.pattern}/
-      break if buses
-    end
-    buses.sort! {|bus1,bus2| bus1.order.to_i <=> bus2.order.to_i} if !buses.nil?
-    buses
+  def actual
+    buses = InterfaceMap.get_bus_order(node)
+    bus_order=[]
+    buses.each {|bus|
+      bus_order << bus.designator
+    }
+    bus_order.to_json
   end
 end
