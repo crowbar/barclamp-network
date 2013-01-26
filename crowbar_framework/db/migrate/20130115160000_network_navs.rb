@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 #
-class NetworkNavs2 < ActiveRecord::Migration
+class NetworkNavs < ActiveRecord::Migration
   def self.up
     Nav.find_or_create_by_item :item=>'network', :parent_item=>'root', :name=>'nav.network', :description=>'nav.network_description', :path=>"networks_path", :order=>2000, :development=>true
     Nav.find_or_create_by_item :item=>'networks', :parent_item=>'network', :name=>'nav.networks', :description=>'nav.networks_description', :path=>"networks_path", :order=>100
