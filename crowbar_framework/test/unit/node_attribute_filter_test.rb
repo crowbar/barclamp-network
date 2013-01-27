@@ -1,4 +1,4 @@
-# Copyright 2012, Dell 
+# Copyright 2013, Dell 
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); 
 # you may not use this file except in compliance with the License. 
@@ -13,13 +13,32 @@
 # limitations under the License. 
 
 require 'test_helper'
-require 'network_test_helper'
  
-class ConduitFilterTest < ActiveSupport::TestCase
+class NodeAttributeFilterTest < ActiveSupport::TestCase
+  test "Test successful match" do
+    cf = NodeAttributeFilter.new()
+    cf.attr = "nics.size"
+    cf.comparitor = "=="
+    cf.value = 2
+    cf.save!
 
-  # Test successful creation
-  test "ConduitFilter creation: success" do
-    conduit_filter = NetworkTestHelper.create_a_conduit_filter()
-    conduit_filter.save!
+    node = NetworkTestHelper.create_node()
+
+    result = cf.match(node)
+    assert result
+  end
+
+
+  test "Test unsuccessful match" do
+    cf = NodeAttributeFilter.new()
+    cf.attr = "nics.size"
+    cf.comparitor = "=="
+    cf.value = 42
+    cf.save!
+
+    node = NetworkTestHelper.create_node()
+      
+    result = cf.match(node)
+    assert !result
   end
 end

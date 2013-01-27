@@ -1,4 +1,4 @@
-# Copyright 2012, Dell
+# Copyright 2013, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,5 +17,8 @@ class ConduitFilter < ActiveRecord::Base
 
   attr_accessible :attr, :comparitor, :end_value, :start_value, :value
 
-  validates :comparitor, :presence => true
+
+  def match(node)
+    raise "Subclasses must implement match method!"
+  end
 end
