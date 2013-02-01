@@ -14,6 +14,6 @@
 #
 
 class Scaffolds::PhysicalInterfacesController < ApplicationController
-  active_scaffold :physical_interface do |conf|
+  active_scaffold :'barclamp_network/physical_interface' do |conf|
   end
 end

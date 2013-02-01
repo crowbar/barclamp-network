@@ -14,6 +14,6 @@
 #
 
 class Scaffolds::ConduitFiltersController < ApplicationController
-  active_scaffold :conduit_filter do |conf|
+  active_scaffold :'barclamp_network/conduit_filter' do |conf|
   end
 end 

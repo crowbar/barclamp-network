@@ -14,6 +14,6 @@
 #
 
 class Scaffolds::NetworksController < ApplicationController
-  active_scaffold :network do |conf|
+  active_scaffold :'barclamp_network/network' do |conf|
   end
 end 

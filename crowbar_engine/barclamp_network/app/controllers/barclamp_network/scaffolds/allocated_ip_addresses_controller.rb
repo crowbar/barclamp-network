@@ -14,6 +14,6 @@
 #
 
 class Scaffolds::AllocatedIpAddressesController < ApplicationController
-  active_scaffold :allocated_ip_address do |conf|
+  active_scaffold :'barclamp_network/allocated_ip_address' do |conf|
   end
 end

@@ -14,6 +14,6 @@
 #
 
 class Scaffolds::VlansController < ApplicationController
-  active_scaffold :vlan do |conf|
+  active_scaffold :'barclamp_network/vlan' do |conf|
   end
 end 

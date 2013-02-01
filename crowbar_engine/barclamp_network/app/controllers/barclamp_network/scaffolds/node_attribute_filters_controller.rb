@@ -14,6 +14,6 @@
 #
 
 class Scaffolds::NodeAttributeFiltersController < ApplicationController
-  active_scaffold :node_attribute_filter do |conf|
+  active_scaffold :'barclamp_network/node_attribute_filter' do |conf|
   end
 end 

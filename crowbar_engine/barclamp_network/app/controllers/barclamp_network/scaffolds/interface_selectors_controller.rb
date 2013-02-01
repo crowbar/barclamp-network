@@ -14,6 +14,6 @@
 #
 
 class Scaffolds::InterfaceSelectorsController < ApplicationController
-  active_scaffold :interface_selector do |conf|
+  active_scaffold :'barclamp_network/interface_selector' do |conf|
   end
 end 

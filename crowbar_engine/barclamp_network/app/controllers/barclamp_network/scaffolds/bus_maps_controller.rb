@@ -14,6 +14,6 @@
 #
 
 class Scaffolds::BusMapsController < ApplicationController
-  active_scaffold :bus_map do |conf|
+  active_scaffold :'barclamp_network/bus_map' do |conf|
   end
 end
