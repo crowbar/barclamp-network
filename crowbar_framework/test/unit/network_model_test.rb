@@ -194,14 +194,18 @@ class NetworkModelTest < ActiveSupport::TestCase
 
   # Test ip alloc success due to suggested ip ok
   test "Network allocate_ip: success due to suggested IP being available" do
+    ip_address = "192.168.122.3"
     node = Node.new(:name => "fred.flintstone.org")
     node.save!
 
     network = NetworkTestHelper.create_a_network()
     network.save!
 
-    http_error, message = network.allocate_ip("host",node,"192.168.122.3")
+    http_error, message = network.allocate_ip("host",node,ip_address)
     assert_equal 200, http_error
+
+    na = node.attrib_get("ip_address")
+    assert_equal na.value, ip_address
   end
 
 
@@ -215,11 +219,16 @@ class NetworkModelTest < ActiveSupport::TestCase
 
     http_error, message = network.allocate_ip("host",node)
     assert_equal 200, http_error
+
+    ip_address = message["address"]
+
+    na = node.attrib_get("ip_address")
+    assert_equal ip_address, na.value
   end
 
 
   # Test ip alloc success when suggested ip already allocated
-  test "Network allocate_ip: success due when suggested IP unavailable" do
+  test "Network allocate_ip: success due to suggested IP unavailable" do
     network = NetworkTestHelper.create_a_network()
     network.save!
 

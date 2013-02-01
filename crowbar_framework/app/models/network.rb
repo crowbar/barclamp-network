@@ -52,7 +52,6 @@ class Network < ActiveRecord::Base
     subnet_addr = IPAddr.new(subnet.cidr)
     netmask_addr = subnet.get_netmask()
 
-
     # Find the ip range
     ip_range = ip_ranges.where(:name => range).first
     return [404, "IP range not found"] if ip_range.nil?
@@ -103,6 +102,8 @@ class Network < ActiveRecord::Base
           AllocatedIpAddress.transaction do
             ip_addr = AllocatedIpAddress.new( :ip => address.to_s )
             ip_addr.network = self
+
+            node.attrib_set("ip_address", address.to_s)
 
             # TODO - Interfaces should be discovered, not created on the fly
             interfaces = Interface.where( "node_id = ?", node.id )

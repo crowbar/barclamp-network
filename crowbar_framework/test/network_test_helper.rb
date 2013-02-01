@@ -99,23 +99,35 @@ class NetworkTestHelper
   # Create an interface map
   def self.create_an_interface_map
     interface_map = InterfaceMap.new()
-    interface_map.bus_maps << create_a_bus_map()
+
+    interface_map.bus_maps << create_a_bus_map("PowerEdge C6145", { "1" => "0000:00/0000:00:04", "2" => "0000:00/0000:00:02" })
+    interface_map.bus_maps << create_a_bus_map("PowerEdge R710", { "1" => "0000:00/0000:00:01", "2" => "0000:00/0000:00:03" })
+
     interface_map.proposal = create_or_get_proposal()
     interface_map
   end
   
   
   # Create a bus map
-  def self.create_a_bus_map
-    bus_map = BusMap.new( :pattern => "PowerEdge C2100")
-    bus_map.buses << create_a_bus()
+  def self.create_a_bus_map(pattern="PowerEdge C6145", bus_order={ "1" => "0000:00/0000:00:04", "2" => "0000:00/0000:00:02"})
+    bus_map = BusMap.new( :pattern => pattern)
+    bus_map.buses << create_buses(bus_order)
     bus_map
   end
 
   
   # Create a bus
-  def self.create_a_bus
-    Bus.new( :order => 1, :designator => "0000:00/0000:00:1c" )
+  def self.create_a_bus(order="1", designator="0000:00/0000:00:01")
+      Bus.new( :order => order, :designator => designator )
+  end
+
+
+  def self.create_buses(bus_order)
+    buses=[]
+    bus_order.each { |order, designator|
+      buses << create_a_bus( order, designator )
+    }
+    buses
   end
 
 

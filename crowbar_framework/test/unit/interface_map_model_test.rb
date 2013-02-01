@@ -1,4 +1,4 @@
-# Copyright 2012, Dell 
+# Copyright 2013, Dell 
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); 
 # you may not use this file except in compliance with the License. 
@@ -41,5 +41,38 @@ class InterfaceMapModelTest < ActiveSupport::TestCase
     assert_raise ActiveRecord::RecordNotFound do
       BusMap.find(bus_map_id)
     end
+  end
+
+
+  # Test retrieval of a bus order
+  test "InterfaceMap: retrieval of bus order success" do
+    interface_map = NetworkTestHelper.create_an_interface_map()
+    interface_map.save!
+
+    node = Node.new(:name => "fred.flintstone.org")
+    node.save!
+
+    node.attrib_set("product_name", "PowerEdge R710")
+
+    buses = InterfaceMap.get_bus_order(node)
+    assert_not_nil buses
+
+    assert_equal "0000:00/0000:00:01", buses[0].designator
+    assert_equal "0000:00/0000:00:03", buses[1].designator
+  end
+
+
+  # Test failure to retrieve bus order
+  test "InterfaceMap: retrieval of bus order failure" do
+    interface_map = NetworkTestHelper.create_an_interface_map()
+    interface_map.save!
+
+    node = Node.new(:name => "fred.flintstone.org")
+    node.save!
+
+    node.attrib_set("product_name", "Magical Mystery Box")
+
+    buses = InterfaceMap.get_bus_order(node)
+    assert_nil buses
   end
 end
