@@ -13,6 +13,7 @@
 # limitations under the License.
 #
 
+
 class Scaffolds::ConduitsController < ApplicationController
   active_scaffold :'barclamp_network/conduit' do |conf|
   end

@@ -13,6 +13,7 @@
 # limitations under the License.
 #
 
+
 class Scaffolds::InterfaceSelectorsController < ApplicationController
   active_scaffold :'barclamp_network/interface_selector' do |conf|
   end

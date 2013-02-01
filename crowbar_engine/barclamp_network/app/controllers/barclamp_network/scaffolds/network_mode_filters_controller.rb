@@ -13,6 +13,7 @@
 # limitations under the License.
 #
 
+
 class Scaffolds::NetworkModeFiltersController < ApplicationController
   active_scaffold :'barclamp_network/network_mode_filter' do |conf|
   end

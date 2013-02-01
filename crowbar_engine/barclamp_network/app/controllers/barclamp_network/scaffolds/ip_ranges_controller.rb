@@ -13,6 +13,7 @@
 # limitations under the License.
 #
 
+
 class Scaffolds::IpRangesController < ApplicationController
   active_scaffold :'barclamp_network/ip_range' do |conf|
   end

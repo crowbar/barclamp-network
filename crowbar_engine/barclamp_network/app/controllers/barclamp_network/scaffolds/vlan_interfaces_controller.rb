@@ -13,6 +13,7 @@
 # limitations under the License.
 #
 
+
 class Scaffolds::VlanInterfacesController < ApplicationController
   active_scaffold :'barclamp_network/vlan_interface' do |conf|
   end

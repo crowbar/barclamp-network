@@ -13,6 +13,7 @@
 # limitations under the License.
 #
 
+
 class Scaffolds::BusMapsController < ApplicationController
   active_scaffold :'barclamp_network/bus_map' do |conf|
   end

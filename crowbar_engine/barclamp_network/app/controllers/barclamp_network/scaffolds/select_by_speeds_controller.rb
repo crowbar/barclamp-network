@@ -13,6 +13,7 @@
 # limitations under the License.
 #
 
+
 class Scaffolds::SelectBySpeedsController < ApplicationController
   active_scaffold :'barclamp_network/select_by_speed' do |conf|
   end

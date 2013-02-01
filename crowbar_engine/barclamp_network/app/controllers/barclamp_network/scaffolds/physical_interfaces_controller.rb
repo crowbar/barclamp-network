@@ -13,6 +13,7 @@
 # limitations under the License.
 #
 
+
 class Scaffolds::PhysicalInterfacesController < ApplicationController
   active_scaffold :'barclamp_network/physical_interface' do |conf|
   end

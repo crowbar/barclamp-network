@@ -13,6 +13,7 @@
 # limitations under the License.
 #
 
+
 class Scaffolds::AllocatedIpAddressesController < ApplicationController
   active_scaffold :'barclamp_network/allocated_ip_address' do |conf|
   end
