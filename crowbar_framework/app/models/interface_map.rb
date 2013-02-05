@@ -1,4 +1,4 @@
-# Copyright 2012, Dell
+# Copyright 2013, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,4 +18,17 @@ class InterfaceMap < ActiveRecord::Base
 
   validates :bus_maps, :presence => true
   validates :proposal, :presence => true
+
+
+  def self.get_bus_order(node)
+    buses = nil
+    product_name_attrib = node.get_attrib("product_name")
+
+    BusMap.all.each do |bus_map|
+      buses = bus_map.buses if product_name_attrib.value =~ /#{bus_map.pattern}/
+      break if buses
+    end
+    buses.sort! {|bus1,bus2| bus1.order.to_i <=> bus2.order.to_i} if !buses.nil?
+    buses
+  end
 end

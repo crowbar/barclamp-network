@@ -126,7 +126,7 @@ class NetworkService < ServiceObject
       network_config.each { |param_name, param_value|
         case param_name
         when "conduit"
-          network.conduit = get_object(Conduit, param_value)
+          network.conduit = ServiceObject.get_object(Conduit, param_value)
         when "use_vlan"
           network.use_vlan = param_value
         when "vlan"
@@ -263,11 +263,11 @@ class NetworkService < ServiceObject
     return [400, "No node_id specified"] if node_id.nil?
 
     # Find the node
-    node = get_object_safe(Node, node_id)
+    node = ServiceObject.get_object_safe(Node, node_id)
     return [404, "Node #{node_id} does not exist"] if node.nil?
 
     # Find the proposal and network
-    error_code, *rest = find_proposal_and_network(proposal_id, network_id)
+    error_code, *rest = NetworkUtils.find_proposal_and_network(proposal_id, network_id)
     return [error_code, rest[0]] if error_code != 200
     proposal = rest[0]
     network = rest[1]
@@ -357,11 +357,11 @@ class NetworkService < ServiceObject
     return [400, "No node_id specified"] if node_id.nil?
 
     # Find the node
-    node = get_object_safe(Node, node_id)
+    node = ServiceObject.get_object_safe(Node, node_id)
     return [404, "Node #{node_id} does not exist"] if node.nil?
     
     # Find the proposal and network
-    error_code, *rest = find_proposal_and_network(proposal_id, network_id)
+    error_code, *rest = NetworkUtils.find_proposal_and_network(proposal_id, network_id)
     return [error_code, rest[0]] if error_code != 200
     proposal = rest[0]
     network = rest[1]
@@ -478,11 +478,11 @@ class NetworkService < ServiceObject
     return [400, "No node_id specified"] if node_id.nil?
 
     # Find the node
-    node = get_object_safe(Node, node_id)
+    node = ServiceObject.get_object_safe(Node, node_id)
     return [404, "Node #{node_id} does not exist"] if node.nil?
 
     # Find the proposal and network
-    error_code, *rest = find_proposal_and_network(proposal_id, network_id)
+    error_code, *rest = NetworkUtils.find_proposal_and_network(proposal_id, network_id)
     return [error_code, rest[0]] if error_code != 200
     proposal = rest[0]
     network = rest[1]
@@ -515,7 +515,7 @@ class NetworkService < ServiceObject
 
   def network_get(id)
     begin
-      [200, get_object(Network, id)]
+      [200, ServiceObject.get_object(Network, id)]
     rescue ActiveRecord::RecordNotFound => ex
       @logger.warn(ex.message)
       [404, ex.message]
@@ -538,8 +538,8 @@ class NetworkService < ServiceObject
             :dhcp_enabled => dhcp_enabled,
             :use_vlan => use_vlan)
         network.subnet = subnet
-        network.proposal = get_object_safe( Proposal, proposal_id ) if proposal_id != "-1"
-        network.conduit = get_object( Conduit, conduit_id )
+        network.proposal = ServiceObject.get_object_safe( Proposal, proposal_id ) if proposal_id != "-1"
+        network.conduit = ServiceObject.get_object( Conduit, conduit_id )
 
         # Either both router_pref and router_ip are passed, or neither are
         if !((router_pref.nil? and router_ip.nil?) or
@@ -579,8 +579,8 @@ class NetworkService < ServiceObject
     network = nil
     begin
       Network.transaction do
-        network = get_object( Network, id )
-        conduit = get_object( Conduit, conduit_id )
+        network = ServiceObject.get_object( Network, id )
+        conduit = ServiceObject.get_object( Conduit, conduit_id )
         if conduit.name != network.conduit.name
           @logger.debug("Updating conduit to #{conduit_id}")
           network.conduit = conduit
@@ -688,7 +688,7 @@ class NetworkService < ServiceObject
     @logger.debug("Entering service network_delete #{id}")
 
     begin
-      network = get_object(Network, id)
+      network = ServiceObject.get_object(Network, id)
 
       @logger.debug("Deleting network #{network.id}/\"#{network.name}\"")
       network.destroy
@@ -703,45 +703,6 @@ class NetworkService < ServiceObject
     end
   end
 
-
-  def find_proposal_and_network(proposal_id, network_id)
-    # Find the proposal
-    proposal = nil
-    unless proposal_id.nil?
-      proposal = get_object_safe(Proposal, proposal_id)
-      return [404, "There is no proposal with proposal_id #{proposal_id}"] if proposal.nil?
-    end
-
-    # Find the network
-    if proposal.nil?
-      network = get_object_safe(Network, network_id)
-      return [404, "There is no network with network_id #{network_id}"] if network.nil?
-      proposal = network.proposal
-    else
-      # We have a proposal
-      # If a network ID was passed, then look up the network by that ID
-      if ServiceObject.id?(network_id)
-        begin
-          network = Network.find(network_id)
-        rescue ActiveRecord::RecordNotFound => ex
-          return [404, ex.message]
-        end
-
-        # Do a consistency check to make sure that the found network is
-        # associated with the specified proposal
-        if network.proposal_id != proposal.id
-          return [400, "Proposal #{proposal_id} is not associated with network #{network_id}"]
-        end
-      else
-        # network_id is a name, so look up the network by proposal ID and network name
-        network = Network.where("proposal_id = ? AND name = ?", proposal.id, network_id ).first
-        return [404, "There is no network with proposal_id #{proposal_id} and name #{network_id}"] if network.nil?
-      end
-    end
-
-    [200, proposal, network]
-  end
-  
 
   private
   def create_ip_range( ip_range_name, ip_range_hash )
