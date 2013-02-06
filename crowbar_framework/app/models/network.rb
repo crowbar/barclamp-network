@@ -33,7 +33,7 @@ class Network < ActiveRecord::Base
 
 
   def allocate_ip(range, node, suggestion = nil)
-    logger.debug("Entering Network#{log_name(self)}.allocate_ip(range: #{range}, node: #{log_name(node)}, suggestion: #{suggestion}")
+    logger.debug("Entering Network#{NetworkUtils.log_name(self)}.allocate_ip(range: #{range}, node: #{NetworkUtils.log_name(node)}, suggestion: #{suggestion}")
 
     # Validate inputs
     return [400, "No range specified"] if range.nil?
@@ -43,7 +43,7 @@ class Network < ActiveRecord::Base
     results = AllocatedIpAddress.joins(:interface).where(:interfaces => {:node_id => node.id}).where(:network_id => id)
     if results.length > 0
       allocated_ip = results.first.ip
-      logger.info("Network.allocate_ip: node #{log_name(node)} already has address #{allocated_ip} on network #{log_name(self)}, range #{range}")
+      logger.info("Network.allocate_ip: node #{NetworkUtils.log_name(node)} already has address #{allocated_ip} on network #{NetworkUtils.log_name(self)}, range #{range}")
       net_info = build_net_info(node)
       net_info["address"] = allocated_ip
       return [200, net_info]
@@ -51,7 +51,6 @@ class Network < ActiveRecord::Base
 
     subnet_addr = IPAddr.new(subnet.cidr)
     netmask_addr = subnet.get_netmask()
-
 
     # Find the ip range
     ip_range = ip_ranges.where(:name => range).first
@@ -70,7 +69,7 @@ class Network < ActiveRecord::Base
       subsug = IPAddr.new(suggestion) & netmask_addr
       if subnet_addr == subsug
         if allocated_ips.where(:ip => suggestion).length == 0
-          logger.info("Using suggestion: node #{log_name(node)}, network #{log_name(self)} #{suggestion}")
+          logger.info("Using suggestion: node #{NetworkUtils.log_name(node)}, network #{NetworkUtils.log_name(self)} #{suggestion}")
           address = suggestion
           found = true
         end
@@ -104,6 +103,8 @@ class Network < ActiveRecord::Base
             ip_addr = AllocatedIpAddress.new( :ip => address.to_s )
             ip_addr.network = self
 
+            node.set_attrib("ip_address", nil, 0, AttribInstanceIpAddress)
+
             # TODO - Interfaces should be discovered, not created on the fly
             interfaces = Interface.where( "node_id = ?", node.id )
             logger.debug("Found #{interfaces.size} interfaces")
@@ -136,7 +137,7 @@ class Network < ActiveRecord::Base
     end
 
     if !found and tries == 0
-      logger.error("Network.allocate_ip: retries exceeded while allocating IP address for node #{log_name(node)} network #{log_name(self)} range #{range}")
+      logger.error("Network.allocate_ip: retries exceeded while allocating IP address for node #{NetworkUtils.log_name(node)} network #{NetworkUtils.log_name(self)} range #{range}")
       return [404, "Unable to allocate IP address due to retries exceeded"]
     end
 
@@ -152,14 +153,14 @@ class Network < ActiveRecord::Base
     # If we don't have one allocated, return success
     results = AllocatedIpAddress.joins(:interface).where(:interfaces => {:node_id => node.id}).where(:network_id => id)
     if results.length == 0
-      logger.warn("Network.deallocate_ip: node #{log_name(node)} does not have an address allocated on network #{log_name(self)}")
+      logger.warn("Network.deallocate_ip: node #{NetworkUtils.log_name(node)} does not have an address allocated on network #{NetworkUtils.log_name(self)}")
       return [200, nil]
     end
 
     allocated_ip = results.first
     allocated_ip.destroy
 
-    logger.info("Network.deallocate_ip: deallocated ip #{allocated_ip.ip} for node #{log_name(node)} on network #{log_name(self)}")
+    logger.info("Network.deallocate_ip: deallocated ip #{allocated_ip.ip} for node #{NetworkUtils.log_name(node)} on network #{NetworkUtils.log_name(self)}")
     
     [200, nil]
   end
@@ -171,7 +172,7 @@ class Network < ActiveRecord::Base
     # If we already have an enabled inteface then return success
     intf = Interface.where(:node_id => node.id).first
     if !intf.nil? and intf.networks.where( :id => id).exists?
-      logger.info("Network.enable_interface: node #{log_name(node)} already has an enabled interface on network #{log_name(self)}")
+      logger.info("Network.enable_interface: node #{NetworkUtils.log_name(node)} already has an enabled interface on network #{NetworkUtils.log_name(self)}")
       return [200, net_info]
     end
 
@@ -204,13 +205,5 @@ class Network < ActiveRecord::Base
       "vlan" => vlan.nil? ? "" :"#{vlan.tag}" }
     net_info["router_pref"] = "#{router_pref}" unless router_pref.nil?
     net_info
-  end
-
-
-  private
-
-  def log_name(object)
-    return "(nil/nil)" if object.nil?
-    "(#{object.object_id}/#{object.name})"
   end
 end

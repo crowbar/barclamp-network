@@ -303,88 +303,6 @@ class NetworkServiceTest < ActiveSupport::TestCase
   end
 
 
-  # Failure to find proposal due to bad proposal id
-  test "find_proposal_and_network: failure to find proposal due to bad proposal id" do
-    net_service = NetworkService.new(Rails.logger)
-    http_error, *rest = net_service.find_proposal_and_network(99, nil)
-    assert_equal 404, http_error
-  end
-
-
-  # Failure to find network due to bad network id when proposal unspecified
-  test "find_proposal_and_network: failure to find network due to bad network id when proposal unspecified" do
-    net_service = NetworkService.new(Rails.logger)
-    http_error, *rest = net_service.find_proposal_and_network(nil, "fred")
-    assert_equal 404, http_error
-  end
-
-
-  # Successfully find network when no proposal id
-  test "find_proposal_and_network: success when no proposal id" do
-    net_service = NetworkService.new(Rails.logger)
-    create_a_network(net_service, "public")
-    http_error, proposal, network = net_service.find_proposal_and_network(nil, "public")
-    assert_equal 200, http_error
-    assert_not_nil network
-    assert_equal network.proposal.id, proposal.id unless proposal.nil?
-    assert_equal network.proposal, proposal if proposal.nil?
-  end
-
-
-  # Successfully find network by name when valid proposal id
-  test "find_proposal_and_network: successfully find network by name when valid proposal id" do
-    net_service = NetworkService.new(Rails.logger)
-    new_network = create_a_network(net_service, "public")
-    new_proposal = NetworkTestHelper.create_or_get_proposal("wilma")
-    new_network.proposal = new_proposal
-    new_network.save!
-    http_error, proposal, network = net_service.find_proposal_and_network(new_proposal.id, "public")
-    assert_equal 200, http_error
-    assert_equal new_proposal.id, proposal.id
-    assert_equal new_network.id, network.id
-  end
-  
-
-  # Fail to find network by name when valid proposal id
-  test "find_proposal_and_network: fail to find network by name when valid proposal id" do
-    net_service = NetworkService.new(Rails.logger)
-    new_network = create_a_network(net_service, "public")
-    new_proposal = NetworkTestHelper.create_or_get_proposal("wilma")
-    new_network.proposal = new_proposal
-    new_network.save!
-    http_error, proposal, network = net_service.find_proposal_and_network(new_proposal.id, "barney")
-    assert_equal 404, http_error
-  end
-
-
-  # Successfully find network by id when valid proposal id
-  test "find_proposal_and_network: successfully find network by id when valid proposal id" do
-    net_service = NetworkService.new(Rails.logger)
-    new_network = create_a_network(net_service, "public")
-    new_proposal = NetworkTestHelper.create_or_get_proposal("wilma")
-    new_network.proposal = new_proposal
-    new_network.save!
-    http_error, proposal, network = net_service.find_proposal_and_network(new_proposal.id, new_network.id)
-    assert_equal 200, http_error
-    assert_equal new_proposal.id, proposal.id
-    assert_equal new_network.id, network.id
-  end
-
-
-  # Consistency check of network id failure
-  test "find_proposal_and_network: consistency check of network id failure" do
-    net_service = NetworkService.new(Rails.logger)
-    new_network = create_a_network(net_service, "public")
-    new_proposal = NetworkTestHelper.create_or_get_proposal("wilma")
-    new_network.proposal = new_proposal
-    new_network.save!
-    new_network2 = create_a_network(net_service, "public")
-    new_network2.save!
-    http_error, proposal, network = net_service.find_proposal_and_network(new_proposal.id, new_network2.id)
-    assert_equal 400, http_error
-  end
-
-
   # Allocate IP failure due to missing network_id
   test "network_allocate_ip: failure due to missing network_id" do
     net_service = NetworkService.new(Rails.logger)
@@ -539,7 +457,6 @@ class NetworkServiceTest < ActiveSupport::TestCase
   end
   
 
-  private
   # Create a Network
   def create_a_network(net_service, name)
     # HACK!  We should remove this line when conduits are prepopulated in the system
@@ -562,8 +479,9 @@ class NetworkServiceTest < ActiveSupport::TestCase
     assert_equal 200, http_error, "HTTP error code returned: #{http_error}, #{network}"
     network
   end
+  
 
-
+  private
   # Retrieve a Network
   def get_a_network(net_service, id)
     http_error, network = net_service.network_get(id)
@@ -579,6 +497,4 @@ class NetworkServiceTest < ActiveSupport::TestCase
     assert_not_nil msg, "Expected to get error message, but got nil"
     assert_equal 404, http_error, "HTTP error code returned: #{http_error}, #{msg}"
   end
-
-
 end
