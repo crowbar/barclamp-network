@@ -1,0 +1,4 @@
+%p{:style => 'float:right'}
+  = link_to t('cancel'), networks_path, :class => 'button'
+%h1= @network.name
+= render 'form'

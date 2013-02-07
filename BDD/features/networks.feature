@@ -53,7 +53,7 @@ Feature: Networks
     Then REST call returned success
     Finally REST deletes the {object:networks} "bdd_net"
       And REST removes {object:node} "node.net.com"
-
+	  
   Scenario: Enable an interface on a node
     While interactive
     Given REST creates the {object:networks} "bdd_net"
@@ -63,3 +63,20 @@ Feature: Networks
     Finally REST deletes the {object:networks} "bdd_net"
       And REST removes {object:node} "node.net.com"
       
+  Scenario: Network Table Renders
+    While interactive
+    Given I am on the home page 
+    When I click on the "Networks" menu item
+    Then I should see "Networks"
+      And I should see "Network Count"
+      And I should see "Network ID"
+      And there should be no translation errors
+      
+  Scenario: View Network Detail
+    While interactive
+    Given REST creates the {object:networks} "bdd_net"
+    When I go to the "network/networks/bdd_net" page
+    Then I should see "<dd>bdd_net</dd>"
+      And I should see "VLAN Tag"
+    Finally REST deletes the {object:networks} "bdd_net"
+

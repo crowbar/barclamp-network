@@ -13,7 +13,10 @@
 # limitations under the License.
 
 class IpAddress < ActiveRecord::Base
-  attr_accessible :cidr
+
+  belongs_to :interface, :inverse_of => :ip_addresses
+  attr_protected :id
+  # attr_accessible :cidr
 
   validates :cidr, :presence => true, :format => { :with => /^([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])(\/([0-9]|1[0-9]|2[0-9]|3[0-2]))?$/, :message => "not a valid IP" }
 
