@@ -22,12 +22,4 @@ class ConduitFilterTest < ActiveSupport::TestCase
     conduit_filter = NetworkTestHelper.create_a_conduit_filter()
     conduit_filter.save!
   end
-
-
-  # Test creation failure due to missing comparitor
-  test "ConduitFilter creation: failure due to missing comparitor" do
-    assert_raise ActiveRecord::RecordInvalid do
-      ConduitFilter.create!( :attr => "stuff", :value => "7" )
-    end
-  end
 end
