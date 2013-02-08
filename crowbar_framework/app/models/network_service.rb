@@ -18,17 +18,21 @@ class NetworkService < ServiceObject
   def apply_role_pre_chef_call(old_config, new_config, all_nodes)
     proposal = new_config.proposal
 
-    #attrs_config = JSON.parse( proposal.barclamp.template.current_config.config )
+    # TODO Remove the below HACK and add code the retrieves the new network
+    # json from the barclamp template
 
-    # TODO Remove the below HACK and uncomment the line above when we switch to the new network json
     # Start HACK
-    # on admin, should result in:"/opt/dell/barclamps/network/chef/data_bags/crowbar/bc-template-network-new.json"
-    fp = File.join(Rails.root,"..","barclamps","network","chef","data_bags","crowbar","bc-template-network-new.json")
-    new_json = JSON.load File.open(fp, "r")
+    new_json = read_new_network_json()
     attrs_config = new_json["attributes"]
     # End HACK
 
     populate_network_defaults( attrs_config["network"], proposal )
+  end
+
+
+  def self.read_new_network_json()
+    fp = File.join(Rails.root,"..","barclamps","network","chef","data_bags","crowbar","bc-template-network-new.json")
+    JSON.load File.open(fp, "r")
   end
 
 

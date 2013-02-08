@@ -20,12 +20,4 @@ class InterfaceSelectorTest < ActiveSupport::TestCase
   test "InterfaceSelector creation: success" do
     InterfaceSelector.create!( :comparitor => "=", :value => "7" )
   end
-
-
-  # Test creation failure due to missing comparitor
-  test "InterfaceSelector creation: failure due to missing comparitor" do
-    assert_raise ActiveRecord::RecordInvalid do
-      InterfaceSelector.create!( :value => "7" )
-    end
-  end
 end
