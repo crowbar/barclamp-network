@@ -1,4 +1,4 @@
-# Copyright 2012, Dell
+# Copyright 2013, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 # limitations under the License.
 
 class Bond < Interface
-  attr_accessible :team_mode
+  attr_accessible :team_mode, :name
 
   has_many :physical_interfaces, :dependent => :nullify
 
