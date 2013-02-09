@@ -1,0 +1,11 @@
+%h1{:title=>@conduit.name}= "#{@conduit.name}  (#{link_to t('edit'), edit_conduit_path(@conduit.id)})".html_safe
+
+.column_50.first
+  %dl
+    = dl_item(t('.name'), @conduit.name, {:show_if_blank => true})
+  %dl
+    = dl_item(t('.networks'), (@conduit.networks.map { |x| x[:name] }.join(", ")), {:show_if_blank => true})
+.column_50.last
+  %dl
+    = dl_item(t('.conduit_rules'), (render(:partial => 'conduit_rules') unless @conduit.conduit_rules.nil?), {:show_if_blank => true})
+.clear

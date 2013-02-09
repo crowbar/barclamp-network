@@ -1,0 +1,36 @@
+:javascript
+  jQuery(document).ready(function($) {
+    $.loadDetails('network_details', 'details');
+  });
+
+%h1= t('.title')
+
+.column_100
+  - unless false
+    %section.box#details
+      - if @network
+        = render :partial => 'show'
+      - else
+        %p= "#{t('.network_count')}: #{Network.count}"
+          
+%table.data.network.box
+  %thead
+    %tr
+      %th{ :style=>'width:10px' }
+      %th= t '.id'
+      %th= t '.name'
+      %th= t '.dhcp_enabled'
+      %th= t '.conduit'
+      %th= t '.updated_at'
+      %th{ :style=>'width:10px' }
+  %tbody
+    - @networks.sort.each do |network|
+      %tr.network{ :class => cycle(:odd, :even)}
+        %td{ :style=>'width:10px' }
+        %td=network.id
+        %td
+          %a{:href => networks_path+"/#{network.id}", :class => 'network_details', :id => network.id}= network.name
+        %td=network.dhcp_enabled
+        %td=network.conduit.name unless network.conduit.nil?
+        %td=network.updated_at
+        %td{ :style=>'width:10px' }

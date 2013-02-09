@@ -11,14 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
-class Router < ActiveRecord::Base
-  attr_protected :id
-  belongs_to :network, :inverse_of => :router
-  has_one :ip, :foreign_key => "router_id", :class_name => "IpAddress", :dependent => :destroy
-
-  #attr_accessible :pref
-  accepts_nested_attributes_for :ip
-  validates :pref, :presence => true, :numericality => { :only_integer => true }
-  validates :ip, :presence => true
+class Scaffolds::IpAddressesController < ApplicationController
+  active_scaffold :ip_address do |conf|
+  end
 end

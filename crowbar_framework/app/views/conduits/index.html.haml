@@ -1,0 +1,34 @@
+:javascript
+  jQuery(document).ready(function($) {
+    $.loadDetails('conduit_details', 'details');
+  });
+
+%h1= t '.title'
+
+.column_100
+  - unless false
+    %section.box#details
+      - if @conduit
+        = render :partial => 'show'
+      - else
+        %p= "#{t('.conduit_count')}: #{Conduit.count}"
+
+%table.data.conduit.box
+  %thead
+    %tr
+      %th{ :style=>'width:10px' }
+      %th= t '.id'
+      %th= t '.name'
+      %th= t '.networks'
+      %th{ :style=>'width:10px' }
+  %tbody
+    - @conduits.sort.each do |conduit|
+      %tr
+        %td{ :style=>'width:10px' }
+        %td=conduit.id
+        %td
+          %a{:href => conduit_path(conduit.id), :class => 'conduit_details', :id => conduit.id}= conduit.name
+        %td=(conduit.networks.map { |x| x[:name] }.join(", "))
+        %td{ :style=>'width:10px' }
+
+.clear

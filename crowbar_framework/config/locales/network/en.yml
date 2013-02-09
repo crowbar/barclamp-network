@@ -13,12 +13,49 @@
 # limitations under the License.
 #
 en:
+  network_name: &network_name Network Name
+  network_id: &network_id Network ID
+  dhcp_enabled: &dhcp_enabled DHCP Enabled
+  conduit: &conduit Conduit
+  updated_at: &updated_at Last Updated
   nav:
+    networks: Networks
+    networks_description: Manage Networks
     switch: Switches
     switch_description: Visual Representation of Switch Connections
     vlan: VLANs
     vlan_description: VLAN to Node Mapping
-    
+    conduits: Conduits
+    conduit_description: Manage Conduits
+    scaffold:
+      network:
+        top: Network
+        allocated_ip_addresses: Allocated IP Addresses
+        bmc_interfaces: BMC Interfaces
+        bonds: Bonds
+        bus_maps: Bus Maps
+        buses: Buses
+        conduit_actions: Conduit Actions
+        conduit_filters: Conduit Filters
+        conduit_rules: Conduit Rules
+        conduits: Conduits
+        create_bonds: Create Bonds
+        create_vlans: Create VLANs
+        interface_maps: Interface Maps
+        interface_selectors: Interface Selectors
+        interfaces: Interfaces
+        ip_addresses: IP Addresses
+        ip_ranges: IP Ranges
+        network_mode_filters: Network Node Filters
+        networks: Networks
+        node_attribute_filters: Node Attribute Filters
+        physical_interfaces: Physical Interfaces
+        routers: Routers
+        select_by_indices: Select By Indices
+        select_by_speeds: Select By Speeds
+        vlan_interfaces: VLAN Interfaces
+        vlans: VLANs
+
   barclamp:
     network:
       edit_attributes: 
@@ -27,6 +64,8 @@ en:
         deployment: Deployment
 
   network:
+    form:
+      save: Save
     vlan_names:
       admin: Admin
       bmc: Mgmt (BMC)
@@ -79,3 +118,63 @@ en:
       team_4: Team Mode 4
       team_5: Team Mode 5
       team_6: Team Mode 6
+  networks:
+    index:
+      title: Networks
+      network_count: Network Count
+      id: *network_id
+      name: *network_name
+      dhcp_enabled: *dhcp_enabled
+      updated_at: *updated_at
+      conduit: *conduit
+      updated_at: *updated_at
+    show:
+      id: *network_id
+      name: *network_name
+      dhcp_enabled: *dhcp_enabled
+      subnet: Subnet
+      ip_ranges: IP Ranges
+      ip_range_name: Name
+      ip_range_start_address: Start Address
+      ip_range_end_address: End Address
+      router: Router
+      router_ip: IP
+      router_pref: Preference
+      conduit: *conduit
+      updated_at: *updated_at
+      allocated_ips: Allocated IPs
+      vlan_tag: VLAN Tag
+    form:
+      id: *network_id
+      name: *network_name
+      dhcp_enabled: *dhcp_enabled
+      subnet: Subnet
+      ip_ranges: IP Ranges
+      ip_range_name: Name
+      ip_range_start_address: Start Address
+      ip_range_end_address: End Address
+      router: Router
+      router_ip: IP
+      router_pref: Preference
+      conduit: *conduit
+      updated_at: *updated_at
+    
+  conduits:
+    networks: &assoc_networks Associated Networks
+    name: &conduit_name Name
+    index:
+      title: Conduits
+      id: Conduit ID
+      name: *conduit_name
+      updated_at: Last Updated
+      networks: *assoc_networks
+      conduit_count: Counduit Count
+      rules:
+        top: Conduit Rules
+        filters: Filters
+        interface_selectors: Interface Selectors
+        actions: Actions
+    show:
+      networks: *assoc_networks
+      name: *conduit_name
+      conduit_rules: Conduit Rules
