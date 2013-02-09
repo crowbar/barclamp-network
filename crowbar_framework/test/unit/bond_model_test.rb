@@ -1,4 +1,4 @@
-# Copyright 2012, Dell 
+# Copyright 2013, Dell 
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); 
 # you may not use this file except in compliance with the License. 
@@ -21,7 +21,12 @@ class BondModelTest < ActiveSupport::TestCase
     bond = Bond.new( :name => "fred", :team_mode => 6 )
     bond.physical_interfaces << PhysicalInterface.new(:name => "wilma")
     bond.physical_interfaces << PhysicalInterface.new(:name => "betty")
-    bond.save!
+    assert bond.save!
+    assert_equal "fred", bond.name
+    assert_equal 6, bond.team_mode
+    assert_equal 2, bond.physical_interfaces.count
+    assert bond.physical_interfaces.first.name.in? %w(wilma betty)
+    assert bond.physical_interfaces.second.name.in? %w(wilma betty)
   end
 
 
