@@ -1,4 +1,4 @@
-# Copyright 2012, Dell
+# Copyright 2013, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,4 +13,12 @@
 # limitations under the License.
 
 class NodeAttributeFilter < ConduitFilter
+  def match(node)
+    attr_name = self.attr.split(".")
+    attrib = node.get_attrib(attr_name[0])
+
+    op_str = ".#{attr_name[1]}" if attr_name.length > 1
+
+    eval "self.value #{self.comparitor} attrib.value()#{op_str}"
+  end
 end

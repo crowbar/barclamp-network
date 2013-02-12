@@ -146,4 +146,29 @@ class NetworkTestHelper
   end
 
 
+  def self.add_role(node, role_name)
+    role=Role.create!(:name=>role_name)
+
+    role_instance = RoleInstance.create!(:role_id => role.id)
+    role_instance.add_node(node)
+  end
+
+
+  def self.create_node()
+    node = Node.create!(:name => "fred.flintstone.org")
+
+    nics = {}
+    eth0_parms = {}
+    eth0_parms["path"] = "0000:00/0000:00:11.0/0000:02:01:0"
+    eth0_parms["speeds"] = { "0" => "1g", "1" => "0g" }
+    nics["eth0"] = eth0_parms
+
+    eth1_parms = {}
+    eth1_parms["path"] = "0000:00/0000:00:11.0/0000:02:02:0"
+    eth1_parms["speeds"] = { "0" => "1g", "1" => "0g" }
+    nics["eth1"] = eth1_parms
+
+    node.set_attrib("nics", nics)
+    node
+  end
 end
