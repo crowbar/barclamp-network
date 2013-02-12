@@ -16,6 +16,4 @@ class InterfaceSelector < ActiveRecord::Base
   belongs_to :conduit_rule, :inverse_of => :interface_selectors
 
   attr_accessible :comparitor, :end_value, :start_value, :value
-
-  validates :comparitor, :presence => true
 end

@@ -13,8 +13,4 @@
 # limitations under the License.
 
 class SelectByIndex < InterfaceSelector
-  def initialize()
-    super()
-    self.comparitor="="
-  end
 end

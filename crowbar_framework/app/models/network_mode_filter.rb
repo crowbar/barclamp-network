@@ -1,4 +1,4 @@
-# Copyright 2012, Dell
+# Copyright 2013, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,14 +13,20 @@
 # limitations under the License.
 
 class NetworkModeFilter < ConduitFilter
-  def initialize()
-    super()
-    self.attr="network_mode"
-    self.comparitor="="
+  def network_mode=( mode )
+    self.value = mode
   end
 
 
-  def network_mode=( mode )
-    self.value="mode"
+  def match(node)
+    # TODO: Figure out the configured networking mode
+    # The below is an ugly hack to read in the configured network mode from
+    # the new network json
+    # Start HACK
+    new_json = NetworkService.read_new_network_json()
+    configured_teaming_mode = new_json["attributes"]["network"]["mode"]
+    # End HACK
+
+    value.casecmp(configured_teaming_mode) == 0
   end
 end
