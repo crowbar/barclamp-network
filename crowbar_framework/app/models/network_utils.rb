@@ -17,19 +17,19 @@ class NetworkUtils
     # Find the proposal
     proposal = nil
     unless proposal_id.nil?
-      proposal = ServiceObject.get_object_safe(Proposal, proposal_id)
+      proposal = Proposal.find_key(proposal_id)
       return [404, "There is no proposal with proposal_id #{proposal_id}"] if proposal.nil?
     end
 
     # Find the network
     if proposal.nil?
-      network = ServiceObject.get_object_safe(Network, network_id)
+      network = Network.find_key(network_id)
       return [404, "There is no network with network_id #{network_id}"] if network.nil?
       proposal = network.proposal
     else
       # We have a proposal
       # If a network ID was passed, then look up the network by that ID
-      if ServiceObject.id?(network_id)
+      if Network.db_id?(network_id)
         begin
           network = Network.find(network_id)
         rescue ActiveRecord::RecordNotFound => ex

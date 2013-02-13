@@ -130,7 +130,7 @@ class NetworkService < ServiceObject
       network_config.each { |param_name, param_value|
         case param_name
         when "conduit"
-          network.conduit = ServiceObject.get_object(Conduit, param_value)
+          network.conduit = Conduit.find_key(param_value)
         when "use_vlan"
           network.use_vlan = param_value
         when "vlan"
@@ -267,7 +267,7 @@ class NetworkService < ServiceObject
     return [400, "No node_id specified"] if node_id.nil?
 
     # Find the node
-    node = ServiceObject.get_object_safe(Node, node_id)
+    node = Node.find_key(node_id)
     return [404, "Node #{node_id} does not exist"] if node.nil?
 
     # Find the proposal and network
@@ -361,7 +361,7 @@ class NetworkService < ServiceObject
     return [400, "No node_id specified"] if node_id.nil?
 
     # Find the node
-    node = ServiceObject.get_object_safe(Node, node_id)
+    node = Node.find_key(node_id)
     return [404, "Node #{node_id} does not exist"] if node.nil?
     
     # Find the proposal and network
@@ -482,7 +482,7 @@ class NetworkService < ServiceObject
     return [400, "No node_id specified"] if node_id.nil?
 
     # Find the node
-    node = ServiceObject.get_object_safe(Node, node_id)
+    node = Node.find_key(node_id)
     return [404, "Node #{node_id} does not exist"] if node.nil?
 
     # Find the proposal and network
@@ -519,10 +519,12 @@ class NetworkService < ServiceObject
 
   def network_get(id)
     begin
-      [200, ServiceObject.get_object(Network, id)]
-    rescue ActiveRecord::RecordNotFound => ex
-      @logger.warn(ex.message)
-      [404, ex.message]
+      network = Network.find_key(id)
+      if network.nil?
+        return [404, "Network #{id} does not exist."]
+      else
+        return [200, Network.find_key(id)]
+      end
     rescue RuntimeError => ex
       @logger.error(ex.message)
       [500, ex.message]
@@ -542,8 +544,8 @@ class NetworkService < ServiceObject
             :dhcp_enabled => dhcp_enabled,
             :use_vlan => use_vlan)
         network.subnet = subnet
-        network.proposal = ServiceObject.get_object_safe( Proposal, proposal_id ) if proposal_id != "-1"
-        network.conduit = ServiceObject.get_object( Conduit, conduit_id )
+        network.proposal = Proposal.find_key(proposal_id) if proposal_id != "-1"
+        network.conduit = Conduit.find_key(conduit_id)
 
         # Either both router_pref and router_ip are passed, or neither are
         if !((router_pref.nil? and router_ip.nil?) or
@@ -583,8 +585,16 @@ class NetworkService < ServiceObject
     network = nil
     begin
       Network.transaction do
-        network = ServiceObject.get_object( Network, id )
-        conduit = ServiceObject.get_object( Conduit, conduit_id )
+        network = Network.find_key(id)
+        if network.nil?
+          return [400, "Network #{id} cannot be updated because it does not exist"]
+        end
+
+        conduit = Conduit.find_key(conduit_id)
+        if conduit.nil?
+          return [400, "Update of network #{id} failed because conduit #{conduit_id} does not exist"]
+        end
+
         if conduit.name != network.conduit.name
           @logger.debug("Updating conduit to #{conduit_id}")
           network.conduit = conduit
@@ -692,15 +702,16 @@ class NetworkService < ServiceObject
     @logger.debug("Entering service network_delete #{id}")
 
     begin
-      network = ServiceObject.get_object(Network, id)
+      network = Network.find_key(id)
+      if network.nil?
+        err_msg = "Network #{id} cannot be deleted because it does not exist."
+        @logger.warn(err_msg)
+        return [404, err_msg]
+      end
 
       @logger.debug("Deleting network #{network.id}/\"#{network.name}\"")
       network.destroy
-
       [200, ""]
-    rescue ActiveRecord::RecordNotFound => ex
-      @logger.warn(ex.message)
-      [404, ex.message]
     rescue RuntimeError => ex
       @logger.error(ex.message)
       [500, ex.message]
