@@ -77,17 +77,6 @@ en:
       storage: Storage
     controller:
       virtual: Virtual
-    switch:
-      title: Network Switches
-      switch_details: Switch Expanded Details
-      switch: Switch
-      port: Port
-      node: Node
-      nc: N/C
-      no_connection: No Connection
-      all: Show All
-    dense:
-      no_connection: No Connection
     vlan:
       title: Available Networks
       name: Name
@@ -158,6 +147,17 @@ en:
       router_pref: Preference
       conduit: *conduit
       updated_at: *updated_at
+    switch:
+      title: Network Switches
+      switch_details: Switch Expanded Details
+      switch: Switch
+      port: Port
+      node: Node
+      nc: N/C
+      no_connection: No Connection
+      all: Show All
+    dense:
+      no_connection: No Connection
     
   conduits:
     networks: &assoc_networks Associated Networks
