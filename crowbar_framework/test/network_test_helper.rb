@@ -56,7 +56,7 @@ class NetworkTestHelper
   # Create a conduit filter
   def self.create_a_conduit_filter
     conduit_filter = ConduitFilter.new()
-    conduit_filter.attr = "num_interfaces"
+    conduit_filter.attr = "nics.size"
     conduit_filter.comparitor = "="
     conduit_filter.value = "2"
     conduit_filter
@@ -65,14 +65,17 @@ class NetworkTestHelper
 
   # Create a conduit rule
   def self.create_a_conduit_rule
+
     sbs = SelectBySpeed.new()
-    sbs.comparitor = "="
     sbs.value = "1g"
+
+    ifs = InterfaceSelector.new()
+    ifs.selectors << sbs
 
     rule = ConduitRule.new()
     rule.conduit_filters << create_a_conduit_filter()
     rule.conduit_actions << create_a_conduit_action()
-    rule.interface_selectors << sbs
+    rule.interface_selectors << ifs
     rule
   end
 
@@ -100,8 +103,8 @@ class NetworkTestHelper
   def self.create_an_interface_map
     interface_map = InterfaceMap.new()
 
-    interface_map.bus_maps << create_a_bus_map("PowerEdge C6145", { "1" => "0000:00/0000:00:04", "2" => "0000:00/0000:00:02" })
-    interface_map.bus_maps << create_a_bus_map("PowerEdge R710", { "1" => "0000:00/0000:00:01", "2" => "0000:00/0000:00:03" })
+    interface_map.bus_maps << create_a_bus_map("PowerEdge C6145", { "0" => "0000:00/0000:00:04", "1" => "0000:00/0000:00:02" })
+    interface_map.bus_maps << create_a_bus_map("PowerEdge R710", { "0" => "0000:00/0000:00:01", "1" => "0000:00/0000:00:03" })
 
     interface_map.proposal = create_or_get_proposal()
     interface_map
@@ -109,7 +112,7 @@ class NetworkTestHelper
   
   
   # Create a bus map
-  def self.create_a_bus_map(pattern="PowerEdge C6145", bus_order={ "1" => "0000:00/0000:00:04", "2" => "0000:00/0000:00:02"})
+  def self.create_a_bus_map(pattern="PowerEdge C6145", bus_order={ "0" => "0000:00/0000:00:04", "1" => "0000:00/0000:00:02"})
     bus_map = BusMap.new( :pattern => pattern)
     bus_map.buses << create_buses(bus_order)
     bus_map
@@ -117,15 +120,15 @@ class NetworkTestHelper
 
   
   # Create a bus
-  def self.create_a_bus(order="1", designator="0000:00/0000:00:01")
-      Bus.new( :order => order, :designator => designator )
+  def self.create_a_bus(order="0", path="0000:00/0000:00:01")
+      Bus.new( :order => order, :path => path )
   end
 
 
   def self.create_buses(bus_order)
     buses=[]
-    bus_order.each { |order, designator|
-      buses << create_a_bus( order, designator )
+    bus_order.each { |order, path|
+      buses << create_a_bus( order, path )
     }
     buses
   end
@@ -159,13 +162,13 @@ class NetworkTestHelper
 
     nics = {}
     eth0_parms = {}
-    eth0_parms["path"] = "0000:00/0000:00:11.0/0000:02:01:0"
-    eth0_parms["speeds"] = { "0" => "1g", "1" => "0g" }
+    eth0_parms["path"] = "0000:00/0000:00:02.0/0000:02:01:0"
+    eth0_parms["speeds"] = [ "100m", "1g" ]
     nics["eth0"] = eth0_parms
 
     eth1_parms = {}
-    eth1_parms["path"] = "0000:00/0000:00:11.0/0000:02:02:0"
-    eth1_parms["speeds"] = { "0" => "1g", "1" => "0g" }
+    eth1_parms["path"] = "0000:00/0000:00:04.0/0000:02:02:0"
+    eth1_parms["speeds"] = [ "1g", "10g" ]
     nics["eth1"] = eth1_parms
 
     node.set_attrib("nics", nics)

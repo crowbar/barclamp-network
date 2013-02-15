@@ -1,4 +1,4 @@
-# Copyright 2012, Dell
+# Copyright 2013, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,11 +16,6 @@ class CreateInterfaceSelectors < ActiveRecord::Migration
   def change
     create_table :interface_selectors do |t|
       t.references :conduit_rule
-      t.string :type
-      t.string :comparitor
-      t.string :value
-      t.string :start_value
-      t.string :end_value
 
       t.timestamps
     end

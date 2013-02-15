@@ -25,7 +25,7 @@ class BusModelTest < ActiveSupport::TestCase
   # Creation failure: non-existent order
   test "Bus creation: failure due to non-existent order" do
     assert_raise ActiveRecord::RecordInvalid do
-      Bus.create!( :designator => "0000:00/0000:00:1c" )
+      Bus.create!( :path => "0000:00/0000:00:1c" )
     end
   end
 
@@ -33,13 +33,13 @@ class BusModelTest < ActiveSupport::TestCase
   # Creation failure: non-numeric order
   test "Bus creation: failure due to non-numeric order" do
     assert_raise ActiveRecord::RecordInvalid do
-      Bus.create!( :order => "fred", :designator => "0000:00/0000:00:1c" )
+      Bus.create!( :order => "fred", :path => "0000:00/0000:00:1c" )
     end
   end
 
 
-  # Creation failure: non-existent designator
-  test "Bus creation: failure due to non-existent designator" do
+  # Creation failure: non-existent path
+  test "Bus creation: failure due to non-existent path" do
     assert_raise ActiveRecord::RecordInvalid do
       Bus.create!( :order => "fred" )
     end

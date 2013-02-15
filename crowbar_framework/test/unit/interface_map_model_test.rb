@@ -57,8 +57,8 @@ class InterfaceMapModelTest < ActiveSupport::TestCase
     buses = InterfaceMap.get_bus_order(node)
     assert_not_nil buses
 
-    assert_equal "0000:00/0000:00:01", buses[0].designator
-    assert_equal "0000:00/0000:00:03", buses[1].designator
+    assert_equal "0000:00/0000:00:01", buses[0].path
+    assert_equal "0000:00/0000:00:03", buses[1].path
   end
 
 

@@ -20,6 +20,8 @@ class InterfaceMap < ActiveRecord::Base
   validates :proposal, :presence => true
 
 
+  # This method finds the bus order for the node and returns a list of the
+  # Buses in the appropriate order
   def self.get_bus_order(node)
     buses = nil
     product_name_attrib = node.get_attrib("product_name")

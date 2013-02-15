@@ -26,6 +26,9 @@ class Conduit < ActiveRecord::Base
   validates :proposal, :presence => true
 
 
+  # This method finds the conduit rule associated with each conduit that passes
+  # all the conduit filters on the node, and returns a hash that maps:
+  # "intf0" => ConduitRule
   def self.get_conduit_rules(node)
     conduit_rules = {}
     # Loop thru each of the Conduits (intf0, intf1, etc)

@@ -38,7 +38,7 @@ class AttribInstanceBusOrder < AttribInstance
     buses = InterfaceMap.get_bus_order(node)
     bus_order=[]
     buses.each {|bus|
-      bus_order << bus.designator
+      bus_order << bus.path
     }
     bus_order.to_json
   end
