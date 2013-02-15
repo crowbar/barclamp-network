@@ -18,6 +18,10 @@ barclamp:
   name: network
   display: Network
   version: 0
+  license: "apache2"
+  copyright: "Dell, Inc 2013"
+  api_version: "v2"
+  api_version_accepts: "v2"
   online_help: 'https://github.com/dellcloudedge/crowbar/wiki/Network--barclamp'
   member:
     - crowbar
