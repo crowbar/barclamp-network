@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class CreateInterfaceSelectors < ActiveRecord::Migration
+class CreateSelectors < ActiveRecord::Migration
   def change
-    create_table :interface_selectors do |t|
-      t.references :conduit_rule
+    create_table :selectors do |t|
+      t.references :interface_selector
+      t.string :type
+      t.string :value
 
       t.timestamps
     end

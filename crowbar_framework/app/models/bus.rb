@@ -15,8 +15,8 @@
 class Bus < ActiveRecord::Base
   belongs_to :bus_map, :inverse_of => :buses
 
-  attr_accessible :designator, :order
+  attr_accessible :path, :order
 
   validates :order, :presence => true, :numericality => { :only_integer => true }
-  validates :designator, :presence => true
+  validates :path, :presence => true
 end
