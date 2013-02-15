@@ -68,13 +68,18 @@
               "interface_selectors": [
                 {
                   "SelectBySpeed": {
-                    "comparitor": "=",
                     "value": "1g"
+                  },
+                  "SelectByIndex": {
+                    "value": "1"
                   }
                 },
                 {
+                  "SelectBySpeed": {
+                    "value": "1g"
+                  },
                   "SelectByIndex": {
-                    "value": "1,2"
+                    "value": "2"
                   }
                 }
               ],
@@ -95,11 +100,8 @@
               "interface_selectors": [
                 {
                   "SelectBySpeed": {
-                    "comparitor": "?",
-                    "value": "1g"
-                  }
-                },
-                {
+                    "value": "?1g"
+                  },
                   "SelectByIndex": {
                     "value": "1"
                   }
@@ -117,11 +119,8 @@
               "interface_selectors": [
                 {
                   "SelectBySpeed": {
-                    "comparitor": "?",
-                    "value": "1g"
-                  }
-                },
-                {
+                    "value": "?1g"
+                  },
                   "SelectByIndex": {
                     "value": "1"
                   }
@@ -136,11 +135,8 @@
               "interface_selectors": [
                 {
                   "SelectBySpeed": {
-                    "comparitor": "?",
-                    "value": "1g"
-                  }
-                },
-                {
+                    "value": "?1g"
+                  },
                   "SelectByIndex": {
                     "value": "1"
                   }
@@ -163,11 +159,18 @@
               "interface_selectors": [
                 {
                   "SelectBySpeed": {
-                    "comparitor": "=",
+                    "value": "?1g"
+                  },
+                  "SelectByIndex": {
+                    "value": "1"
+                  }
+                },
+                {
+                  "SelectBySpeed": {
                     "value": "1g"
                   },
                   "SelectByIndex": {
-                    "value": "1,2"
+                    "value": "2"
                   }
                 }
               ],
@@ -188,13 +191,10 @@
               "interface_selectors": [
                 {
                   "SelectBySpeed": {
-                    "comparitor": "?",
-                    "value": "1g"
-                  }
-                },
-                {
+                    "value": "?1g"
+                  },
                   "SelectByIndex": {
-                    "value": "1"
+                    "value": "2"
                   }
                 }
               ],
@@ -210,11 +210,8 @@
               "interface_selectors": [
                 {
                   "SelectBySpeed": {
-                    "comparitor": "?",
-                    "value": "1g"
-                  }
-                },
-                {
+                    "value": "?1g"
+                  },
                   "SelectByIndex": {
                     "value": "1"
                   }
@@ -229,11 +226,8 @@
               "interface_selectors": [
                 {
                   "SelectBySpeed": {
-                    "comparitor": "=",
                     "value": "1g"
-                  }
-                },
-                {
+                  },
                   "SelectByIndex": {
                     "value": "1"
                   }
@@ -256,11 +250,18 @@
               "interface_selectors": [
                 {
                   "SelectBySpeed": {
-                    "comparitor": "=",
                     "value": "1g"
                   },
                   "SelectByIndex": {
-                    "value": "1,2"
+                    "value": "1"
+                  }
+                },
+                {
+                  "SelectBySpeed": {
+                    "value": "1g"
+                  },
+                  "SelectByIndex": {
+                    "value": "2"
                   }
                 }
               ],
@@ -281,11 +282,8 @@
               "interface_selectors": [
                 {
                   "SelectBySpeed": {
-                    "comparitor": "?",
-                    "value": "1g"
-                  }
-                },
-                {
+                    "value": "?1g"
+                  },
                   "SelectByIndex": {
                     "value": "1"
                   }
@@ -303,11 +301,8 @@
               "interface_selectors": [
                 {
                   "SelectBySpeed": {
-                    "comparitor": "?",
-                    "value": "1g"
-                  }
-                },
-                {
+                    "value": "?1g"
+                  },
                   "SelectByIndex": {
                     "value": "1"
                   }
@@ -322,11 +317,8 @@
               "interface_selectors": [
                 {
                   "SelectBySpeed": {
-                    "comparitor": "=",
                     "value": "1g"
-                  }
-                },
-                {
+                  },
                   "SelectByIndex": {
                     "value": "1"
                   }
