@@ -63,8 +63,14 @@ class ConduitTest < ActiveSupport::TestCase
     conduit1.proposal = NetworkTestHelper.create_or_get_proposal()
     conduit1.proposal.save!
 
+    sbs1 = SelectBySpeed.create!(:value => "1g")
+
+    is1 = InterfaceSelector.new()
+    is1.selectors << sbs1
+    is1.save!
+
     rule1 = ConduitRule.new()
-    rule1.interface_selectors << SelectBySpeed.new(:comparitor => "=", :value => "1g")
+    rule1.interface_selectors << is1
     conduit1.conduit_rules << rule1
 
     nmf1 = NetworkModeFilter.new()
@@ -86,8 +92,14 @@ class ConduitTest < ActiveSupport::TestCase
 
     rule1.save!
     
+    sbs2 = SelectBySpeed.create!(:value => "1g")
+
+    is2 = InterfaceSelector.new()
+    is2.selectors << sbs2
+    is2.save!
+    
     rule2 = ConduitRule.new()
-    rule2.interface_selectors << SelectBySpeed.new(:comparitor => "=", :value => "1g")
+    rule2.interface_selectors << is2
     conduit1.conduit_rules << rule2
 
     nmf2 = NetworkModeFilter.new()
@@ -117,8 +129,14 @@ class ConduitTest < ActiveSupport::TestCase
     conduit2.proposal = NetworkTestHelper.create_or_get_proposal()
     conduit2.proposal.save!
 
+    sbs3 = SelectBySpeed.create!(:value => "1g")
+
+    is3 = InterfaceSelector.new()
+    is3.selectors << sbs3
+    is3.save!
+    
     rule3 = ConduitRule.new()
-    rule3.interface_selectors << SelectBySpeed.new(:comparitor => "=", :value => "1g")
+    rule3.interface_selectors << is3
     conduit2.conduit_rules << rule3
 
     nmf3 = NetworkModeFilter.new()
@@ -140,8 +158,14 @@ class ConduitTest < ActiveSupport::TestCase
 
     rule3.save!
 
+    sbs4 = SelectBySpeed.create!(:value => "1g")
+
+    is4 = InterfaceSelector.new()
+    is4.selectors << sbs4
+    is4.save!
+    
     rule4 = ConduitRule.new()
-    rule4.interface_selectors << SelectBySpeed.new(:comparitor => "=", :value => "1g")
+    rule4.interface_selectors << is4
     conduit2.conduit_rules << rule4
 
     nmf4 = NetworkModeFilter.new()
@@ -171,8 +195,14 @@ class ConduitTest < ActiveSupport::TestCase
     conduit3.proposal = NetworkTestHelper.create_or_get_proposal()
     conduit3.proposal.save!
 
+    sbs5 = SelectBySpeed.create!(:comparitor => "=", :value => "1g")
+
+    is5 = InterfaceSelector.new()
+    is5.selectors << sbs5
+    is5.save!
+    
     rule5 = ConduitRule.new()
-    rule5.interface_selectors << SelectBySpeed.new(:comparitor => "=", :value => "1g")
+    rule5.interface_selectors << is5
     conduit3.conduit_rules << rule5
 
     rf5 = RoleFilter.new()

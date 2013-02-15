@@ -12,12 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class CreateInterfaceSelectors < ActiveRecord::Migration
-  def change
-    create_table :interface_selectors do |t|
-      t.references :conduit_rule
+class Selector < ActiveRecord::Base
+  attr_accessible :value
 
-      t.timestamps
-    end
+  belongs_to :interface_selector, :inverse_of => :selectors
+
+  validates :value, :presence => true
+
+
+  CONDUIT_REGEX = /^([-+?]?)(\d{1,3}[mg])(\d+)$/ # [1]=sign, [2]=speed, [3]=if_index
+  
+  def select(if_remap)
+    raise "Subclasses must implement select"
   end
 end

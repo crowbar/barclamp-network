@@ -1,4 +1,4 @@
-# Copyright 2012, Dell
+# Copyright 2013, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,6 +14,24 @@
 
 class InterfaceSelector < ActiveRecord::Base
   belongs_to :conduit_rule, :inverse_of => :interface_selectors
+  has_many :selectors, :inverse_of => :interface_selector, :dependent => :destroy
 
-  attr_accessible :comparitor, :end_value, :start_value, :value
+  validates :selectors, :presence => true
+
+
+  def select_interface(if_remap, node)
+    # Apply each selector to the bucket of interfaces,
+    # resulting in a trimmed down bucket each time
+    self.selectors.each do |selector|
+      if_remap = selector.select(if_remap)
+    end
+
+    if if_remap.empty?
+      return nil
+    elsif if_remap.size > 1
+      Rails.logger.warn("#{if_remap.size} interfaces selected for node #{node.name} by interface selector #{self.id}")
+    end
+
+    if_remap.values[0]
+  end
 end

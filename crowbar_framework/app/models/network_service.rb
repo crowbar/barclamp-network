@@ -52,11 +52,11 @@ class NetworkService < ServiceObject
       bus_map.pattern = bus_map_config["pattern"]
       interface_map.bus_maps << bus_map
 
-      bus_index = 1
+      bus_index = 0
       bus_order_config = bus_map_config["bus_order"]
       bus_order_config.each { |bus_config|
         bus = Bus.new()
-        bus.designator = bus_config
+        bus.path = bus_config
         bus.order = bus_index
         bus_index += 1
         bus_map.buses << bus
@@ -92,14 +92,18 @@ class NetworkService < ServiceObject
 
         interface_selectors_config = conduit_rule_config["interface_selectors"]
         interface_selectors_config.each { |interface_selector_config|
-          interface_selector_config.each { |interface_selector_name, interface_selector_parms|
-            interface_selector = Object.const_get(interface_selector_name).new()
-            conduit_rule.interface_selectors << interface_selector
-            interface_selector_parms.each { |param_name, param_value|
-              interface_selector.send( "#{param_name}=", param_value )
+          interface_selector = InterfaceSelector.new()
+          conduit_rule.interface_selectors << interface_selector
+
+          interface_selector_config.each { |selector_name, selector_parms|
+            selector = Object.const_get(selector_name).new()
+            interface_selector.selectors << selector
+            selector_parms.each { |param_name, param_value|
+              selector.send( "#{param_name}=", param_value )
             }
-            interface_selector.save!
+            selector.save!
           }
+          interface_selector.save!
         }
 
         conduit_actions_config = conduit_rule_config["conduit_actions"]
