@@ -34,22 +34,12 @@ class Conduit < ActiveRecord::Base
     # Loop thru each of the Conduits (intf0, intf1, etc)
     Conduit.all.each do |conduit|
 
-      # Find the ConduitRule where...
+      # Find the ConduitRule where each of the supplied ConduitFilters match 
       next if conduit.conduit_rules.nil?
-      conduit.conduit_rules.each do |conduit_rule|
-        # each of the supplied ConduitFilters match 
-        found_match=true
-        if !conduit_rule.conduit_filters.nil?
-          conduit_rule.conduit_filters.each do |conduit_filter|
-            if !conduit_filter.match(node)
-              found_match=false
-              break
-            end
-          end
-        end
 
-        # If the conduit filters for this ConduitRule did match, then...
-        if found_match
+      conduit.conduit_rules.each do |conduit_rule|
+        # If the conduit filters for this ConduitRule match, then...
+        if conduit_rule.match_filters(node)
           # This is the ConduitRule that we want, so put it in the hash
           conduit_rules[conduit.name] = conduit_rule
           break
@@ -58,5 +48,23 @@ class Conduit < ActiveRecord::Base
     end
 
     conduit_rules
+  end
+
+
+  def self.build_node_map(node)
+    bus_order = InterfaceMap.get_bus_order(node)
+
+    # Find the conduit rule for each conduit that is applicable to the node
+    rules = Conduit.get_conduit_rules(node)
+    return {} if rules.empty?
+
+    # Build up a map that maps conduit_name to an array of interface names
+    ans = {}
+    rules.each do |conduit_name, conduit_rule|
+      if_list = conduit_rule.select_interfaces(node)
+      ans[conduit_name] = if_list
+    end
+
+    ans
   end
 end

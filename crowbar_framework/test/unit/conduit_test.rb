@@ -78,10 +78,7 @@ class ConduitTest < ActiveSupport::TestCase
     rule1.conduit_filters << nmf1
     nmf1.save!
 
-    rf1 = RoleFilter.new()
-    rf1.pattern = "^ganglia_.+"
-    rule1.conduit_filters << rf1
-    rf1.save!
+    rule1.conduit_filters << RoleFilter.create!(:value => "^ganglia_.+")
 
     naf1 = NodeAttributeFilter.new()
     naf1.attr = "nics.size"
@@ -107,10 +104,7 @@ class ConduitTest < ActiveSupport::TestCase
     rule2.conduit_filters << nmf2
     nmf2.save!
 
-    rf2 = RoleFilter.new()
-    rf2.pattern = "^dns_.+"
-    rule2.conduit_filters << rf2
-    rf2.save!
+    rule2.conduit_filters << RoleFilter.create!(:value => "^dns_.+")
 
     naf2 = NodeAttributeFilter.new()
     naf2.attr = "nics.size"
@@ -144,10 +138,7 @@ class ConduitTest < ActiveSupport::TestCase
     rule3.conduit_filters << nmf3
     nmf3.save!
 
-    rf3 = RoleFilter.new()
-    rf3.pattern = "^dns_.+"
-    rule3.conduit_filters << rf3
-    rf3.save!
+    rule3.conduit_filters << RoleFilter.create!(:value => "^dns_.+")
 
     naf3 = NodeAttributeFilter.new()
     naf3.attr = "nics.size"
@@ -173,10 +164,7 @@ class ConduitTest < ActiveSupport::TestCase
     rule4.conduit_filters << nmf4
     nmf4.save!
 
-    rf4 = RoleFilter.new()
-    rf4.pattern = "^ganglia_.+"
-    rule4.conduit_filters << rf4
-    rf4.save!
+    rule4.conduit_filters << RoleFilter.create!(:value => "^ganglia_.+")
 
     naf4 = NodeAttributeFilter.new()
     naf4.attr = "nics.size"
@@ -195,7 +183,7 @@ class ConduitTest < ActiveSupport::TestCase
     conduit3.proposal = NetworkTestHelper.create_or_get_proposal()
     conduit3.proposal.save!
 
-    sbs5 = SelectBySpeed.create!(:comparitor => "=", :value => "1g")
+    sbs5 = SelectBySpeed.create!(:value => "1g")
 
     is5 = InterfaceSelector.new()
     is5.selectors << sbs5
@@ -205,11 +193,7 @@ class ConduitTest < ActiveSupport::TestCase
     rule5.interface_selectors << is5
     conduit3.conduit_rules << rule5
 
-    rf5 = RoleFilter.new()
-    rf5.pattern = "^coffee_maker_.+"
-    rule5.conduit_filters << rf5
-    rf5.save!
-
+    rule5.conduit_filters << RoleFilter.create!(:value => "^coffee_maker_.+")
     rule5.save!
 
     conduit3.save!
@@ -225,5 +209,218 @@ class ConduitTest < ActiveSupport::TestCase
 
     result_conduit_rule3 = result["intf2"]
     assert result_conduit_rule3.nil?
+  end
+
+
+  # Test failed node map construction due to no conduit rules matched
+  test "Conduit.build_node_map failure: no conduit rules matched" do
+    c1_intf_selectors = []
+
+    c1_ifs1 = InterfaceSelector.new()
+    c1_ifs1.selectors << SelectBySpeed.create!(:value => "1g")
+    c1_ifs1.selectors << SelectByIndex.create!(:value => "1")
+    c1_ifs1.save!
+    c1_intf_selectors << c1_ifs1
+
+    c2_intf_selectors = []
+
+    c2_ifs1 = InterfaceSelector.new()
+    c2_ifs1.selectors << SelectBySpeed.create!(:value => "1g")
+    c2_ifs1.selectors << SelectByIndex.create!(:value => "1")
+    c2_ifs1.save!
+    c2_intf_selectors << c2_ifs1
+
+    node_map = test_build_node_map("^bambam_.*$", c1_intf_selectors, c2_intf_selectors)
+
+    assert_equal 0, node_map.size
+  end
+
+
+  # Test failed node map construction due to no interfaces selected per conduit
+  test "Conduit.build_node_map failure: 0 intf per conduit" do
+    c1_intf_selectors = []
+
+    c1_ifs1 = InterfaceSelector.new()
+    c1_ifs1.selectors << SelectBySpeed.create!(:value => "10g")
+    c1_ifs1.selectors << SelectByIndex.create!(:value => "3")
+    c1_ifs1.save!
+    c1_intf_selectors << c1_ifs1
+
+    c2_intf_selectors = []
+
+    c2_ifs1 = InterfaceSelector.new()
+    c2_ifs1.selectors << SelectBySpeed.create!(:value => "10g")
+    c2_ifs1.selectors << SelectByIndex.create!(:value => "3")
+    c2_ifs1.save!
+    c2_intf_selectors << c2_ifs1
+
+    node_map = test_build_node_map("^ganglia_.*$", c1_intf_selectors, c2_intf_selectors)
+
+    assert_equal 2, node_map.size
+
+    assert node_map.has_key?("intf0")
+    assert_equal 0, node_map["intf0"].size
+
+    assert node_map.has_key?("intf1")
+    assert_equal 0, node_map["intf1"].size
+  end
+
+
+  # Test successful node map construction.
+  # Select 1 interface per conduit in reverse order
+  test "Conduit.build_node_map: 1 intf per conduit reverse" do
+    c1_intf_selectors = []
+
+    c1_ifs1 = InterfaceSelector.new()
+    c1_ifs1.selectors << SelectBySpeed.create!(:value => "1g")
+    c1_ifs1.selectors << SelectByIndex.create!(:value => "2")
+    c1_ifs1.save!
+    c1_intf_selectors << c1_ifs1
+
+    c2_intf_selectors = []
+
+    c2_ifs1 = InterfaceSelector.new()
+    c2_ifs1.selectors << SelectBySpeed.create!(:value => "1g")
+    c2_ifs1.selectors << SelectByIndex.create!(:value => "1")
+    c2_ifs1.save!
+    c2_intf_selectors << c2_ifs1
+    
+    node_map = test_build_node_map("^ganglia_.*$", c1_intf_selectors, c2_intf_selectors)
+
+    assert_equal 2, node_map.size
+
+    assert node_map.has_key?("intf0")
+    assert_equal 1, node_map["intf0"].size
+    assert_equal "eth0", node_map["intf0"][0]
+
+    assert node_map.has_key?("intf1")
+    assert_equal 1, node_map["intf1"].size
+    assert_equal "eth1", node_map["intf1"][0]
+  end
+
+
+  # Test successful node map construction.
+  # Select 2 interfaces per conduit in forward and reverse order
+  test "Conduit.build_node_map: 2 intf per conduit forward and reverse order" do
+    c1_intf_selectors = []
+
+    c1_ifs1 = InterfaceSelector.new()
+    c1_ifs1.selectors << SelectBySpeed.create!(:value => "1g")
+    c1_ifs1.selectors << SelectByIndex.create!(:value => "1")
+    c1_ifs1.save!
+    c1_intf_selectors << c1_ifs1
+
+    c1_ifs2 = InterfaceSelector.new()
+    c1_ifs2.selectors << SelectBySpeed.create!(:value => "1g")
+    c1_ifs2.selectors << SelectByIndex.create!(:value => "2")
+    c1_ifs2.save!
+    c1_intf_selectors << c1_ifs2
+
+    c2_intf_selectors = []
+
+    c2_ifs1 = InterfaceSelector.new()
+    c2_ifs1.selectors << SelectBySpeed.create!(:value => "1g")
+    c2_ifs1.selectors << SelectByIndex.create!(:value => "2")
+    c2_ifs1.save!
+    c2_intf_selectors << c2_ifs1
+
+    c2_ifs2 = InterfaceSelector.new()
+    c2_ifs2.selectors << SelectBySpeed.create!(:value => "1g")
+    c2_ifs2.selectors << SelectByIndex.create!(:value => "1")
+    c2_ifs2.save!
+    c2_intf_selectors << c2_ifs2
+
+    node_map = test_build_node_map("^ganglia_.*$", c1_intf_selectors, c2_intf_selectors)
+
+    assert_equal 2, node_map.size
+
+    assert node_map.has_key?("intf0")
+    assert_equal 2, node_map["intf0"].size
+    assert_equal "eth1", node_map["intf0"][0]
+    assert_equal "eth0", node_map["intf0"][1]
+
+    assert node_map.has_key?("intf1")
+    assert_equal 2, node_map["intf1"].size
+    assert_equal "eth0", node_map["intf1"][0]
+    assert_equal "eth1", node_map["intf1"][1]
+  end
+
+
+  private
+
+  def test_build_node_map(role_pattern, c1_intf_selectors, c2_intf_selectors)
+    node = NetworkTestHelper.create_node()
+    node.set_attrib("product_name", "PowerEdge C6145")
+    NetworkTestHelper.add_role(node, "ganglia_client")
+    NetworkTestHelper.add_role(node, "dns_server")
+    node.save!
+
+    if_map = NetworkTestHelper.create_an_interface_map()
+    if_map.save!
+
+    # Set up conduit intf0
+    c1 = Conduit.new(:name=>"intf0")
+    c1.proposal = NetworkTestHelper.create_or_get_proposal()
+    c1.proposal.save!
+    
+    # Add in a conduit rule that filters on ganglia role
+    c1_cr1 = ConduitRule.new()
+    c1.conduit_rules << c1_cr1
+
+    c1_cr1.conduit_filters << RoleFilter.create!(:value => role_pattern)
+
+    c1_intf_selectors.each do |intf_selector|
+      c1_cr1.interface_selectors << intf_selector
+    end
+    c1_cr1.save!
+
+    # Add in another conduit rule that filters on a bogus role name
+    c1_cr2 = ConduitRule.new()
+    c1.conduit_rules << c1_cr2
+
+    # Note that this role filter is set up to deliberately not match
+    c1_cr2.conduit_filters << RoleFilter.create!(:value => "^nomatch_.*$")
+
+    c1_ifs2 = InterfaceSelector.new()
+    c1_ifs2.selectors << SelectBySpeed.create!(:value => "100m")
+    c1_ifs2.selectors << SelectByIndex.create!(:value => "1")
+    c1_ifs2.save!
+    c1_cr2.interface_selectors << c1_ifs2
+    c1_cr2.save!
+
+    c1.save!
+
+    # Set up conduit intf1
+    c2 = Conduit.new(:name=>"intf1")
+    c2.proposal = c1.proposal
+    
+    # Add in a conduit rule that filters on ganglia role
+    c2_cr1 = ConduitRule.new()
+    c2.conduit_rules << c2_cr1
+
+    c2_cr1.conduit_filters << RoleFilter.create!(:value => role_pattern)
+
+    c2_intf_selectors.each do |intf_selector|
+      c2_cr1.interface_selectors << intf_selector
+    end
+    c2_cr1.save!
+
+    # Add in another conduit rule that filters on a bogus role name
+    c2_cr2 = ConduitRule.new()
+    c2.conduit_rules << c2_cr2
+
+    # Note that this role filter is set up to deliberately not match
+    c2_cr2.conduit_filters << RoleFilter.create!(:value => "^nomatch_.*$")
+
+    c2_ifs2 = InterfaceSelector.new()
+    c2_ifs2.selectors << SelectBySpeed.create!(:value => "100m")
+    c2_ifs2.selectors << SelectByIndex.create!(:value => "2")
+    c2_ifs2.save!
+    c2_cr2.interface_selectors << c2_ifs2
+    c2_cr2.save!
+
+    c2.save!
+    
+    Conduit.build_node_map(node)
   end
 end

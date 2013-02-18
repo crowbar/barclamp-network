@@ -21,6 +21,21 @@ class ConduitRule < ActiveRecord::Base
   validates :interface_selectors, :presence => true
 
 
+  def match_filters(node)
+    # Check to see if all of the supplied ConduitFilters match 
+    found_match=true
+    if !self.conduit_filters.nil?
+      self.conduit_filters.each do |conduit_filter|
+        if !conduit_filter.match(node)
+          found_match=false
+          break
+        end
+      end
+    end
+    found_match
+  end
+
+
   def select_interfaces(node)
     # if_remap is a hash that maps "1g1" to "eth0", etc
     if_remap = ConduitRule.build_if_remap(node)
