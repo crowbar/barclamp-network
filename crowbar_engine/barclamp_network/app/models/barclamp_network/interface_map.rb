@@ -14,10 +14,10 @@
 
 class BarclampNetwork::InterfaceMap < ActiveRecord::Base
   has_many :bus_maps, :dependent => :destroy
-  belongs_to :proposal
+  belongs_to :barclamp_instance
 
   validates :bus_maps, :presence => true
-  validates :proposal, :presence => true
+  validates :barclamp_instance, :presence => true
 
 
   # This method finds the bus order for the node and returns a list of the

@@ -14,7 +14,7 @@
 
 class NetworkTestHelper
   # Create a Network
-  def self.create_a_network(name="admin")
+  def self.create_a_network(name="admin", barclamp_instance=nil)
     network = Network.new
     network.name = name
     network.dhcp_enabled = true
@@ -23,7 +23,10 @@ class NetworkTestHelper
     network.conduit = create_or_get_conduit("intf0")
     network.router = create_a_router()
     network.ip_ranges << create_an_ip_range()
-    network.proposal = create_or_get_proposal()
+
+    barclamp_instance = BarclampInstance.create!() if barclamp_instance.nil?
+    network.barclamp_instance = barclamp_instance
+
     network
   end
   
@@ -44,7 +47,7 @@ class NetworkTestHelper
       conduit = Conduit.new()
       conduit.name = conduit_name
       conduit.conduit_rules << create_a_conduit_rule()
-      conduit.proposal = create_or_get_proposal()
+      conduit.barclamp_instance = create_barclamp_instance()
     else
       conduit = conduits[0]
     end
@@ -106,7 +109,7 @@ class NetworkTestHelper
     interface_map.bus_maps << create_a_bus_map("PowerEdge C6145", { "0" => "0000:00/0000:00:04", "1" => "0000:00/0000:00:02" })
     interface_map.bus_maps << create_a_bus_map("PowerEdge R710", { "0" => "0000:00/0000:00:01", "1" => "0000:00/0000:00:03" })
 
-    interface_map.proposal = create_or_get_proposal()
+    interface_map.barclamp_instance = create_barclamp_instance()
     interface_map
   end
   
@@ -134,18 +137,8 @@ class NetworkTestHelper
   end
 
 
-  def self.create_or_get_proposal( proposal_name = "default" )
-    proposal = nil
-
-    proposals = Proposal.where( :name => proposal_name )
-    if proposals.size == 0
-      proposal = Proposal.new( :name=> proposal_name )
-      proposal.save!
-    else
-      proposal = proposals[0]
-    end
-
-    proposal
+  def self.create_barclamp_instance()
+    BarclampInstance.new
   end
 
 

@@ -13,47 +13,51 @@
 # limitations under the License.
 
 class BarclampNetwork::NetworkUtils
-  def self.find_proposal_and_network(proposal_id, network_id)
-    # Find the proposal
-    proposal = nil
-    unless proposal_id.nil?
-      proposal = Proposal.find_key(proposal_id)
-      return [404, "There is no proposal with proposal_id #{proposal_id}"] if proposal.nil?
-    end
 
-    # Find the network
-    if proposal.nil?
-      network = Network.find_key(network_id)
-      return [404, "There is no network with network_id #{network_id}"] if network.nil?
-      proposal = network.proposal
-    else
-      # We have a proposal
-      # If a network ID was passed, then look up the network by that ID
-      if Network.db_id?(network_id)
-        begin
-          network = Network.find(network_id)
-        rescue ActiveRecord::RecordNotFound => ex
-          return [404, ex.message]
-        end
+  ACTIVE_BARCLAMP_INSTANCE = 0
+  PROPOSED_BARCLAMP_INSTANCE = 1
 
-        # Do a consistency check to make sure that the found network is
-        # associated with the specified proposal
-        if network.proposal_id != proposal.id
-          return [400, "Proposal #{proposal_id} is not associated with network #{network_id}"]
-        end
-      else
-        # network_id is a name, so look up the network by proposal ID and network name
-        network = Network.where("proposal_id = ? AND name = ?", proposal.id, network_id ).first
-        return [404, "There is no network with proposal_id #{proposal_id} and name #{network_id}"] if network.nil?
+
+  def self.find_network(
+      network_id,
+      barclamp_config_id = DEFAULT_BARCLAMP_CONFIG_NAME,
+      barclamp_instance_type = PROPOSED_BARCLAMP_INSTANCE)
+
+    barclamp_config_id = DEFAULT_BARCLAMP_CONFIG_NAME if barclamp_config_id.nil?
+
+    # Find the barclamp config
+    barclamp_config = BarclampConfiguration.find_key(barclamp_config_id)
+    return [404, "There is no BarclampConfiguration with id #{barclamp_config_id}"] if barclamp_config.nil?
+
+    # If there is no proposed, then return the active one instead
+    barclamp_instance_type = ACTIVE_BARCLAMP_INSTANCE if barclamp_instance_type == PROPOSED_BARCLAMP_INSTANCE && barclamp.config.proposed.nil?
+    barclamp_instance = (barclamp_instance_type == ACTIVE_BARCLAMP_INSTANCE ? barclamp_config.active :  barclamp_config.proposed)
+
+    # If a network ID was passed, then look up the network by that ID
+    if Network.db_id?(network_id)
+      begin
+        network = Network.find(network_id)
+      rescue ActiveRecord::RecordNotFound => ex
+        return [404, ex.message]
       end
+
+      # Do a consistency check to make sure that the found network is
+      # associated with the appropriate BarclampInstance
+      if network.barclamp_instance.id != barclamp_instance.id
+        return [400, "BarclampConfig/Instance #{log_name(barclamp_config)}/#{log_name(barclamp_instance)} is not associated with network #{log_name(network)}"]
+      end
+    else
+      # network_id is a name, so look up the network by BarclampInstance ID and network name
+      network = Network.where("barclamp_instance_id = ? AND name = ?", barclamp_instance.id, network_id).first
+      return [404, "There is no network #{network_id} with BarclampConfig/Instance #{log_name(barclamp_config)}/#{log_name(barclamp_instance)}" if network.nil?
     end
 
-    [200, proposal, network]
+    [200, network]
   end
 
 
   def self.log_name(object)
-    return "(nil/nil)" if object.nil?
-    "(#{object.object_id}/#{object.name})"
+    return "nil(nil)" if object.nil?
+    "#{object.name}(#{object.object_id})"
   end
 end

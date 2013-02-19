@@ -34,16 +34,21 @@ class BarclampNetwork::AttribInstanceIpAddress < AttribInstance
   end
   
 
-  def actual(proposal="default", network="admin")
-    error_code, *rest = NetworkUtils.find_proposal_and_network(proposal, network)
+  def actual(network_id="admin", barclamp_config_id=Barclamp::DEFAULT_BARCLAMP_CONFIG_NAME,
+             barclamp_instance_type=NetworkUtils::ACTIVE_BARCLAMP_INSTANCE)
+    error_code, *rest = NetworkUtils.find_barclamp_config_barclamp_instance_and_network(
+        network_id,
+        barclamp_config_id,
+        barclamp_instance_type)
     raise "#{error_code}: #{rest[0]}" if error_code != 200
 
-    proposal = rest[0]
-    network = rest[1]
+    barclamp_config = rest[0]
+    barclamp_instance = rest[1]
+    network = rest[2]
 
     results = AllocatedIpAddress.joins(:interface).where(:interfaces => {:node_id => node.id}).where(:network_id => network.id)
     if results.length == 0
-      raise "Node #{NetworkUtils.log_name(node)} does not have an address allocated on network #{log_name(self)}"
+      raise "Node #{NetworkUtils.log_name(node)} does not have an address allocated on BarclampConfig/Instance #{NetworkUtils.log_name(barclamp_config)}/#{NetworkUtils.log_name(barclamp_instance)} network #{NetworkUtils.log_name(self)}"
     end
 
     results.first.ip
