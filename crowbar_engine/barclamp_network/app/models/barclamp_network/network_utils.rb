@@ -49,7 +49,7 @@ class BarclampNetwork::NetworkUtils
     else
       # network_id is a name, so look up the network by BarclampInstance ID and network name
       network = Network.where("barclamp_instance_id = ? AND name = ?", barclamp_instance.id, network_id).first
-      return [404, "There is no network #{network_id} with BarclampConfig/Instance #{log_name(barclamp_config)}/#{log_name(barclamp_instance)}" if network.nil?
+      return [404, "There is no network #{network_id} with BarclampConfig/Instance #{log_name(barclamp_config)}/#{log_name(barclamp_instance)}"] if network.nil?
     end
 
     [200, network]

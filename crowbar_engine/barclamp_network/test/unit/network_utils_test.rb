@@ -13,7 +13,6 @@
 # limitations under the License. 
 # 
 require 'test_helper'
-require 'network_service'
  
 class NetworkUtilsTest < ActiveSupport::TestCase
 

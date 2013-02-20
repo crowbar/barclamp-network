@@ -295,8 +295,8 @@ class BarclampNetworkTest < ActiveSupport::TestCase
 
     barclamp_config = net_barclamp.create_proposal()
 
-    network_service = Barclamp.new(Rails.logger)
-    network_service.populate_network_defaults( json["attributes"]["network"], barclamp_config.proposed_instance )
+    net_barclamp = Barclamp.new(Rails.logger)
+    net_barclamp.populate_network_defaults( json["attributes"]["network"], barclamp_config.proposed_instance )
 
     assert Conduit.count > 0, "There are no Conduits"
     assert InterfaceMap.count == 1, "There is no InterfaceMap"

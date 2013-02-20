@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class BarclampNetwork::SelectByIndex < Selector
+class BarclampNetwork::SelectByIndex < BarclampNetwork::Selector
   def select(if_remap)
     value = (self.value.instance_of? Integer) ? self.value : self.value.to_i
     new_if_remap = {}

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class BarclampNetwork::SelectBySpeed < Selector
+class BarclampNetwork::SelectBySpeed < BarclampNetwork::Selector
   def select(if_remap)
     speeds= %w{10m 100m 1g 10g}
     
