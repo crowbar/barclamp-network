@@ -22,15 +22,15 @@ class BarclampNetwork::Barclamp < Barclamp
   def create_proposal(config=nil)
     bc = super
 
-    new_json = read_new_network_json()
-    attrs_config = new_json["attributes"]
+    json = read_network_json()
+    attrs_config = json["attributes"]
 
     populate_network_defaults( attrs_config["network"], bc.proposed_instance )
   end
 
 
-  def self.read_new_network_json()
-    fp = File.join(Rails.root,"..","barclamps","network","chef","data_bags","crowbar","bc-template-network-new.json")
+  def self.read_network_json()
+    fp = File.join(Rails.root,"..","barclamps","network","bc-template-network.json")
     JSON.load File.open(fp, "r")
   end
 
