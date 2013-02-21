@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class BarclampNetwork::Bond < Interface
+class BarclampNetwork::Bond < BarclampNetwork::Interface
   attr_accessible :team_mode, :name
 
   has_many :physical_interfaces, :dependent => :nullify

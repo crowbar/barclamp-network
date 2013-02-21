@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class BarclampNetwork::NodeAttributeFilter < ConduitFilter
+class BarclampNetwork::NodeAttributeFilter < BarclampNetwork::ConduitFilter
   def match(node)
     attr_name = self.attr.split(".")
     attrib = node.get_attrib(attr_name[0])

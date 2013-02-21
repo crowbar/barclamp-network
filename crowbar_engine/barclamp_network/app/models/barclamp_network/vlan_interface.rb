@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class BarclampNetwork::VlanInterface < Interface
+class BarclampNetwork::VlanInterface < BarclampNetwork::Interface
   has_many :interfaces, :inverse_of => :vlan_interface, :dependent => :nullify
   belongs_to :vlan, :inverse_of => :vlan_interfaces
 end

@@ -21,18 +21,18 @@ class BarclampNetwork::Network < ActiveRecord::Base
   belongs_to :conduit, :inverse_of => :networks
   has_one :router, :inverse_of => :network, :dependent => :destroy
   has_many :ip_ranges, :dependent => :destroy
-  belongs_to :proposal
+  belongs_to :barclamp_instance
   has_one :vlan, :inverse_of => :network, :dependent => :destroy
   has_and_belongs_to_many :interfaces
 
   # attr_accessible :name, :dhcp_enabled, :use_vlan
 
-  validates_uniqueness_of :name, :presence => true, :scope => :proposal_id
+  validates_uniqueness_of :name, :presence => true, :scope => :barclamp_instance_id
   validates :use_vlan, :inclusion => { :in => [true, false] }
   validates :dhcp_enabled, :inclusion => { :in => [true, false] }
   validates :subnet, :presence => true
   validates :ip_ranges, :presence => true
-  #validates :proposal, :presence => true
+  #validates :barclamp_instance, :presence => true
 
 
   def allocate_ip(range, node, suggestion = nil)

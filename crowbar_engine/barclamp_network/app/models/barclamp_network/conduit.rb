@@ -16,14 +16,14 @@ class BarclampNetwork::Conduit < ActiveRecord::Base
   attr_protected :id
   has_many :networks, :inverse_of => :conduit, :dependent => :nullify
   has_many :conduit_rules, :dependent => :destroy
-  belongs_to :proposal
+  belongs_to :barclamp_instance
 
   attr_accessible :name
   accepts_nested_attributes_for :networks, :conduit_rules
 
-  validates_uniqueness_of :name, :presence => true, :scope => :proposal_id
+  validates_uniqueness_of :name, :presence => true, :scope => :barclamp_instance_id
   validates :conduit_rules, :presence => true
-  validates :proposal, :presence => true
+  validates :barclamp_instance_id, :presence => true
 
 
   # This method finds the conduit rule associated with each conduit that passes

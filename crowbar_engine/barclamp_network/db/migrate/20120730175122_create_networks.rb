@@ -19,7 +19,7 @@ class CreateNetworks < ActiveRecord::Migration
       t.boolean :dhcp_enabled
       t.boolean :use_vlan
       t.references :conduit
-      t.references :proposal
+      t.references :barclamp_instance
 
       t.timestamps
     end

@@ -14,19 +14,18 @@
 # 
 
 class BarclampNetwork::Barclamp < Barclamp
+  def after_initialize
+    allow_multiple_proposals = false
+  end
 
-  def apply_role_pre_chef_call(old_config, new_config, all_nodes)
-    proposal = new_config.proposal
 
-    # TODO Remove the below HACK and add code the retrieves the new network
-    # json from the barclamp template
+  def create_proposal(config=nil)
+    bc = super
 
-    # Start HACK
     new_json = read_new_network_json()
     attrs_config = new_json["attributes"]
-    # End HACK
 
-    populate_network_defaults( attrs_config["network"], proposal )
+    populate_network_defaults( attrs_config["network"], bc.proposed_instance )
   end
 
 
@@ -36,16 +35,16 @@ class BarclampNetwork::Barclamp < Barclamp
   end
 
 
-  def populate_network_defaults( network_attrs_config, proposal )
-    create_interface_map( network_attrs_config, proposal )
-    create_conduits( network_attrs_config, proposal )
-    create_networks( network_attrs_config, proposal )
+  def populate_network_defaults( network_attrs_config, barclamp_instance )
+    create_interface_map( network_attrs_config, barclamp_instance )
+    create_conduits( network_attrs_config, barclamp_instance )
+    create_networks( network_attrs_config, barclamp_instance )
   end
 
 
-  def create_interface_map( network_attrs_config, proposal )
+  def create_interface_map( network_attrs_config, barclamp_instance )
     interface_map = InterfaceMap.new()
-    interface_map.proposal = proposal
+    interface_map.barclamp_instance = barclamp_instance
     interface_map_config = network_attrs_config["interface_map"]
     interface_map_config.each { |bus_map_config|
       bus_map = BusMap.new()
@@ -68,11 +67,11 @@ class BarclampNetwork::Barclamp < Barclamp
   end
 
 
-  def create_conduits( network_attrs_config, proposal )
+  def create_conduits( network_attrs_config, barclamp_instance )
     conduits_config = network_attrs_config["conduit_map"]
     conduits_config.each { |conduit_config|
       conduit = Conduit.new()
-      conduit.proposal = proposal
+      conduit.barclamp_instance = barclamp_instance
       conduit.name = conduit_config["conduit_name"]
 
       conduit_rules_config = conduit_config["conduit_rules"]
@@ -125,11 +124,11 @@ class BarclampNetwork::Barclamp < Barclamp
   end
 
 
-  def create_networks( network_attrs_config, proposal )
+  def create_networks( network_attrs_config, barclamp_instance )
     networks_config = network_attrs_config["networks"]
     networks_config.each { |network_name, network_config|
       network = Network.new()
-      network.proposal = proposal
+      network.barclamp_instance = barclamp_instance
       network.name = network_name
       network_config.each { |param_name, param_value|
         case param_name
@@ -166,105 +165,11 @@ class BarclampNetwork::Barclamp < Barclamp
   end
 
 
-  def allocate_ip(bc_instance, network, range, name, suggestion = nil)
-    @logger.debug("Network allocate_ip: entering #{name} #{network} #{range}")
+  def network_allocate_ip(barclamp_config_id, network_id, range, node_id, suggestion = nil)
+    @logger.debug("Entering network_allocate_ip(barclamp_config_id: #{barclamp_config_id}, network_id: #{network_id}, range: #{range}, node_id: #{node_id}, suggestion: #{suggestion})")
 
-    return [404, "No network specified"] if network.nil?
-    return [404, "No range specified"] if range.nil?
-    return [404, "No name specified"] if name.nil?
-
-    # Find the node
-    node = NodeObject.find_node_by_name name
-    @logger.error("Network allocate_ip: return node not found: #{name} #{network} #{range}") if node.nil?
-    return [404, "No node found"] if node.nil?
-
-    # Find an interface based upon config
-    role = RoleObject.find_role_by_name "network-config-#{bc_instance}"
-    @logger.error("Network allocate_ip: No network data found: #{name} #{network} #{range}") if role.nil?
-    return [404, "No network data found"] if role.nil?
-
-    # If we already have on allocated, return success
-    unless node.address(network)
-      @logger.error("Network allocate_ip: node already has address: #{name} #{network} #{range}")
-      return [200, node[:crowbar][:network][network]]
-    end
-
-    net_info={}
-    found = false
-    CrowbarUtils.with_lock("ip") do
-      begin # Rescue block
-        db = ProposalObject.find_data_bag_item "crowbar/#{network}_network"
-        net_info = build_net_info(network, name, db)
-
-        rangeH = db["network"]["ranges"][range]
-        rangeH = db["network"]["ranges"]["host"] if rangeH.nil?
-
-        index = IPAddr.new(rangeH["start"]) & ~IPAddr.new(net_info["netmask"])
-        index = index.to_i
-        stop_address = IPAddr.new(rangeH["end"]) & ~IPAddr.new(net_info["netmask"])
-        stop_address = IPAddr.new(net_info["subnet"]) | (stop_address.to_i + 1)
-        address = IPAddr.new(net_info["subnet"]) | index
-
-        if suggestion
-          @logger.error("Allocating with suggestion: #{suggestion}")
-          subsug = IPAddr.new(suggestion) & IPAddr.new(net_info["netmask"])
-          subnet = IPAddr.new(net_info["subnet"]) & IPAddr.new(net_info["netmask"])
-          if subnet == subsug
-            if db["allocated"][suggestion].nil?
-              @logger.error("Using suggestion: #{name} #{network} #{suggestion}")
-              address = suggestion
-              found = true
-            end
-          end
-        end
-
-        unless found
-          # Did we already allocate this, but the node lose it?
-          unless db["allocated_by_name"][node.name].nil?
-            found = true
-            address = db["allocated_by_name"][node.name]["address"]
-          end
-        end
-
-        # Let's search for an empty one.
-        while !found do
-          if db["allocated"][address.to_s].nil?
-            found = true
-            break
-          end
-          index = index + 1
-          address = IPAddr.new(net_info["subnet"]) | index
-          break if address == stop_address
-        end
-
-        if found
-          net_info["address"] = address.to_s
-          db["allocated_by_name"][node.name] = { "machine" => node.name, "interface" => net_info["conduit"], "address" => address.to_s }
-          db["allocated"][address.to_s] = { "machine" => node.name, "interface" => net_info["conduit"], "address" => address.to_s }
-          db.save
-        end
-      rescue Exception => e
-        @logger.error("Error finding address: #{e.message}")
-      end
-    end
-
-    @logger.info("Network allocate_ip: no address available: #{name} #{network} #{range}") if !found
-    return [404, "No Address Available"] if !found
-
-    # Save the information.
-    node.crowbar["crowbar"]["network"][network] = net_info
-    node.save
-
-    @logger.info("Network allocate_ip: Assigned: #{name} #{network} #{range} #{net_info["address"]}")
-    [200, net_info]
-  end
-
-
-  def network_allocate_ip(proposal_id, network_id, range, node_id, suggestion = nil)
-    @logger.debug("Entering network_allocate_ip(proposal_id: #{proposal_id}, network_id: #{network_id}, range: #{range}, node_id: #{node_id}, suggestion: #{suggestion})")
-
-    proposal_id = proposal_id.to_s
-    proposal_id = nil if proposal_id.empty?
+    barclamp_config_id = barclamp_config_id.to_s
+    barclamp_config_id = nil if barclamp_config_id.empty?
 
     # Validate inputs
     return [400, "No network_id specified"] if network_id.nil?
@@ -274,92 +179,20 @@ class BarclampNetwork::Barclamp < Barclamp
     node = Node.find_key(node_id)
     return [404, "Node #{node_id} does not exist"] if node.nil?
 
-    # Find the proposal and network
-    error_code, *rest = NetworkUtils.find_proposal_and_network(proposal_id, network_id)
-    return [error_code, rest[0]] if error_code != 200
-    proposal = rest[0]
-    network = rest[1]
+    # Find the network
+    error_code, result = NetworkUtils.find_network(network_id, barclamp_config_id)
+    return [error_code, result] if error_code != 200
+    network = result
 
     network.allocate_ip(range, node, suggestion)
   end
 
 
-  def deallocate_ip(bc_instance, network, name)
-    @logger.debug("Network deallocate_ip: entering #{name} #{network}")
+  def network_deallocate_ip(barclamp_config_id, network_id, node_id)
+    @logger.debug("Entering network_deallocate_ip(barclamp_config_id: #{barclamp_config_id}, network_id: #{network_id}, node_id: #{node_id}")
 
-    return [404, "No network specified"] if network.nil?
-    return [404, "No name specified"] if name.nil?
-
-    # Find the node
-    node = NodeObject.find_node_by_name name
-    @logger.error("Network deallocate_ip: return node not found: #{name} #{network}") if node.nil?
-    return [404, "No node found"] if node.nil?
-
-    # Find an interface based upon config
-    role = RoleObject.find_role_by_name "network-config-#{bc_instance}"
-    @logger.error("Network allocate_ip: No network data found: #{name} #{network}") if role.nil?
-    return [404, "No network data found"] if role.nil?
-
-    # If we already have on allocated, return success
-    net_info = node.get_network_by_type(network)
-    if net_info.nil? or net_info["address"].nil?
-      @logger.error("Network deallocate_ip: node does not have address: #{name} #{network}")
-      return [200, nil]
-    end
-
-    save = false
-    CrowbarUtils.with_lock("ip") do
-      begin # Rescue block
-        db = ProposalObject.find_data_bag_item "crowbar/#{network}_network"
-
-        address = net_info["address"]
- 
-        # Did we already allocate this, but the node lose it?
-        unless db["allocated_by_name"][node.name].nil?
-          save = true
-
-          newhash = {}
-          db["allocated_by_name"].each do |k,v|
-            newhash[k] = v unless k == node.name
-          end
-          db["allocated_by_name"] = newhash
-        end
-
-        unless db["allocated"][address.to_s].nil?
-          save = true
-          newhash = {}
-          db["allocated"].each do |k,v|
-            newhash[k] = v unless k == address.to_s
-          end
-          db["allocated"] = newhash
-        end
-
-        if save
-          db.save
-        end
-      rescue Exception => e
-        @logger.error("Error finding address: #{e.message}")
-      end
-    end
-
-    # Save the information.
-    newhash = {} 
-    node.crowbar["crowbar"]["network"].each do |k, v|
-      newhash[k] = v unless k == network
-    end
-    node.crowbar["crowbar"]["network"] = newhash
-    node.save
-
-    @logger.info("Network deallocate_ip: removed: #{name} #{network}")
-    [200, nil]
-  end
-
-
-  def network_deallocate_ip(proposal_id, network_id, node_id)
-    @logger.debug("Entering network_deallocate_ip(proposal_id: #{proposal_id}, network_id: #{network_id}, node_id: #{node_id}")
-
-    proposal_id = proposal_id.to_s
-    proposal_id = nil if proposal_id.empty?
+    barclamp_config_id = barclamp_config_id.to_s
+    barclamp_config_id = nil if barclamp_config_id.empty?
     
     return [400, "No network_id specified"] if network_id.nil?
     return [400, "No node_id specified"] if node_id.nil?
@@ -368,40 +201,14 @@ class BarclampNetwork::Barclamp < Barclamp
     node = Node.find_key(node_id)
     return [404, "Node #{node_id} does not exist"] if node.nil?
     
-    # Find the proposal and network
-    error_code, *rest = NetworkUtils.find_proposal_and_network(proposal_id, network_id)
-    return [error_code, rest[0]] if error_code != 200
-    proposal = rest[0]
-    network = rest[1]
+    # Find the BarclampConfig and network
+    error_code, result = NetworkUtils.find_network(network_id, barclamp_config_id)
+    return [error_code, result] if error_code != 200
+    network = result
 
     network.deallocate_ip(node)
   end
 
-
-  def create_proposal(name)
-    @logger.debug("Network create_proposal: entering")
-    base = super(name)
-
-    networks = base.current_config.config_hash["network"]["networks"] rescue nil
-    unless networks
-      @logger.warn("Network doesn't have any networks specified")
-      network = {}
-    end
-    networks.each do |k,net|
-      @logger.debug("Network: creating #{k} in the network")
-      bc = Chef::DataBagItem.new
-      bc.data_bag "crowbar"
-      bc["id"] = "#{k}_network"
-      bc["network"] = net
-      bc["allocated"] = {}
-      bc["allocated_by_name"] = {}
-      db = ProposalObject.new bc
-      db.save
-    end
-
-    @logger.debug("Network create_proposal: exiting")
-    base
-  end
 
   def transition(inst, name, state)
     @logger.debug("Network transition: Entering #{name} for #{state}")
@@ -437,50 +244,12 @@ class BarclampNetwork::Barclamp < Barclamp
     [200, ""]
   end
 
-  def enable_interface(bc_instance, network, name)
-    @logger.debug("Network enable_interface: entering #{name} #{network}")
 
-    return [404, "No network specified"] if network.nil?
-    return [404, "No name specified"] if name.nil?
+  def network_enable_interface(barclamp_config_id, network_id, node_id)
+    @logger.debug("Entering network_enable_interface(barclamp_config_id: #{barclamp_config_id}, network_id: #{network_id}, node_id: #{node_id})")
 
-    # Find the node
-    node = NodeObject.find_node_by_name name
-    @logger.error("Network enable_interface: return node not found: #{name} #{network}") if node.nil?
-    return [404, "No node found"] if node.nil?
-
-    # Find an interface based upon config
-    role = RoleObject.find_role_by_name "network-config-#{bc_instance}"
-    @logger.error("Network enable_interface: No network data found: #{name} #{network}") if role.nil?
-    return [404, "No network data found"] if role.nil?
-
-    # If we already have on allocated, return success
-    if node.interface(network)
-      @logger.error("Network enable_interface: node already has address: #{name} #{network}")
-      return [200, node[:crowbar][:network][network]]
-    end
-
-    net_info={}
-    begin # Rescue block
-      net_info = build_net_info(network, name)
-    rescue Exception => e
-      @logger.error("Error finding address: #{e.message}")
-    ensure
-    end
-
-    # Save the information.
-    node.crowbar["crowbar"]["network"][network] = net_info
-    node.save
-
-    @logger.info("Network enable_interface: Assigned: #{name} #{network}")
-    [200, net_info]
-  end
-
-
-  def network_enable_interface(proposal_id, network_id, node_id)
-    @logger.debug("Entering network_enable_interface(proposal_id: #{proposal_id}, network_id: #{network_id}, node_id: #{node_id})")
-
-    proposal_id = proposal_id.to_s
-    proposal_id = nil if proposal_id.empty?
+    barclamp_config_id = barclamp_config_id.to_s
+    barclamp_config_id = nil if barclamp_config_id.empty?
     
     return [400, "No network_id specified"] if network_id.nil?
     return [400, "No node_id specified"] if node_id.nil?
@@ -489,37 +258,14 @@ class BarclampNetwork::Barclamp < Barclamp
     node = Node.find_key(node_id)
     return [404, "Node #{node_id} does not exist"] if node.nil?
 
-    # Find the proposal and network
-    error_code, *rest = NetworkUtils.find_proposal_and_network(proposal_id, network_id)
-    return [error_code, rest[0]] if error_code != 200
-    proposal = rest[0]
-    network = rest[1]
+    # Find the network
+    error_code, result = NetworkUtils.find_network(network_id, barclamp_config_id)
+    return [error_code, result] if error_code != 200
+    network = result
 
     network.enable_interface(node)
   end
 
-
-  def build_net_info(network, name, db = nil)
-    db = ProposalObject.find_data_bag_item "crowbar/#{network}_network" unless db
-
-    subnet = db["network"]["subnet"]
-    vlan = db["network"]["vlan"]
-    use_vlan = db["network"]["use_vlan"]
-    add_bridge = db["network"]["add_bridge"]
-    broadcast = db["network"]["broadcast"]
-    router = db["network"]["router"]
-    router_pref = db["network"]["router_pref"] unless db["network"]["router_pref"].nil?
-    netmask = db["network"]["netmask"]
-    conduit = db["network"]["conduit"]
-    net_info = { 
-      "conduit" => conduit, 
-      "netmask" => netmask, "node" => name, "router" => router,
-      "subnet" => subnet, "broadcast" => broadcast, "usage" => network, 
-      "use_vlan" => use_vlan, "vlan" => vlan, "add_bridge" => add_bridge }
-    net_info["router_pref"] = router_pref unless router_pref.nil?
-    net_info
-  end
-  
 
   def network_get(id)
     begin
@@ -536,7 +282,7 @@ class BarclampNetwork::Barclamp < Barclamp
   end
 
 
-  def network_create(name, proposal_id, conduit_id, subnet, dhcp_enabled, use_vlan, ip_ranges, router_pref, router_ip)
+  def network_create(name, barclamp_config_id, conduit_id, subnet, dhcp_enabled, use_vlan, ip_ranges, router_pref, router_ip)
     @logger.debug("Entering service network_create #{name}")
 
     network = nil
@@ -548,7 +294,14 @@ class BarclampNetwork::Barclamp < Barclamp
             :dhcp_enabled => dhcp_enabled,
             :use_vlan => use_vlan)
         network.subnet = subnet
-        network.proposal = Proposal.find_key(proposal_id) if proposal_id != "-1"
+
+        # TODO: Remove this HACK and replace it with the "right" code
+        bi = BarclampInstance.new()
+        bi.barclamp_configuration = self.barclamp_configurations[0]
+        bi.barclamp = self
+        network.barclamp_instance = bi
+        # End HACK
+
         network.conduit = Conduit.find_key(conduit_id)
 
         # Either both router_pref and router_ip are passed, or neither are
@@ -599,6 +352,13 @@ class BarclampNetwork::Barclamp < Barclamp
           return [400, "Update of network #{id} failed because conduit #{conduit_id} does not exist"]
         end
 
+        # TODO: Remove this HACK and replace it with the "right" code
+        bi = BarclampInstance.new()
+        bi.barclamp_configuration = self.barclamp_configurations[0]
+        bi.barclamp = self
+        network.barclamp_instance = bi
+        # End HACK
+        
         if conduit.name != network.conduit.name
           @logger.debug("Updating conduit to #{conduit_id}")
           network.conduit = conduit
