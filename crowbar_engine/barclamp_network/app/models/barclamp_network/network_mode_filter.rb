@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class BarclampNetwork::NetworkModeFilter < ConduitFilter
+class BarclampNetwork::NetworkModeFilter < BarclampNetwork::ConduitFilter
   def network_mode=( mode )
     self.value = mode
   end

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class BarclampNetwork::RoleFilter < ConduitFilter
+class BarclampNetwork::RoleFilter < BarclampNetwork::ConduitFilter
   def pattern=(pat)
     self.value = pat
   end

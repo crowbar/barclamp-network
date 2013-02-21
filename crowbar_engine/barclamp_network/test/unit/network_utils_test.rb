@@ -13,83 +13,80 @@
 # limitations under the License. 
 # 
 require 'test_helper'
-require 'network_service'
  
 class NetworkUtilsTest < ActiveSupport::TestCase
 
-  # Failure to find proposal due to bad proposal id
-  test "find_proposal_and_network: failure to find proposal due to bad proposal id" do
-    http_error, *rest = NetworkUtils.find_proposal_and_network(99, nil)
+  # Failure to find BarclampConfig due to bad id
+  test "find_network: failure to find BarclampConfig due to bad id" do
+    http_error, result = NetworkUtils.find_network("fred", "badbcc")
     assert_equal 404, http_error
   end
 
 
   # Failure to find network due to bad network id when proposal unspecified
-  test "find_proposal_and_network: failure to find network due to bad network id when proposal unspecified" do
-    http_error, *rest = NetworkUtils.find_proposal_and_network(nil, "fred")
+  test "find_network: failure to find network due to bad network id" do
+    barclamp = BarclampNetwork::Barclamp.new()
+    barclamp_config = barclamp.create_proposal()
+
+    http_error, result = NetworkUtils.find_network("fred", barclamp_config.id)
     assert_equal 404, http_error
   end
 
 
-  # Successfully find network when no proposal id
-  test "find_proposal_and_network: success when no proposal id" do
-    network = NetworkTestHelper.create_a_network("public")
+  # Consistency check of barclamp instance id given network DB id
+  test "find_network: consistency check of network id failure" do
+    barclamp = BarclampNetwork::Barclamp.new()
+    barclamp_config = barclamp.create_proposal()
+
+    network = NetworkTestHelper.create_a_network("public", BarclampInstance.create!())
     network.save!
 
-    http_error, proposal, network = NetworkUtils.find_proposal_and_network(nil, "public")
+    http_error, network = NetworkUtils.find_network(network.id)
+    assert_equal 400, http_error
+  end
+
+
+  # Successfully find network when only network name supplied
+  test "find_network: success when only network name supplied" do
+    barclamp = BarclampNetwork::Barclamp.new()
+    barclamp_config = barclamp.create_proposal()
+
+    network = NetworkTestHelper.create_a_network("public", barclamp_config.proposed_instance)
+    network.save!
+
+    http_error, network = NetworkUtils.find_network("public")
     assert_equal 200, http_error
     assert_not_nil network
-    assert_equal network.proposal.id, proposal.id unless proposal.nil?
-    assert_equal network.proposal, proposal if proposal.nil?
+    assert_equal network.barclamp_instance.id, barclamp_config.proposed_instance.id
   end
 
 
-  # Successfully find network by name when valid proposal id
-  test "find_proposal_and_network: successfully find network by name when valid proposal id" do
-    new_network = NetworkTestHelper.create_a_network("public")
-    new_proposal = NetworkTestHelper.create_or_get_proposal("wilma")
-    new_network.proposal = new_proposal
-    new_network.save!
-    http_error, proposal, network = NetworkUtils.find_proposal_and_network(new_proposal.id, "public")
+  # Successfully find network when network name and BarclampConfig supplied
+  test "find_network: success when network name and BarclampConfig supplied" do
+    barclamp = BarclampNetwork::Barclamp.new()
+    barclamp_config = barclamp.create_proposal()
+
+    network = NetworkTestHelper.create_a_network("public", barclamp_config.proposed_instance)
+    network.save!
+
+    http_error, network = NetworkUtils.find_network("public", barclamp_config)
     assert_equal 200, http_error
-    assert_equal new_proposal.id, proposal.id
-    assert_equal new_network.id, network.id
-  end
-  
-
-  # Fail to find network by name when valid proposal id
-  test "find_proposal_and_network: fail to find network by name when valid proposal id" do
-    new_network = NetworkTestHelper.create_a_network("public")
-    new_proposal = NetworkTestHelper.create_or_get_proposal("wilma")
-    new_network.proposal = new_proposal
-    new_network.save!
-    http_error, proposal, network = NetworkUtils.find_proposal_and_network(new_proposal.id, "barney")
-    assert_equal 404, http_error
+    assert_not_nil network
+    assert_equal network.barclamp_instance.id, barclamp_config.proposed_instance.id
   end
 
 
-  # Successfully find network by id when valid proposal id
-  test "find_proposal_and_network: successfully find network by id when valid proposal id" do
-    new_network = NetworkTestHelper.create_a_network("public")
-    new_proposal = NetworkTestHelper.create_or_get_proposal("wilma")
-    new_network.proposal = new_proposal
-    new_network.save!
-    http_error, proposal, network = NetworkUtils.find_proposal_and_network(new_proposal.id, new_network.id)
+  # Successfully find network when network name, BarclampConfig, and proposed type supplied
+  test "find_network: success when network name, BarclampConfig, and active supplied" do
+    barclamp = BarclampNetwork::Barclamp.new()
+    barclamp_config = barclamp.create_proposal()
+
+    network = NetworkTestHelper.create_a_network("public", barclamp_config.proposed_instance)
+    network.save!
+
+    http_error, network = NetworkUtils.find_network("public", barclamp_config, NetworkUtils.PROPOSED_BARCLAMP_INSTANCE)
     assert_equal 200, http_error
-    assert_equal new_proposal.id, proposal.id
-    assert_equal new_network.id, network.id
-  end
-
-
-  # Consistency check of network id failure
-  test "find_proposal_and_network: consistency check of network id failure" do
-    new_network = NetworkTestHelper.create_a_network("public")
-    new_proposal = NetworkTestHelper.create_or_get_proposal("wilma")
-    new_network.proposal = new_proposal
-    new_network.save!
-    new_network2 = NetworkTestHelper.create_a_network("public")
-    new_network2.save!
-    http_error, proposal, network = NetworkUtils.find_proposal_and_network(new_proposal.id, new_network2.id)
-    assert_equal 400, http_error
+    assert_not_nil network
+    assert_equal network.barclamp_instance.id, barclamp_config.proposed_instance.id
   end
 end

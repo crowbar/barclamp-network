@@ -1,4 +1,4 @@
-# Copyright 2012, Dell 
+# Copyright 2013, Dell 
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); 
 # you may not use this file except in compliance with the License. 
@@ -60,8 +60,8 @@ class ConduitTest < ActiveSupport::TestCase
     # Set up intf0 conduit with 2 rules and 3 filters
     # The idea is that the 1st rule will match for this conduit
     conduit1 = Conduit.new(:name => "intf0")
-    conduit1.proposal = NetworkTestHelper.create_or_get_proposal()
-    conduit1.proposal.save!
+    conduit1.barclamp_instance = NetworkTestHelper.create_barclamp_instance()
+    conduit1.barclamp_instance.save!
 
     sbs1 = SelectBySpeed.create!(:value => "1g")
 
@@ -120,8 +120,7 @@ class ConduitTest < ActiveSupport::TestCase
     # Set up intf1 conduit with 2 rules and 3 filters
     # The idea is that the 2nd rule will match for this conduit
     conduit2 = Conduit.new(:name => "intf1")
-    conduit2.proposal = NetworkTestHelper.create_or_get_proposal()
-    conduit2.proposal.save!
+    conduit2.barclamp_instance = conduit1.barclamp_instance
 
     sbs3 = SelectBySpeed.create!(:value => "1g")
 
@@ -180,8 +179,7 @@ class ConduitTest < ActiveSupport::TestCase
     # Set up intf2 conduit
     # The idea is that no rules will match for this conduit
     conduit3 = Conduit.new(:name => "intf2")
-    conduit3.proposal = NetworkTestHelper.create_or_get_proposal()
-    conduit3.proposal.save!
+    conduit3.barclamp_instance = conduit1.barclamp_instance
 
     sbs5 = SelectBySpeed.create!(:value => "1g")
 
@@ -360,8 +358,8 @@ class ConduitTest < ActiveSupport::TestCase
 
     # Set up conduit intf0
     c1 = Conduit.new(:name=>"intf0")
-    c1.proposal = NetworkTestHelper.create_or_get_proposal()
-    c1.proposal.save!
+    c1.barclamp_instance = NetworkTestHelper.create_barclamp_instance()
+    c1.barclamp_instance.save!
     
     # Add in a conduit rule that filters on ganglia role
     c1_cr1 = ConduitRule.new()
@@ -392,7 +390,7 @@ class ConduitTest < ActiveSupport::TestCase
 
     # Set up conduit intf1
     c2 = Conduit.new(:name=>"intf1")
-    c2.proposal = c1.proposal
+    c2.barclamp_instance = c1.barclamp_instance
     
     # Add in a conduit rule that filters on ganglia role
     c2_cr1 = ConduitRule.new()
