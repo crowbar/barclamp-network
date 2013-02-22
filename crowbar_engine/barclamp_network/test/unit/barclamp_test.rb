@@ -15,7 +15,7 @@
 require 'test_helper'
 require 'barclamp'
  
-class BarclampNetworkTest < ActiveSupport::TestCase
+class BarclampTest < ActiveSupport::TestCase
 
   # Test creation
   test "network_create: success" do
@@ -290,7 +290,7 @@ class BarclampNetworkTest < ActiveSupport::TestCase
 
   # Test population of network defaults
   test "network_defaults_populate" do
-    template_file = "barclamps/templates/bc-template-network-new.json"
+    template_file = File.join(Rails.root,"..","barclamps","network","bc-template-network.json")
     json = JSON::load File.open(template_file, 'r')
 
     barclamp_config = net_barclamp.create_proposal()
