@@ -26,7 +26,7 @@ class ConduitRuleTest < ActiveSupport::TestCase
 
   # Test creation failure due to missing interface selectors
   test "ConduitRule creation: failure due to missing interface selectors" do
-    rule = ConduitRule.new()
+    rule = BarclampNetwork::ConduitRule.new()
     rule.conduit_filters << NetworkTestHelper.create_a_conduit_filter()
     rule.conduit_actions << NetworkTestHelper.create_a_conduit_action()
     assert_raise ActiveRecord::RecordInvalid do
@@ -48,57 +48,60 @@ class ConduitRuleTest < ActiveSupport::TestCase
 
     # Verify conduit filter destroyed on conduit rule destroy
     assert_raise ActiveRecord::RecordNotFound do
-      ConduitFilter.find(conduit_filter_id)
+      BarclampNetwork::ConduitFilter.find(conduit_filter_id)
     end
 
     # Verify conduit action destroyed on conduit rule destroy
     assert_raise ActiveRecord::RecordNotFound do
-      ConduitAction.find(conduit_action_id)
+      BarclampNetwork::ConduitAction.find(conduit_action_id)
     end
 
     # Verify interface selector destroyed on conduit rule destroy
     assert_raise ActiveRecord::RecordNotFound do
-      InterfaceSelector.find(interface_selector_id)
+      BarclampNetwork::InterfaceSelector.find(interface_selector_id)
     end
   end
 
 
   test "ConduitRule.bus_index: Test nil bus_order" do
-    index = ConduitRule.bus_index(nil, "0000:00/0000:00:09.0/0000:02:01.0")
-    assert_equal ConduitRule::MAX_INDEX, index
+    index = BarclampNetwork::ConduitRule.bus_index(nil, "0000:00/0000:00:09.0/0000:02:01.0")
+    assert_equal BarclampNetwork::ConduitRule::MAX_INDEX, index
   end
 
 
   test "ConduitRule.bus_index: Test nil path" do
     bus_order = create_bus_order()
-    index = ConduitRule.bus_index(bus_order,nil)
-    assert_equal ConduitRule::MAX_INDEX, index
+    index = BarclampNetwork::ConduitRule.bus_index(bus_order,nil)
+    assert_equal BarclampNetwork::ConduitRule::MAX_INDEX, index
   end
   
 
   test "ConduitRule.bus_index: Test 0 index retrieval" do
     bus_order = create_bus_order()
-    index = ConduitRule.bus_index(bus_order, "0000:00/0000:00:1c.0/0000:02:01.0")
+    index = BarclampNetwork::ConduitRule.bus_index(bus_order, "0000:00/0000:00:1c.0/0000:02:01.0")
     assert_equal 0, index
   end
 
 
   test "ConduitRule.bus_index: Test non-0 index retrieval" do
     bus_order = create_bus_order()
-    index = ConduitRule.bus_index(bus_order, "0000:00/0000:00:09.0/0000:02:01.0")
+    index = BarclampNetwork::ConduitRule.bus_index(bus_order, "0000:00/0000:00:09.0/0000:02:01.0")
     assert_equal 2, index
   end
 
 
   test "ConduitRule.sort_ifs: Test proper interface sorting when product_name in interface map" do
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+
     node = NetworkTestHelper.create_node()
     node.set_attrib("product_name", "PowerEdge C6145")
     node.save!
 
-    if_map = NetworkTestHelper.create_an_interface_map()
+    if_map = NetworkTestHelper.create_an_interface_map(deployment)
     if_map.save!
 
-    result = ConduitRule.sort_ifs(node)
+    result = BarclampNetwork::ConduitRule.sort_ifs(node)
 
     assert_equal "eth1", result[0]
     assert_equal "eth0", result[1]
@@ -106,14 +109,17 @@ class ConduitRuleTest < ActiveSupport::TestCase
 
 
   test "ConduitRule.sort_ifs: Test proper interface sorting when product_name not in interface map" do
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+
     node = NetworkTestHelper.create_node()
     node.set_attrib("product_name", "Magical Mystery Box")
     node.save!
 
-    if_map = NetworkTestHelper.create_an_interface_map()
+    if_map = NetworkTestHelper.create_an_interface_map(deployment)
     if_map.save!
 
-    result = ConduitRule.sort_ifs(node)
+    result = BarclampNetwork::ConduitRule.sort_ifs(node)
 
     assert_equal "eth0", result[0]
     assert_equal "eth1", result[1]
@@ -121,14 +127,17 @@ class ConduitRuleTest < ActiveSupport::TestCase
 
 
   test "ConduitRule.build_if_remap: Remap with known product name" do
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+
     node = NetworkTestHelper.create_node()
     node.set_attrib("product_name", "PowerEdge C6145")
     node.save!
 
-    if_map = NetworkTestHelper.create_an_interface_map()
+    if_map = NetworkTestHelper.create_an_interface_map(deployment)
     if_map.save!
 
-    if_remap = ConduitRule.build_if_remap(node)
+    if_remap = BarclampNetwork::ConduitRule.build_if_remap(node)
 
     assert if_remap.has_key?("1g1")
     assert if_remap["1g1"] == "eth1"
@@ -145,14 +154,17 @@ class ConduitRuleTest < ActiveSupport::TestCase
 
 
   test "ConduitRule.build_if_remap: Remap with unknown product name" do
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+
     node = NetworkTestHelper.create_node()
     node.set_attrib("product_name", "Magical Mystery Box")
     node.save!
 
-    if_map = NetworkTestHelper.create_an_interface_map()
+    if_map = NetworkTestHelper.create_an_interface_map(deployment)
     if_map.save!
 
-    if_remap = ConduitRule.build_if_remap(node)
+    if_remap = BarclampNetwork::ConduitRule.build_if_remap(node)
 
     assert if_remap.has_key?("1g1")
     assert if_remap["1g1"] == "eth0"
@@ -169,10 +181,10 @@ class ConduitRuleTest < ActiveSupport::TestCase
   
 
   test "ConduitRule.select_interfaces: Successful interface selection 1" do
-    sbs = SelectBySpeed.create!(:value => "1g")
-    sbi = SelectByIndex.create!(:value => "2")
+    sbs = BarclampNetwork::SelectBySpeed.create!(:value => "1g")
+    sbi = BarclampNetwork::SelectByIndex.create!(:value => "2")
 
-    ifs_selector = InterfaceSelector.new()
+    ifs_selector = BarclampNetwork::InterfaceSelector.new()
     ifs_selector.selectors << sbs
     ifs_selector.selectors << sbi
     ifs_selector.save!
@@ -185,10 +197,10 @@ class ConduitRuleTest < ActiveSupport::TestCase
 
 
   test "ConduitRule.select_interfaces: Successful interface selection 2" do
-    sbs = SelectBySpeed.create!(:value => "1g")
-    sbi = SelectByIndex.create!(:value => "1")
+    sbs = BarclampNetwork::SelectBySpeed.create!(:value => "1g")
+    sbi = BarclampNetwork::SelectByIndex.create!(:value => "1")
 
-    ifs_selector = InterfaceSelector.new()
+    ifs_selector = BarclampNetwork::InterfaceSelector.new()
     ifs_selector.selectors << sbs
     ifs_selector.selectors << sbi
     ifs_selector.save!
@@ -201,10 +213,10 @@ class ConduitRuleTest < ActiveSupport::TestCase
 
 
   test "ConduitRule.select_interfaces: Successful interface selection 3" do
-    sbs = SelectBySpeed.create!(:value => "10g")
-    sbi = SelectByIndex.create!(:value => "1")
+    sbs = BarclampNetwork::SelectBySpeed.create!(:value => "10g")
+    sbi = BarclampNetwork::SelectByIndex.create!(:value => "1")
 
-    ifs_selector = InterfaceSelector.new()
+    ifs_selector = BarclampNetwork::InterfaceSelector.new()
     ifs_selector.selectors << sbs
     ifs_selector.selectors << sbi
     ifs_selector.save!
@@ -217,10 +229,10 @@ class ConduitRuleTest < ActiveSupport::TestCase
   
 
   test "ConduitRule.select_interfaces: Successful interface selection 4" do
-    sbs = SelectBySpeed.create!(:value => "100m")
-    sbi = SelectByIndex.create!(:value => "1")
+    sbs = BarclampNetwork::SelectBySpeed.create!(:value => "100m")
+    sbi = BarclampNetwork::SelectByIndex.create!(:value => "1")
 
-    ifs_selector = InterfaceSelector.new()
+    ifs_selector = BarclampNetwork::InterfaceSelector.new()
     ifs_selector.selectors << sbs
     ifs_selector.selectors << sbi
     ifs_selector.save!
@@ -233,10 +245,10 @@ class ConduitRuleTest < ActiveSupport::TestCase
   
 
   test "ConduitRule.select_interfaces: Unsuccessful interface selection due to no index" do
-    sbs = SelectBySpeed.create!(:value => "10g")
-    sbi = SelectByIndex.create!(:value => "2")
+    sbs = BarclampNetwork::SelectBySpeed.create!(:value => "10g")
+    sbi = BarclampNetwork::SelectByIndex.create!(:value => "2")
 
-    ifs_selector = InterfaceSelector.new()
+    ifs_selector = BarclampNetwork::InterfaceSelector.new()
     ifs_selector.selectors << sbs
     ifs_selector.selectors << sbi
     ifs_selector.save!
@@ -248,10 +260,10 @@ class ConduitRuleTest < ActiveSupport::TestCase
   
 
   test "ConduitRule.select_interfaces: Unsuccessful interface selection due to no speed" do
-    sbs = SelectBySpeed.create!(:value => "10m")
-    sbi = SelectByIndex.create!(:value => "1")
+    sbs = BarclampNetwork::SelectBySpeed.create!(:value => "10m")
+    sbi = BarclampNetwork::SelectByIndex.create!(:value => "1")
 
-    ifs_selector = InterfaceSelector.new()
+    ifs_selector = BarclampNetwork::InterfaceSelector.new()
     ifs_selector.selectors << sbs
     ifs_selector.selectors << sbi
     ifs_selector.save!
@@ -266,22 +278,25 @@ class ConduitRuleTest < ActiveSupport::TestCase
 
   def create_bus_order
     bus_order = []
-    bus_order << Bus.create!(:order=>0,:path=>"0000:00/0000:00:1c")
-    bus_order << Bus.create!(:order=>1,:path=>"0000:00/0000:00:07")
-    bus_order << Bus.create!(:order=>2,:path=>"0000:00/0000:00:09")
+    bus_order << BarclampNetwork::Bus.create!(:order=>0,:path=>"0000:00/0000:00:1c")
+    bus_order << BarclampNetwork::Bus.create!(:order=>1,:path=>"0000:00/0000:00:07")
+    bus_order << BarclampNetwork::Bus.create!(:order=>2,:path=>"0000:00/0000:00:09")
     bus_order
   end
 
 
   def test_select_interfaces(ifs_selector)
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+
     node = NetworkTestHelper.create_node()
     node.set_attrib("product_name", "PowerEdge C6145")
     node.save!
 
-    if_map = NetworkTestHelper.create_an_interface_map()
+    if_map = NetworkTestHelper.create_an_interface_map(deployment)
     if_map.save!
 
-    rule = ConduitRule.new()
+    rule = BarclampNetwork::ConduitRule.new()
     rule.interface_selectors << ifs_selector
     rule.save!
 

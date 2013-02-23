@@ -16,13 +16,17 @@ require 'test_helper'
  
 class RoleFilterTest < ActiveSupport::TestCase
   test "Test successful match" do
-    cf = RoleFilter.new()
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+    snapshot = deployment.proposed_snapshot
+
+    cf = BarclampNetwork::RoleFilter.new()
     cf.pattern = "^dns_.+"
     cf.save!
 
     node = Node.create!(:name => "fred.flintstone.org")
-    NetworkTestHelper.add_role(node, "ganglia_client")
-    NetworkTestHelper.add_role(node, "dns_server")
+    NetworkTestHelper.add_role(snapshot, node, "ganglia_client")
+    NetworkTestHelper.add_role(snapshot, node, "dns_server")
 
     result = cf.match(node)
     assert result
@@ -30,13 +34,17 @@ class RoleFilterTest < ActiveSupport::TestCase
 
 
   test "Test unsuccessful match" do
-    cf = RoleFilter.new()
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+    snapshot = deployment.proposed_snapshot
+
+    cf = BarclampNetwork::RoleFilter.new()
     cf.pattern = "^.*fred.*$"
     cf.save!
 
     node = Node.create!(:name => "fred.flintstone.org")
-    NetworkTestHelper.add_role(node, "ganglia_client")
-    NetworkTestHelper.add_role(node, "dns_server")
+    NetworkTestHelper.add_role(snapshot, node, "ganglia_client")
+    NetworkTestHelper.add_role(snapshot, node, "dns_server")
       
     result = cf.match(node)
     assert !result

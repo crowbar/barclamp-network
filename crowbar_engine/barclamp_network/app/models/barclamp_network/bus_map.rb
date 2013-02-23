@@ -13,8 +13,8 @@
 # limitations under the License.
 
 class BarclampNetwork::BusMap < ActiveRecord::Base
-  has_many :buses, :dependent => :destroy
-  belongs_to :interface_map, :inverse_of => :bus_maps
+  has_many :buses, :dependent => :destroy, :class_name => "BarclampNetwork::Bus"
+  belongs_to :interface_map, :inverse_of => :bus_maps, :class_name => "BarclampNetwork::InterfaceMap"
 
   attr_accessible :pattern
 

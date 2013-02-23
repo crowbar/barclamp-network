@@ -20,9 +20,9 @@ class BarclampNetwork::RoleFilter < BarclampNetwork::ConduitFilter
 
   def match(node)
     found = false
-    role_instances = node.role_instances
-    role_instances.each do |role_instance|
-      if role_instance.name =~ /#{value}/
+    roles = node.roles
+    roles.each do |role|
+      if role.name =~ /#{value}/
         found = true
         break
       end

@@ -13,8 +13,8 @@
 # limitations under the License.
 
 class BarclampNetwork::AllocatedIpAddress < ActiveRecord::Base
-  belongs_to :interface, :inverse_of => :allocated_ip_addresses
-  belongs_to :network, :inverse_of => :allocated_ips
+  belongs_to :interface, :inverse_of => :allocated_ip_addresses, :class_name => "BarclampNetwork::Interface"
+  belongs_to :network, :inverse_of => :allocated_ips, :class_name => "BarclampNetwork::Network"
   attr_accessible :ip
 
   validates :ip,

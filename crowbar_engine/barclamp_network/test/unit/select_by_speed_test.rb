@@ -21,7 +21,7 @@ class SelectBySpeedTest < ActiveSupport::TestCase
     if_remap = { "1g1" => "eth2", "1g2" => "eth3", "1g3" => "eth1",
                  "10g1" => "eth4", "10g2" => "eth5", "100m2" => "eth6" }
 
-    sbs = SelectBySpeed.create!(:value => "10g")
+    sbs = BarclampNetwork::SelectBySpeed.create!(:value => "10g")
 
     new_if_remap = sbs.select(if_remap)
 
@@ -39,7 +39,7 @@ class SelectBySpeedTest < ActiveSupport::TestCase
   test "SelectBySpeed: no selection" do
     if_remap = { "10m1" => "eth1", "100m2" => "eth2", "10g3" => "eth3" }
 
-    sbs = SelectBySpeed.create!(:value => "1g")
+    sbs = BarclampNetwork::SelectBySpeed.create!(:value => "1g")
 
     new_if_remap = sbs.select(if_remap)
 
@@ -58,7 +58,7 @@ class SelectBySpeedTest < ActiveSupport::TestCase
                  # Missing desired speed, with speeds below
                  "10m4" => "eth9" }
 
-    sbs = SelectBySpeed.create!(:value => "+100m")
+    sbs = BarclampNetwork::SelectBySpeed.create!(:value => "+100m")
 
     new_if_remap = sbs.select(if_remap)
 
@@ -89,7 +89,7 @@ class SelectBySpeedTest < ActiveSupport::TestCase
                  # Missing desired speed, with speeds below
                  "10m4" => "eth9" }
 
-    sbs = SelectBySpeed.create!(:value => "-100m")
+    sbs = BarclampNetwork::SelectBySpeed.create!(:value => "-100m")
 
     new_if_remap = sbs.select(if_remap)
 
@@ -120,7 +120,7 @@ class SelectBySpeedTest < ActiveSupport::TestCase
                  # Missing desired speed, with speeds below
                  "10m4" => "eth9" }
 
-    sbs = SelectBySpeed.create!(:value => "?100m")
+    sbs = BarclampNetwork::SelectBySpeed.create!(:value => "?100m")
 
     new_if_remap = sbs.select(if_remap)
 

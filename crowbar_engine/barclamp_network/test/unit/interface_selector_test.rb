@@ -18,8 +18,8 @@ class InterfaceSelectorTest < ActiveSupport::TestCase
 
   # Test successful creation
   test "InterfaceSelector creation: success" do
-    is = InterfaceSelector.new()
-    is.selectors << SelectByIndex.create!(:value => 1)
+    is = BarclampNetwork::InterfaceSelector.new()
+    is.selectors << BarclampNetwork::SelectByIndex.create!(:value => 1)
     is.save!
   end
 
@@ -27,17 +27,17 @@ class InterfaceSelectorTest < ActiveSupport::TestCase
   # Test failed creation due to missing selectors
   test "InterfaceSelector creation: failure due to missing selectors" do
     assert_raise ActiveRecord::RecordInvalid do
-      InterfaceSelector.create!()
+      BarclampNetwork::InterfaceSelector.create!()
     end
   end
   
 
   # Test delete cascade
   test "InterfaceSelector deletion: cascade to Selector" do
-    sbi = SelectByIndex.create!(:value => "1")
-    sbs = SelectBySpeed.create!(:value => "1g")
+    sbi = BarclampNetwork::SelectByIndex.create!(:value => "1")
+    sbs = BarclampNetwork::SelectBySpeed.create!(:value => "1g")
 
-    is = InterfaceSelector.new()
+    is = BarclampNetwork::InterfaceSelector.new()
     is.selectors << sbi
     is.selectors << sbs
     is.save!
@@ -46,10 +46,10 @@ class InterfaceSelectorTest < ActiveSupport::TestCase
 
     # Verify SelectBy's destroyed on InterfaceSelect destroy
     assert_raise ActiveRecord::RecordNotFound do
-      SelectByIndex.find(sbi.id)
+      BarclampNetwork::SelectByIndex.find(sbi.id)
     end
     assert_raise ActiveRecord::RecordNotFound do
-      SelectBySpeed.find(sbs.id)
+      BarclampNetwork::SelectBySpeed.find(sbs.id)
     end
   end
 
@@ -58,8 +58,8 @@ class InterfaceSelectorTest < ActiveSupport::TestCase
   test "InterfaceSelector: no interfaces selected" do
     node = Node.create!(:name => "fred.flintstone.org")
 
-    is = InterfaceSelector.new()
-    is.selectors << SelectByIndex.create!(:value => 271)
+    is = BarclampNetwork::InterfaceSelector.new()
+    is.selectors << BarclampNetwork::SelectByIndex.create!(:value => 271)
     is.save!
 
     if_remap = {"1g1" => "eth0", "10g1" => "eth1", "1g2" => "eth2"}
@@ -73,9 +73,9 @@ class InterfaceSelectorTest < ActiveSupport::TestCase
   test "InterfaceSelector: one interface selected" do
     node = Node.create!(:name => "fred.flintstone.org")
 
-    is = InterfaceSelector.new()
-    is.selectors << SelectByIndex.create!(:value => 2)
-    is.selectors << SelectBySpeed.create!(:value => "10g")
+    is = BarclampNetwork::InterfaceSelector.new()
+    is.selectors << BarclampNetwork::SelectByIndex.create!(:value => 2)
+    is.selectors << BarclampNetwork::SelectBySpeed.create!(:value => "10g")
     is.save!
 
     if_remap = {"1g1" => "eth0", "10g1" => "eth1",
@@ -90,8 +90,8 @@ class InterfaceSelectorTest < ActiveSupport::TestCase
   test "InterfaceSelector: multiple interfaces selected" do
     node = Node.create!(:name => "fred.flintstone.org")
 
-    is = InterfaceSelector.new()
-    is.selectors << SelectBySpeed.create!(:value => "10g")
+    is = BarclampNetwork::InterfaceSelector.new()
+    is.selectors << BarclampNetwork::SelectBySpeed.create!(:value => "10g")
     is.save!
 
     if_remap = {"1g1" => "eth0", "10g1" => "eth1",

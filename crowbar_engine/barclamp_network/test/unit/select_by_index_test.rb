@@ -18,13 +18,13 @@ class SelectByIndexTest < ActiveSupport::TestCase
 
   # Test successful interface selection with string value
   test "SelectByIndex: successful interface selection string value" do
-    test_success(SelectByIndex.create!(:value => "2"))
+    test_success(BarclampNetwork::SelectByIndex.create!(:value => "2"))
   end
 
 
   # Test successful interface selection with Integer value
   test "SelectByIndex: successful interface selection Integer value" do
-    test_success(SelectByIndex.create!(:value => 2))
+    test_success(BarclampNetwork::SelectByIndex.create!(:value => 2))
   end
 
 
@@ -33,7 +33,7 @@ class SelectByIndexTest < ActiveSupport::TestCase
     if_remap = { "1g1" => "eth2", "1g2" => "eth3",
                  "10g1" => "eth4", "10g2" => "eth5", "100m2" => "eth6" }
 
-    sbi = SelectByIndex.create!(:value => 3)
+    sbi = BarclampNetwork::SelectByIndex.create!(:value => 3)
     new_if_remap = sbi.select(if_remap)
 
     assert new_if_remap.empty?

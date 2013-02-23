@@ -14,8 +14,8 @@
 
 class CreateInterfaceMaps < ActiveRecord::Migration
   def change
-    create_table :interface_maps do |t|
-      t.references :barclamp_instance
+    create_table :bc_net_interface_maps do |t|
+      t.references :snapshot
 
       t.timestamps
     end

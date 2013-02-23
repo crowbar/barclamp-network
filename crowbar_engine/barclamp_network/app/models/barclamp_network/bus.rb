@@ -13,7 +13,7 @@
 # limitations under the License.
 
 class BarclampNetwork::Bus < ActiveRecord::Base
-  belongs_to :bus_map, :inverse_of => :buses
+  belongs_to :bus_map, :inverse_of => :buses, :class_name => "BarclampNetwork::BusMap"
 
   attr_accessible :path, :order
 

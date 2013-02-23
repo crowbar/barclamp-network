@@ -13,11 +13,11 @@
 # limitations under the License.
 
 class BarclampNetwork::InterfaceMap < ActiveRecord::Base
-  has_many :bus_maps, :dependent => :destroy
-  belongs_to :barclamp_instance
+  has_many :bus_maps, :dependent => :destroy, :class_name => "BarclampNetwork::BusMap"
+  belongs_to :snapshot
 
   validates :bus_maps, :presence => true
-  validates :barclamp_instance, :presence => true
+  validates :snapshot, :presence => true
 
 
   # This method finds the bus order for the node and returns a list of the
@@ -26,7 +26,7 @@ class BarclampNetwork::InterfaceMap < ActiveRecord::Base
     buses = nil
     product_name_attrib = node.get_attrib("product_name")
 
-    BusMap.all.each do |bus_map|
+    BarclampNetwork::BusMap.all.each do |bus_map|
       buses = bus_map.buses if product_name_attrib.value =~ /#{bus_map.pattern}/
       break if buses
     end

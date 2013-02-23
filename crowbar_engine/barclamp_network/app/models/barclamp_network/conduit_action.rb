@@ -13,5 +13,5 @@
 # limitations under the License.
 
 class BarclampNetwork::ConduitAction < ActiveRecord::Base
-  belongs_to :conduit_rule, :inverse_of => :conduit_actions
+  belongs_to :conduit_rule, :inverse_of => :conduit_actions, :class_name => "BarclampNetwork::ConduitRule"
 end

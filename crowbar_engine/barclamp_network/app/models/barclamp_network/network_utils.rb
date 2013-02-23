@@ -14,42 +14,44 @@
 
 class BarclampNetwork::NetworkUtils
 
-  ACTIVE_BARCLAMP_INSTANCE = 0
-  PROPOSED_BARCLAMP_INSTANCE = 1
+  TABLE_PREFIX = "bc_net_"
+
+  ACTIVE_SNAPSHOT = 0
+  PROPOSED_SNAPSHOT = 1
 
 
   def self.find_network(
       network_id,
-      barclamp_config_id = DEFAULT_BARCLAMP_CONFIG_NAME,
-      barclamp_instance_type = PROPOSED_BARCLAMP_INSTANCE)
-
-    barclamp_config_id = DEFAULT_BARCLAMP_CONFIG_NAME if barclamp_config_id.nil?
+      deployment_id = Barclamp::DEFAULT_DEPLOYMENT_NAME,
+      snapshot_type = PROPOSED_SNAPSHOT)
 
     # Find the barclamp config
-    barclamp_config = BarclampConfiguration.find_key(barclamp_config_id)
-    return [404, "There is no BarclampConfiguration with id #{barclamp_config_id}"] if barclamp_config.nil?
+    deployment = Deployment.find_key(deployment_id)
+    return [404, "There is no Deployment with id #{deployment_id}"] if deployment.nil?
 
     # If there is no proposed, then return the active one instead
-    barclamp_instance_type = ACTIVE_BARCLAMP_INSTANCE if barclamp_instance_type == PROPOSED_BARCLAMP_INSTANCE && barclamp.config.proposed.nil?
-    barclamp_instance = (barclamp_instance_type == ACTIVE_BARCLAMP_INSTANCE ? barclamp_config.active :  barclamp_config.proposed)
+    snapshot_type = ACTIVE_SNAPSHOT if snapshot_type == PROPOSED_SNAPSHOT && deployment.proposed_snapshot.nil?
+    snapshot = (snapshot_type == ACTIVE_SNAPSHOT ? deployment.active :  deployment.proposed)
+
+    return [404, "There is no active snapshot"] if snapshot.nil?
 
     # If a network ID was passed, then look up the network by that ID
-    if Network.db_id?(network_id)
+    if BarclampNetwork::Network.db_id?(network_id)
       begin
-        network = Network.find(network_id)
+        network = BarclampNetwork::Network.find(network_id)
       rescue ActiveRecord::RecordNotFound => ex
         return [404, ex.message]
       end
 
       # Do a consistency check to make sure that the found network is
-      # associated with the appropriate BarclampInstance
-      if network.barclamp_instance.id != barclamp_instance.id
-        return [400, "BarclampConfig/Instance #{log_name(barclamp_config)}/#{log_name(barclamp_instance)} is not associated with network #{log_name(network)}"]
+      # associated with the appropriate Snapshot
+      if network.snapshot.id != snapshot.id
+        return [400, "Deployment/Instance #{log_name(deployment)}/#{log_name(snapshot)} is not associated with network #{log_name(network)}"]
       end
     else
-      # network_id is a name, so look up the network by BarclampInstance ID and network name
-      network = Network.where("barclamp_instance_id = ? AND name = ?", barclamp_instance.id, network_id).first
-      return [404, "There is no network #{network_id} with BarclampConfig/Instance #{log_name(barclamp_config)}/#{log_name(barclamp_instance)}"] if network.nil?
+      # network_id is a name, so look up the network by Snapshot ID and network name
+      network = BarclampNetwork::Network.where("snapshot_id = ? AND name = ?", snapshot.id, network_id).first
+      return [404, "There is no network #{network_id} with Deployment/Instance #{log_name(deployment)}/#{log_name(snapshot)}"] if network.nil?
     end
 
     [200, network]

@@ -15,10 +15,10 @@
 class BarclampNetwork::Interface < ActiveRecord::Base
   attr_protected :id
   
-  has_many :allocated_ip_addresses, :inverse_of => :interface, :dependent => :destroy
-  belongs_to :vlan_interface, :inverse_of => :interfaces
+  has_many :allocated_ip_addresses, :inverse_of => :interface, :dependent => :destroy, :class_name => "BarclampNetwork::AllocatedIpAddress"
+  belongs_to :vlan_interface, :inverse_of => :interfaces, :class_name => "BarclampNetwork::VlanInterface"
   belongs_to :node
-  has_and_belongs_to_many :networks
+  has_and_belongs_to_many :networks, :join_table => "bc_net_interfaces_networks", :class_name => "BarclampNetwork::Network"
   
   # attr_accessible :name
 

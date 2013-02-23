@@ -14,7 +14,7 @@
 
 class CreateInterfaceSelectors < ActiveRecord::Migration
   def change
-    create_table :interface_selectors do |t|
+    create_table :bc_net_interface_selectors do |t|
       t.references :conduit_rule
 
       t.timestamps

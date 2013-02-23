@@ -14,7 +14,7 @@
 
 class CreateConduitFilters < ActiveRecord::Migration
   def change
-    create_table :conduit_filters do |t|
+    create_table :bc_net_conduit_filters do |t|
       t.references :conduit_rule
       t.string :type
       t.string :attr

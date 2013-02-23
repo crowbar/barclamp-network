@@ -14,38 +14,44 @@
 
 require 'test_helper'
  
-class AttribInstanceIpAddressTest < ActiveSupport::TestCase
+class AttribIpAddressTest < ActiveSupport::TestCase
 
   # Test retrieval of ip address for default network
   test "Ip address retrieval: default network success" do
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+
     node = Node.new(:name => "fred.flintstone.org")
     node.save!
 
-    allocated_ip = allocate_ip("admin", node)
+    allocated_ip = allocate_ip(deployment, NetworkTestHelper::DEFAULT_NETWORK_NAME, node)
 
     ip_address = node.get_attrib("ip_address")
-    assert_equal allocated_ip, ip_address.actual
+    assert_equal allocated_ip, ip_address.actual(NetworkTestHelper::DEFAULT_NETWORK_NAME, deployment.id, BarclampNetwork::NetworkUtils::PROPOSED_SNAPSHOT)
   end
 
 
   # Test retrieval of ip address for specified network
   test "Ip address retrieval: specified network success" do
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+
     node = Node.new(:name => "fred7.flintstone.org")
     node.save!
 
-    admin_allocated_ip = allocate_ip("admin", node)
-    public_allocated_ip = allocate_ip("public", node)
+    net1_allocated_ip = allocate_ip(deployment, "#{NetworkTestHelper::DEFAULT_NETWORK_NAME}_1", node)
+    net2_allocated_ip = allocate_ip(deployment, "#{NetworkTestHelper::DEFAULT_NETWORK_NAME}_2", node)
 
     ip_address = node.get_attrib("ip_address")
-    assert_equal admin_allocated_ip, ip_address.actual("default","admin")
-    assert_equal public_allocated_ip, ip_address.actual("default","public")
+    assert_equal net1_allocated_ip, ip_address.actual("#{NetworkTestHelper::DEFAULT_NETWORK_NAME}_1", deployment.id, BarclampNetwork::NetworkUtils::PROPOSED_SNAPSHOT)
+    assert_equal net2_allocated_ip, ip_address.actual("#{NetworkTestHelper::DEFAULT_NETWORK_NAME}_2", deployment.id, BarclampNetwork::NetworkUtils::PROPOSED_SNAPSHOT)
   end
 
 
   private
 
-  def allocate_ip(network_name, node)
-    network = NetworkTestHelper.create_a_network(network_name)
+  def allocate_ip(deployment, network_name, node)
+    network = NetworkTestHelper.create_a_network(deployment, network_name)
     network.save!
 
     http_error, message = network.allocate_ip("host", node)
