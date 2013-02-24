@@ -18,37 +18,14 @@
 require File.join(File.expand_path(File.dirname(__FILE__)), "barclamp_lib")
 @barclamp = "network"
 
-@commands["deallocate_ip"] = [ "deallocate_ip(ARGV.shift,ARGV.shift,ARGV.shift)", "deallocate_ip <name> <node> <network> - Deallocate an ip from a node on a network" ]
 @commands["network_deallocate_ip"] = [ "network_deallocate_ip(ARGV.shift,ARGV.shift,ARGV.shift)", "network_deallocate_ip <deployment_id> <node_id> <network_id> - Deallocate an ip from a node on a network" ]
-@commands["allocate_ip"] = [ "allocate_ip(ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift)", "allocate_ip <name> <node> <network> <range> [<suggestion>] - Allocate an ip for a node on a network from a range" ]
 @commands["network_allocate_ip"] = [ "network_allocate_ip(ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift)", "network_allocate_ip <deployment_id> <node_id> <network_id> <range> [suggestion] - Allocate an ip for a node on a network from a range" ]
-@commands["enable_interface"] = [ "enable_interface(ARGV.shift,ARGV.shift,ARGV.shift)", "enable_interface <name> <node> <network> - Ensure that an interface is present for the specified network" ]
 @commands["network_enable_interface"] = [ "network_enable_interface(ARGV.shift,ARGV.shift,ARGV.shift)", "network_enable_interface <deployment_id> <node_id> <network_id> - Ensure that an interface is present for the specified network" ]
-@commands["disable_interface"] = [ "disable_interface(ARGV.shift,ARGV.shift,ARGV.shift)", "disable_interface <name> <node> <network> - Ensure that an interface is not enabled for the specified network" ]
 @commands["network_list"] = [ "network_list()", "network_list - Show a list of current networks" ]
 @commands["network_show"] = [ "network_show(ARGV.shift)", "network_show <name_or_id> - Show a specific network" ]
 @commands["network_create"] = [ "network_create(ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift)", "network_create <name> <deployment_id> <conduit_id> <subnet> <dhcp_enabled> <use_vlan> <ip_ranges> <router_pref> <router_ip> - Create a network" ]
 @commands["network_edit"] = [ "network_edit(ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift)", "network_edit <name_or_id> <conduit_id> <subnet> <dhcp_enabled> <use_vlan> <ip_ranges> <router_pref> <router_ip> - Edit a network" ]
 @commands["network_delete"] = [ "network_delete(ARGV.shift)", "network_delete <name_or_id> - Delete a network" ]
-
-def enable_interface(name, node, network)
-  usage -1 if name.nil? or name == ""
-  usage -1 if node.nil? or node == ""
-  usage -1 if network.nil? or network == ""
-
-  @data = { "name" => node, "network" => network }.to_json
-  struct = post_json("/enable_interface/#{name}", @data)
-
-  if struct[1] == 200
-    [ "Enabled interface #{name} #{struct[0].inspect}", 0 ]
-  elsif struct[1] == 404
-    [ "Failed to enable interface: #{name} : Not Found", 1 ]
-  elsif struct[1] == 400
-    [ "Failed to enable interface: #{name} : Errors in data\n#{struct[0]}", 1 ]
-  else
-    [ "Failed to talk to service enable_interface: #{struct[1]}: #{struct[0]}", 1 ]
-  end
-end
 
 
 def network_enable_interface(deployment_id, node_id, network_id)
@@ -68,28 +45,6 @@ def network_enable_interface(deployment_id, node_id, network_id)
     [ "Failed to enable interface for deployment #{deployment_id}, network #{network_id}, node #{node_id}: Errors in data\n#{struct[0]}", 1 ]
   else
     [ "Failed to talk to service network_enable_interface for deployment #{deployment_id}, network #{network_id}, node #{node_id}: #{struct[1]}: #{struct[0]}", 1 ]
-  end
-end
-
-def allocate_ip(name, node, network, range, suggestion)
-  usage -1 if name.nil? or name == ""
-  usage -1 if network.nil? or network == ""
-  usage -1 if node.nil? or node == ""
-  usage -1 if range.nil? or range == ""
-
-  @data = { "name" => node, "network" => network, "range" => range }
-  @data["suggestion"] = suggestion if suggestion
-  @data = @data.to_json
-  struct = post_json("/allocate_ip/#{name}", @data)
-
-  if struct[1] == 200
-    [ "Allocate ip #{name} #{struct[0].inspect}", 0 ]
-  elsif struct[1] == 404
-    [ "Failed to Allocate ip: #{name} : Not Found", 1 ]
-  elsif struct[1] == 400
-    [ "Failed to Allocate ip: #{name} : Errors in data\n#{struct[0]}", 1 ]
-  else
-    [ "Failed to talk to service allocate_ip: #{struct[1]}: #{struct[0]}", 1 ]
   end
 end
 
@@ -119,26 +74,6 @@ def network_allocate_ip(deployment_id, node_id, network_id, range, suggestion)
 end
 
 
-def deallocate_ip(name, node, network)
-  usage -1 if name.nil? or name == ""
-  usage -1 if network.nil? or network == ""
-  usage -1 if node.nil? or node == ""
-
-  @data = { "name" => node, "network" => network }.to_json
-  struct = post_json("/deallocate_ip/#{name}", @data)
-
-  if struct[1] == 200
-    [ "Deallocate address #{network} #{node}", 0 ]
-  elsif struct[1] == 404
-    [ "Failed to deallocate ip: #{name} : Not Found", 1 ]
-  elsif struct[1] == 400
-    [ "Failed to deallocate ip: #{name} : Errors in data\n#{struct[0]}", 1 ]
-  else
-    [ "Failed to talk to service deallocate_ip: #{struct[1]}: #{struct[0]}", 1 ]
-  end
-end
-
-
 def network_deallocate_ip(deployment_id, node_id, network_id)
   usage -1 if deployment_id.nil? or deployment_id == ""
   usage -1 if node_id.nil? or node_id == ""
@@ -159,25 +94,6 @@ def network_deallocate_ip(deployment_id, node_id, network_id)
 end
 
 
-def disable_interface(name, node, network)
-  usage -1 if name.nil? or name == ""
-  usage -1 if node.nil? or node == ""
-  usage -1 if network.nil? or network == ""
-
-  @data = { "name" => node, "network" => network }.to_json
-  struct = post_json("/disable_interface/#{name}", @data)
-
-  if struct[1] == 200
-    [ "Disable interface #{network} #{node}", 0 ]
-  elsif struct[1] == 404
-    [ "Failed to disable interface: #{name} : Not Found", 1 ]
-  elsif struct[1] == 400
-    [ "Failed to disable interface: #{name} : Errors in data\n#{struct[0]}", 1 ]
-  else
-    [ "Failed to talk to service disable_interface: #{struct[1]}: #{struct[0]}", 1 ]
-  end
-end
-
 def network_list()
   struct = get_json2("2.0/crowbar/2.0/network/networks")
 
@@ -189,6 +105,7 @@ def network_list()
     [ JSON.pretty_generate(struct[0]), 0]
   end
 end
+
 
 def network_show(id)
   usage -1 if id.nil? or id == ""
@@ -203,6 +120,7 @@ def network_show(id)
     [ "Unable to retrieve network #{id}: #{struct[1]} - #{struct[0]}", 1 ]
   end
 end
+
 
 def network_create(name, deployment_id, conduit_id, subnet, dhcp_enabled, use_vlan, ip_ranges, router_pref, router_ip)
   usage -1 if name.nil? or name == ""
@@ -236,6 +154,7 @@ def network_create(name, deployment_id, conduit_id, subnet, dhcp_enabled, use_vl
   end
 end
 
+
 def network_edit(name_or_id, conduit_id, subnet, dhcp_enabled, use_vlan, ip_ranges, router_pref, router_ip)
   usage -1 if name_or_id.nil? or name_or_id == ""
   usage -1 if conduit_id.nil? or conduit_id == ""
@@ -268,6 +187,7 @@ def network_edit(name_or_id, conduit_id, subnet, dhcp_enabled, use_vlan, ip_rang
     [ "An error occured while editing the network: #{struct[1]}: #{struct[0]}", 1 ]
   end
 end
+
 
 def network_delete(name_or_id)
   usage -1 if name_or_id.nil? or name_or_id == ""
