@@ -13,7 +13,8 @@
 # limitations under the License.
 #
 
+
 class Scaffolds::BondsController < ApplicationController
-  active_scaffold :bond do |conf|
+  active_scaffold :'barclamp_network/bond' do |conf|
   end
 end

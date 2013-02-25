@@ -13,7 +13,8 @@
 # limitations under the License.
 #
 
+
 class Scaffolds::BmcInterfacesController < ApplicationController
-  active_scaffold :bmc_interface do |conf|
+  active_scaffold :'barclamp_network/bmc_interface' do |conf|
   end
 end

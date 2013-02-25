@@ -13,7 +13,8 @@
 # limitations under the License.
 #
 
+
 class Scaffolds::CreateVlansController < ApplicationController
-  active_scaffold :create_vlan do |conf|
+  active_scaffold :'barclamp_network/create_vlan' do |conf|
   end
 end 
