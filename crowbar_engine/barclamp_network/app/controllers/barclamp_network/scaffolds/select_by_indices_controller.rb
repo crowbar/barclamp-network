@@ -13,7 +13,8 @@
 # limitations under the License.
 #
 
+
 class Scaffolds::SelectByIndicesController < ApplicationController
-  active_scaffold :select_by_index do |conf|
+  active_scaffold :'barclamp_network/select_by_index' do |conf|
   end
 end 

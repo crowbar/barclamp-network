@@ -13,7 +13,8 @@
 # limitations under the License.
 #
 
+
 class Scaffolds::InterfaceMapsController < ApplicationController
-  active_scaffold :interface_map do |conf|
+  active_scaffold :'barclamp_network/interface_map' do |conf|
   end
 end 
