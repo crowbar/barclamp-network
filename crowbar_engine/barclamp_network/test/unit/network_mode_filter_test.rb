@@ -19,7 +19,7 @@ class NetworkModeFilterTest < ActiveSupport::TestCase
   # These tests assume that the default teaming mode in the network json
   # is single
   test "Test successful match" do
-    cf = NetworkModeFilter.new()
+    cf = BarclampNetwork::NetworkModeFilter.new()
     cf.network_mode = "single"
     cf.save!
 
@@ -31,7 +31,7 @@ class NetworkModeFilterTest < ActiveSupport::TestCase
 
 
   test "Test unsuccessful match" do
-    cf = NetworkModeFilter.new()
+    cf = BarclampNetwork::NetworkModeFilter.new()
     cf.network_mode = "dual"
 
     node = Node.create!(:name => "fred.flintstone.org")

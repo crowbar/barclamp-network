@@ -25,7 +25,7 @@ class BusModelTest < ActiveSupport::TestCase
   # Creation failure: non-existent order
   test "Bus creation: failure due to non-existent order" do
     assert_raise ActiveRecord::RecordInvalid do
-      Bus.create!( :path => "0000:00/0000:00:1c" )
+      BarclampNetwork::Bus.create!( :path => "0000:00/0000:00:1c" )
     end
   end
 
@@ -33,7 +33,7 @@ class BusModelTest < ActiveSupport::TestCase
   # Creation failure: non-numeric order
   test "Bus creation: failure due to non-numeric order" do
     assert_raise ActiveRecord::RecordInvalid do
-      Bus.create!( :order => "fred", :path => "0000:00/0000:00:1c" )
+      BarclampNetwork::Bus.create!( :order => "fred", :path => "0000:00/0000:00:1c" )
     end
   end
 
@@ -41,7 +41,7 @@ class BusModelTest < ActiveSupport::TestCase
   # Creation failure: non-existent path
   test "Bus creation: failure due to non-existent path" do
     assert_raise ActiveRecord::RecordInvalid do
-      Bus.create!( :order => "fred" )
+      BarclampNetwork::Bus.create!( :order => "fred" )
     end
   end
 end

@@ -14,12 +14,12 @@
 
 class CreateNetworks < ActiveRecord::Migration
   def change
-    create_table :networks do |t|
+    create_table :bc_net_networks do |t|
       t.string :name
       t.boolean :dhcp_enabled
       t.boolean :use_vlan
       t.references :conduit
-      t.references :barclamp_instance
+      t.references :snapshot
 
       t.timestamps
     end

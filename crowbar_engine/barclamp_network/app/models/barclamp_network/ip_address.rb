@@ -13,8 +13,7 @@
 # limitations under the License.
 
 class BarclampNetwork::IpAddress < ActiveRecord::Base
-
-  belongs_to :interface, :inverse_of => :ip_addresses
+  belongs_to :interface, :inverse_of => :ip_addresses, :class_name => "BarclampNetwork::Interface"
   attr_protected :id
   # attr_accessible :cidr
 

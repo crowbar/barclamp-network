@@ -14,7 +14,7 @@
 
 class CreateAllocatedIpAddresses < ActiveRecord::Migration
   def change
-    create_table :allocated_ip_addresses do |t|
+    create_table :bc_net_allocated_ip_addresses do |t|
       t.string :ip
       t.references :interface
       t.references :network
@@ -22,6 +22,6 @@ class CreateAllocatedIpAddresses < ActiveRecord::Migration
       t.timestamps
     end
 
-    add_index(:allocated_ip_addresses, [:ip, :network_id], :unique => true, :name => "by_ip_network")
+    add_index(:bc_net_allocated_ip_addresses, [:ip, :network_id], :unique => true, :name => "by_ip_network")
   end
 end

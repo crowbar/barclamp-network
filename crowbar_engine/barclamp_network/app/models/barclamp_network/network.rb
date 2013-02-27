@@ -15,38 +15,38 @@
 class BarclampNetwork::Network < ActiveRecord::Base
   attr_protected :id
 
-  has_many :allocated_ips, :class_name => "AllocatedIpAddress", :dependent => :nullify
+  has_many :allocated_ips, :dependent => :nullify, :class_name => "BarclampNetwork::AllocatedIpAddress"
 
-  has_one :subnet, :foreign_key => "subnet_id", :class_name => "IpAddress", :dependent => :destroy
-  belongs_to :conduit, :inverse_of => :networks
-  has_one :router, :inverse_of => :network, :dependent => :destroy
-  has_many :ip_ranges, :dependent => :destroy
-  belongs_to :barclamp_instance
-  has_one :vlan, :inverse_of => :network, :dependent => :destroy
-  has_and_belongs_to_many :interfaces
+  has_one :subnet, :foreign_key => "subnet_id", :dependent => :destroy, :class_name => "BarclampNetwork::IpAddress"
+  belongs_to :conduit, :inverse_of => :networks, :class_name => "BarclampNetwork::Conduit"
+  has_one :router, :inverse_of => :network, :dependent => :destroy, :class_name => "BarclampNetwork::Router"
+  has_many :ip_ranges, :dependent => :destroy, :class_name => "BarclampNetwork::IpRange"
+  belongs_to :snapshot
+  has_one :vlan, :inverse_of => :network, :dependent => :destroy, :class_name => "BarclampNetwork::Vlan"
+  has_and_belongs_to_many :interfaces, :join_table => "bc_net_interfaces_networks", :class_name => "BarclampNetwork::Interface"
 
   # attr_accessible :name, :dhcp_enabled, :use_vlan
 
-  validates_uniqueness_of :name, :presence => true, :scope => :barclamp_instance_id
+  validates_uniqueness_of :name, :presence => true, :scope => :snapshot_id
   validates :use_vlan, :inclusion => { :in => [true, false] }
   validates :dhcp_enabled, :inclusion => { :in => [true, false] }
   validates :subnet, :presence => true
   validates :ip_ranges, :presence => true
-  #validates :barclamp_instance, :presence => true
+  #validates :snapshot, :presence => true
 
 
   def allocate_ip(range, node, suggestion = nil)
-    logger.debug("Entering Network#{NetworkUtils.log_name(self)}.allocate_ip(range: #{range}, node: #{NetworkUtils.log_name(node)}, suggestion: #{suggestion}")
+    logger.debug("Entering Network#{BarclampNetwork::NetworkUtils.log_name(self)}.allocate_ip(range: #{range}, node: #{BarclampNetwork::NetworkUtils.log_name(node)}, suggestion: #{suggestion}")
 
     # Validate inputs
     return [400, "No range specified"] if range.nil?
     return [400, "No node specified"] if node.nil?
 
     # If the node already has an IP on this network then just return success
-    results = AllocatedIpAddress.joins(:interface).where(:interfaces => {:node_id => node.id}).where(:network_id => id)
+    results = BarclampNetwork::AllocatedIpAddress.joins(:interface).where(:bc_net_interfaces => {:node_id => node.id}).where(:network_id => id)
     if results.length > 0
       allocated_ip = results.first.ip
-      logger.info("Network.allocate_ip: node #{NetworkUtils.log_name(node)} already has address #{allocated_ip} on network #{NetworkUtils.log_name(self)}, range #{range}")
+      logger.info("Network.allocate_ip: node #{BarclampNetwork::NetworkUtils.log_name(node)} already has address #{allocated_ip} on network #{BarclampNetwork::NetworkUtils.log_name(self)}, range #{range}")
       net_info = build_net_info(node)
       net_info["address"] = allocated_ip
       return [200, net_info]
@@ -72,7 +72,7 @@ class BarclampNetwork::Network < ActiveRecord::Base
       subsug = IPAddr.new(suggestion) & netmask_addr
       if subnet_addr == subsug
         if allocated_ips.where(:ip => suggestion).length == 0
-          logger.info("Using suggestion: node #{NetworkUtils.log_name(node)}, network #{NetworkUtils.log_name(self)} #{suggestion}")
+          logger.info("Using suggestion: node #{BarclampNetwork::NetworkUtils.log_name(node)}, network #{BarclampNetwork::NetworkUtils.log_name(self)} #{suggestion}")
           address = suggestion
           found = true
         end
@@ -102,18 +102,18 @@ class BarclampNetwork::Network < ActiveRecord::Base
 
       if found
         begin
-          AllocatedIpAddress.transaction do
-            ip_addr = AllocatedIpAddress.new( :ip => address.to_s )
+          BarclampNetwork::AllocatedIpAddress.transaction do
+            ip_addr = BarclampNetwork::AllocatedIpAddress.new( :ip => address.to_s )
             ip_addr.network = self
 
-            node.set_attrib("ip_address", nil, 0, AttribInstanceIpAddress)
+            node.set_attrib("ip_address", nil, 0, BarclampNetwork::AttribIpAddress)
 
             # TODO - Interfaces should be discovered, not created on the fly
-            interfaces = Interface.where( "node_id = ?", node.id )
+            interfaces = BarclampNetwork::Interface.where( "node_id = ?", node.id )
             logger.debug("Found #{interfaces.size} interfaces")
             interface = nil
             if interfaces.size == 0
-              interface = PhysicalInterface.new(:name => "eth0")
+              interface = BarclampNetwork::PhysicalInterface.new(:name => "eth0")
               interface.node = node
               interface.networks << self
               interface.save!
@@ -140,7 +140,7 @@ class BarclampNetwork::Network < ActiveRecord::Base
     end
 
     if !found and tries == 0
-      logger.error("Network.allocate_ip: retries exceeded while allocating IP address for node #{NetworkUtils.log_name(node)} network #{NetworkUtils.log_name(self)} range #{range}")
+      logger.error("Network.allocate_ip: retries exceeded while allocating IP address for node #{BarclampNetwork::NetworkUtils.log_name(node)} network #{BarclampNetwork::NetworkUtils.log_name(self)} range #{range}")
       return [404, "Unable to allocate IP address due to retries exceeded"]
     end
 
@@ -154,16 +154,16 @@ class BarclampNetwork::Network < ActiveRecord::Base
     return [400, "No node specified"] if node.nil?
 
     # If we don't have one allocated, return success
-    results = AllocatedIpAddress.joins(:interface).where(:interfaces => {:node_id => node.id}).where(:network_id => id)
+    results = BarclampNetwork::AllocatedIpAddress.joins(:interface).where(:bc_net_interfaces => {:node_id => node.id}).where(:network_id => id)
     if results.length == 0
-      logger.warn("Network.deallocate_ip: node #{NetworkUtils.log_name(node)} does not have an address allocated on network #{NetworkUtils.log_name(self)}")
+      logger.warn("Network.deallocate_ip: node #{BarclampNetwork::NetworkUtils.log_name(node)} does not have an address allocated on network #{BarclampNetwork::NetworkUtils.log_name(self)}")
       return [200, nil]
     end
 
     allocated_ip = results.first
     allocated_ip.destroy
 
-    logger.info("Network.deallocate_ip: deallocated ip #{allocated_ip.ip} for node #{NetworkUtils.log_name(node)} on network #{NetworkUtils.log_name(self)}")
+    logger.info("Network.deallocate_ip: deallocated ip #{allocated_ip.ip} for node #{BarclampNetwork::NetworkUtils.log_name(node)} on network #{BarclampNetwork::NetworkUtils.log_name(self)}")
     
     [200, nil]
   end
@@ -173,14 +173,14 @@ class BarclampNetwork::Network < ActiveRecord::Base
     net_info = build_net_info(node)
 
     # If we already have an enabled inteface then return success
-    intf = Interface.where(:node_id => node.id).first
+    intf = BarclampNetwork::Interface.where(:node_id => node.id).first
     if !intf.nil? and intf.networks.where( :id => id).exists?
-      logger.info("Network.enable_interface: node #{NetworkUtils.log_name(node)} already has an enabled interface on network #{NetworkUtils.log_name(self)}")
+      logger.info("Network.enable_interface: node #{BarclampNetwork::NetworkUtils.log_name(node)} already has an enabled interface on network #{BarclampNetwork::NetworkUtils.log_name(self)}")
       return [200, net_info]
     end
 
     # TODO: Remove this hack when interfaces are discovered
-    interface = PhysicalInterface.new(:name => "eth0")
+    interface = BarclampNetwork::PhysicalInterface.new(:name => "eth0")
     interface.node = node
     interface.networks << self
     interface.save!

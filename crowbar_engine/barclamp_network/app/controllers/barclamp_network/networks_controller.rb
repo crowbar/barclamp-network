@@ -48,10 +48,10 @@ class NetworksController < BarclampController
     end
   end
 
-  add_help(:network_create,[:name, :barclamp_config_id, :conduit_id, :subnet, :dhcp_enabled, :use_vlan, :ip_ranges, :router_pref, :router_ip],[:post])
+  add_help(:network_create,[:name, :deployment_id, :conduit_id, :subnet, :dhcp_enabled, :use_vlan, :ip_ranges, :router_pref, :router_ip],[:post])
   def network_create
     name = params[:name]
-    barclamp_config_id = params[:barclamp_config_id]
+    deployment_id = params[:deployment_id]
     conduit_id = params[:conduit_id]
     subnet = params[:subnet]
     dhcp_enabled = to_bool( params[:dhcp_enabled] )
@@ -62,7 +62,7 @@ class NetworksController < BarclampController
 
     Rails.logger.debug("Creating network #{name}");
 
-    ret = operations.network_create(name, barclamp_config_id, conduit_id, subnet, dhcp_enabled, use_vlan, ip_ranges, router_pref, router_ip)
+    ret = operations.network_create(name, deployment_id, conduit_id, subnet, dhcp_enabled, use_vlan, ip_ranges, router_pref, router_ip)
 
     return render :text => ret[1], :status => ret[0] if ret[0] != 200
 
@@ -117,14 +117,14 @@ class NetworksController < BarclampController
 
   add_help(:network_allocate_ip,[:id,:network_id,:node_id,:range],[:post])
   def network_allocate_ip
-    barclamp_config_id = params[:id]
-    barclamp_config_id = nil if barclamp_config_id == "-1"
+    deployment_id = params[:id]
+    deployment_id = nil if deployment_id == "-1"
     network_id = params[:network_id]
     node_id = params[:node_id]
     range = params[:range]
     suggestion = params[:suggestion]
 
-    ret = operations.network_allocate_ip(barclamp_config_id, network_id, range, node_id, suggestion)
+    ret = operations.network_allocate_ip(deployment_id, network_id, range, node_id, suggestion)
     return render :text => ret[1], :status => ret[0] if ret[0] != 200
     render :json => ret[1]
   end
@@ -142,12 +142,12 @@ class NetworksController < BarclampController
 
   add_help(:network_deallocate_ip,[:id,:network_id,:node_id],[:delete])
   def network_deallocate_ip
-    barclamp_config_id = params[:id]
-    barclamp_config_id = nil if barclamp_config_id == "-1"
+    deployment_id = params[:id]
+    deployment_id = nil if deployment_id == "-1"
     network_id = params[:network_id]
     node_id = params[:node_id]
 
-    ret = operations.network_deallocate_ip(barclamp_config_id, network_id, node_id)
+    ret = operations.network_deallocate_ip(deployment_id, network_id, node_id)
     return render :text => ret[1], :status => ret[0] if ret[0] != 200
     render :json => ret[1]
   end
@@ -165,12 +165,12 @@ class NetworksController < BarclampController
 
   add_help(:network_enable_interface,[:id,:network_id,:node_id],[:post])
   def network_enable_interface
-    barclamp_config_id = params[:id]
-    barclamp_config_id = nil if barclamp_config_id == "-1"
+    deployment_id = params[:id]
+    deployment_id = nil if deployment_id == "-1"
     network_id = params[:network_id]
     node_id = params[:node_id]
 
-    ret = operations.network_enable_interface(barclamp_config_id, network_id, node_id)
+    ret = operations.network_enable_interface(deployment_id, network_id, node_id)
     return render :text => ret[1], :status => ret[0] if ret[0] != 200
     render :json => ret[1]
   end

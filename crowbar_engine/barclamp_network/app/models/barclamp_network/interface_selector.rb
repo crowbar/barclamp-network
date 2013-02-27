@@ -13,8 +13,8 @@
 # limitations under the License.
 
 class BarclampNetwork::InterfaceSelector < ActiveRecord::Base
-  belongs_to :conduit_rule, :inverse_of => :interface_selectors
-  has_many :selectors, :inverse_of => :interface_selector, :dependent => :destroy
+  belongs_to :conduit_rule, :inverse_of => :interface_selectors, :class_name => "BarclampNetwork::ConduitRule"
+  has_many :selectors, :inverse_of => :interface_selector, :dependent => :destroy, :class_name => "BarclampNetwork::Selector"
 
   validates :selectors, :presence => true
 

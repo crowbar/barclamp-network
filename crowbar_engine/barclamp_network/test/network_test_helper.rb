@@ -13,41 +13,41 @@
 # limitations under the License. 
 
 class NetworkTestHelper
+  DEFAULT_NETWORK_NAME = "bedrock"
+
+
   # Create a Network
-  def self.create_a_network(name="admin", barclamp_instance=nil)
-    network = Network.new
+  def self.create_a_network(deployment, name=DEFAULT_NETWORK_NAME)
+    network = BarclampNetwork::Network.new
     network.name = name
     network.dhcp_enabled = true
     network.use_vlan = false
-    network.subnet = IpAddress.create!( :cidr => "192.168.122.11/24" )
-    network.conduit = create_or_get_conduit("intf0")
+    network.subnet = BarclampNetwork::IpAddress.create!( :cidr => "192.168.122.11/24" )
+    network.conduit = create_or_get_conduit(deployment, "intf0")
     network.router = create_a_router()
     network.ip_ranges << create_an_ip_range()
-
-    barclamp_instance = BarclampInstance.create!() if barclamp_instance.nil?
-    network.barclamp_instance = barclamp_instance
-
+    network.snapshot = deployment.proposed_snapshot
     network
   end
   
   
   # Create a Router
   def self.create_a_router
-    router = Router.new()
-    router.ip = IpAddress.new( :cidr => "192.168.124.1/24" )
+    router = BarclampNetwork::Router.new()
+    router.ip = BarclampNetwork::IpAddress.new( :cidr => "192.168.124.1/24" )
     router.pref = 5
     router
   end
 
   
   # Create a conduit
-  def self.create_or_get_conduit( conduit_name )
-    conduits = Conduit.where( :name => conduit_name )
+  def self.create_or_get_conduit(deployment, conduit_name)
+    conduits = BarclampNetwork::Conduit.where( :name => conduit_name )
     if conduits.size == 0
-      conduit = Conduit.new()
+      conduit = BarclampNetwork::Conduit.new()
       conduit.name = conduit_name
       conduit.conduit_rules << create_a_conduit_rule()
-      conduit.barclamp_instance = create_barclamp_instance()
+      conduit.snapshot = deployment.proposed_snapshot
     else
       conduit = conduits[0]
     end
@@ -58,7 +58,7 @@ class NetworkTestHelper
 
   # Create a conduit filter
   def self.create_a_conduit_filter
-    conduit_filter = ConduitFilter.new()
+    conduit_filter = BarclampNetwork::ConduitFilter.new()
     conduit_filter.attr = "nics.size"
     conduit_filter.comparitor = "="
     conduit_filter.value = "2"
@@ -69,13 +69,13 @@ class NetworkTestHelper
   # Create a conduit rule
   def self.create_a_conduit_rule
 
-    sbs = SelectBySpeed.new()
+    sbs = BarclampNetwork::SelectBySpeed.new()
     sbs.value = "1g"
 
-    ifs = InterfaceSelector.new()
+    ifs = BarclampNetwork::InterfaceSelector.new()
     ifs.selectors << sbs
 
-    rule = ConduitRule.new()
+    rule = BarclampNetwork::ConduitRule.new()
     rule.conduit_filters << create_a_conduit_filter()
     rule.conduit_actions << create_a_conduit_action()
     rule.interface_selectors << ifs
@@ -85,7 +85,7 @@ class NetworkTestHelper
 
   # Create a conduit action
   def self.create_a_conduit_action
-    create_bond = CreateBond.new()
+    create_bond = BarclampNetwork::CreateBond.new()
     create_bond.team_mode = 6
     create_bond
   end
@@ -93,30 +93,30 @@ class NetworkTestHelper
   
   # Create an IpRange
   def self.create_an_ip_range
-    ip_range = IpRange.new( :name => "host" )
-    ip = IpAddress.new( :cidr => "192.168.122.2" )
+    ip_range = BarclampNetwork::IpRange.new( :name => "host" )
+    ip = BarclampNetwork::IpAddress.new( :cidr => "192.168.122.2" )
     ip_range.start_address = ip
-    ip = IpAddress.new( :cidr => "192.168.122.5" )
+    ip = BarclampNetwork::IpAddress.new( :cidr => "192.168.122.5" )
     ip_range.end_address = ip
     ip_range
   end
 
   
   # Create an interface map
-  def self.create_an_interface_map
-    interface_map = InterfaceMap.new()
+  def self.create_an_interface_map(deployment)
+    interface_map = BarclampNetwork::InterfaceMap.new()
 
     interface_map.bus_maps << create_a_bus_map("PowerEdge C6145", { "0" => "0000:00/0000:00:04", "1" => "0000:00/0000:00:02" })
     interface_map.bus_maps << create_a_bus_map("PowerEdge R710", { "0" => "0000:00/0000:00:01", "1" => "0000:00/0000:00:03" })
 
-    interface_map.barclamp_instance = create_barclamp_instance()
+    interface_map.snapshot = deployment.proposed_snapshot
     interface_map
   end
   
   
   # Create a bus map
   def self.create_a_bus_map(pattern="PowerEdge C6145", bus_order={ "0" => "0000:00/0000:00:04", "1" => "0000:00/0000:00:02"})
-    bus_map = BusMap.new( :pattern => pattern)
+    bus_map = BarclampNetwork::BusMap.new( :pattern => pattern)
     bus_map.buses << create_buses(bus_order)
     bus_map
   end
@@ -124,7 +124,7 @@ class NetworkTestHelper
   
   # Create a bus
   def self.create_a_bus(order="0", path="0000:00/0000:00:01")
-      Bus.new( :order => order, :path => path )
+      BarclampNetwork::Bus.new( :order => order, :path => path )
   end
 
 
@@ -137,16 +137,11 @@ class NetworkTestHelper
   end
 
 
-  def self.create_barclamp_instance()
-    BarclampInstance.new
-  end
+  def self.add_role(snapshot, node, role_name)
+    role_type = RoleType.create!(:name=>role_name)
 
-
-  def self.add_role(node, role_name)
-    role=Role.create!(:name=>role_name)
-
-    role_instance = RoleInstance.create!(:role_id => role.id)
-    role_instance.add_node(node)
+    role = Role.create!(:role_type_id => role_type.id, :snapshot_id => snapshot.id)
+    role.add_node(node)
   end
 
 
@@ -166,5 +161,19 @@ class NetworkTestHelper
 
     node.set_attrib("nics", nics)
     node
+  end
+
+
+  def self.create_a_barclamp()
+    barclamp = BarclampNetwork::Barclamp.new(:name => "default")
+    barclamp.save!
+
+    snapshot = Snapshot.new()
+    snapshot.barclamp = barclamp
+    snapshot.save!
+
+    barclamp.template = snapshot
+    barclamp.save!
+    barclamp
   end
 end

@@ -13,10 +13,10 @@
 # limitations under the License.
 
 class BarclampNetwork::ConduitRule < ActiveRecord::Base
-  has_many :conduit_filters, :dependent => :destroy
-  has_many :interface_selectors, :dependent => :destroy
-  has_many :conduit_actions, :dependent => :destroy
-  belongs_to :conduit, :inverse_of => :conduit_rules
+  has_many :conduit_filters, :dependent => :destroy, :class_name => "BarclampNetwork::ConduitFilter"
+  has_many :interface_selectors, :dependent => :destroy, :class_name => "BarclampNetwork::InterfaceSelector"
+  has_many :conduit_actions, :dependent => :destroy, :class_name => "BarclampNetwork::ConduitAction"
+  belongs_to :conduit, :inverse_of => :conduit_rules, :class_name => "BarclampNetwork::Conduit"
 
   validates :interface_selectors, :presence => true
 
@@ -38,7 +38,7 @@ class BarclampNetwork::ConduitRule < ActiveRecord::Base
 
   def select_interfaces(node)
     # if_remap is a hash that maps "1g1" to "eth0", etc
-    if_remap = ConduitRule.build_if_remap(node)
+    if_remap = BarclampNetwork::ConduitRule.build_if_remap(node)
 
     ifs = []
     self.interface_selectors.each do |if_selector|
@@ -86,7 +86,7 @@ class BarclampNetwork::ConduitRule < ActiveRecord::Base
   end
   
   def self.sort_ifs(node)
-    bus_order = InterfaceMap.get_bus_order(node)
+    bus_order = BarclampNetwork::InterfaceMap.get_bus_order(node)
 
     nic_map = node.get_attrib("nics").value
 

@@ -18,14 +18,14 @@ class VlanModelTest < ActiveSupport::TestCase
 
   # Test successful creation
   test "Vlan creation: success" do
-    vlan = Vlan.new(:tag => 100)
+    vlan = BarclampNetwork::Vlan.new(:tag => 100)
     vlan.save!
   end
 
 
   # Test creation failure due to missing tag
   test "Vlan creation: failure due to missing tag" do
-    vlan = Vlan.new()
+    vlan = BarclampNetwork::Vlan.new()
     assert_raise ActiveRecord::RecordInvalid do
       vlan.save!
     end
@@ -34,14 +34,14 @@ class VlanModelTest < ActiveSupport::TestCase
 
   # Test cascade VlanInterface deletion on vlan deletion
   test "Vlan deletion: cascade delete to VlanInterfaces" do
-    vlan = Vlan.new(:tag => 100)
-    vlan.vlan_interfaces << VlanInterface.new(:name => "vlanIf1")
+    vlan = BarclampNetwork::Vlan.new(:tag => 100)
+    vlan.vlan_interfaces << BarclampNetwork::VlanInterface.new(:name => "vlanIf1")
     vlan.save!
 
     vlan_if_id = vlan.vlan_interfaces.first.id
     vlan.destroy()
 
-    vlan_ifs = VlanInterface.where( :id => vlan_if_id )
+    vlan_ifs = BarclampNetwork::VlanInterface.where( :id => vlan_if_id )
     assert_equal 0, vlan_ifs.size
   end
 end

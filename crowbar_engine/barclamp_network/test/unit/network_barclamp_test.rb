@@ -15,24 +15,25 @@
 require 'test_helper'
 require 'barclamp'
  
-class BarclampTest < ActiveSupport::TestCase
+class NetworkBarclampTest < ActiveSupport::TestCase
 
   # Test creation
   test "network_create: success" do
-    net_barclamp = Barclamp.new(Rails.logger)
-    create_a_network(net_barclamp, "public")
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+
+    create_a_network(barclamp, deployment, "public")
   end
 
 
   # Test failed network creation due to missing router_pref
   test "network_create: missing router_pref" do
-    net_barclamp = Barclamp.new(Rails.logger)
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
 
-    barclamp_config = net_barclamp.create_proposal()
-
-    http_error, network = net_barclamp.network_create(
+    http_error, network = barclamp.network_create(
         "public2",
-        barclamp_config.id,
+        deployment.id,
         "intf0",
         "192.168.122.0/24",
         false,
@@ -47,13 +48,12 @@ class BarclampTest < ActiveSupport::TestCase
 
   # Test failed network creation due to missing router_ip
   test "network_create: missing router_ip" do
-    net_barclamp = Barclamp.new(Rails.logger)
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
 
-    barclamp_config = net_barclamp.create_proposal()
-
-    http_error, network = net_barclamp.network_create(
+    http_error, network = barclamp.network_create(
         "public3",
-        barclamp_config.id,
+        deployment.id,
         "intf0",
         "192.168.122.0/24",
         false,
@@ -68,13 +68,12 @@ class BarclampTest < ActiveSupport::TestCase
 
   # Test failed network creation due to missing ip range
   test "network_create: missing no ip range" do
-    net_barclamp = Barclamp.new(Rails.logger)
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
 
-    barclamp_config = net_barclamp.create_proposal()
-
-    http_error, network = net_barclamp.network_create(
+    http_error, network = barclamp.network_create(
         "public4",
-        barclamp_config.id,
+        deployment.id,
         "intf0",
         "192.168.122.0/24",
         false,
@@ -89,35 +88,39 @@ class BarclampTest < ActiveSupport::TestCase
 
   # Test retrieval by name
   test "network_get: by name success" do
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+
     net_name="public"
-    net_barclamp = Barclamp.new(Rails.logger)
-    create_a_network(net_barclamp, net_name)
+    create_a_network(barclamp, deployment, net_name)
 
     # Get by name
-    network = get_a_network(net_barclamp, net_name)
+    network = get_a_network(barclamp, net_name)
     assert_equal net_name, network.name, "Expected to get network with name #{net_name}, got network with name #{network.name}"
   end
 
 
   # Test retrieval by id
   test "network_get: by id success" do
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+
     net_name="public"
-    net_barclamp = Barclamp.new(Rails.logger)
-    network = create_a_network(net_barclamp, net_name)
+    network = create_a_network(barclamp, deployment, net_name)
 
     # Get by id
     id=network.id
-    network = get_a_network(net_barclamp, id)
+    network = get_a_network(barclamp, id)
     assert_equal id, network.id, "Expected to get network with id #{id}, got network with id #{network.id}"
   end
   
 
   # Test retrieval of non-existant object
   test "network_get: non-existant network" do
-    net_barclamp = Barclamp.new(Rails.logger)
+    barclamp = NetworkTestHelper.create_a_barclamp()
 
     # Get by name
-    http_error, network = net_barclamp.network_get("zippityDoDa")
+    http_error, network = barclamp.network_get("zippityDoDa")
     assert_not_nil network, "Expected to get error message, but got nil"
     assert_equal 404, http_error, "Expected to get HTTP error code 404, got HTTP error code: #{http_error}, #{network}"
   end
@@ -125,11 +128,13 @@ class BarclampTest < ActiveSupport::TestCase
 
   # Test adding an ip range
   test "network_update: add ip range" do
-    net_name="public"
-    net_barclamp = Barclamp.new(Rails.logger)
-    create_a_network(net_barclamp, net_name)
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
 
-    http_error, network = net_barclamp.network_update(
+    net_name="public"
+    create_a_network(barclamp, deployment, net_name)
+
+    http_error, network = barclamp.network_update(
         net_name,
         "intf0",
         "192.168.122.0/24",
@@ -140,18 +145,20 @@ class BarclampTest < ActiveSupport::TestCase
         "192.168.122.1" )
     assert_equal 200, http_error, "Expected to get HTTP error code 200, got HTTP error code: #{http_error}, #{network}"
 
-    ip_range = IpRange.where( :name => "admin", :network_id => network.id )
+    ip_range = BarclampNetwork::IpRange.where( :name => "admin", :network_id => network.id )
     assert_not_nil ip_range, "Expecting ip_range, got nil"
   end
 
 
   # Test removing an ip range
   test "network_update: remove ip range" do
-    net_name = "public"
-    net_barclamp = Barclamp.new(Rails.logger)
-    create_a_network(net_barclamp, net_name)
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
 
-    http_error, network = net_barclamp.network_update(
+    net_name = "public"
+    create_a_network(barclamp, deployment, net_name)
+
+    http_error, network = barclamp.network_update(
         net_name,
         "intf0",
         "192.168.122.0/24",
@@ -162,18 +169,20 @@ class BarclampTest < ActiveSupport::TestCase
         "192.168.122.1" )
     assert_equal 200, http_error, "Expected to get HTTP error code 200, got HTTP error code: #{http_error}, #{network}"
 
-    ip_ranges = IpRange.where( :name => "dhcp", :network_id => network.id )
+    ip_ranges = BarclampNetwork::IpRange.where( :name => "dhcp", :network_id => network.id )
     assert_equal 0, ip_ranges.size, "Expected to get 0 ip_ranges, got #{ip_ranges}"
   end
 
 
   # Test removing all IP ranges from a network
   test "network_update: remove all ip ranges" do
-    net_name = "public"
-    net_barclamp = Barclamp.new(Rails.logger)
-    create_a_network(net_barclamp, net_name)
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
 
-    http_error, network = net_barclamp.network_update(
+    net_name = "public"
+    create_a_network(barclamp, deployment, net_name)
+
+    http_error, network = barclamp.network_update(
         net_name,
         "intf0",
         "192.168.122.0/24",
@@ -189,11 +198,13 @@ class BarclampTest < ActiveSupport::TestCase
 
   # Test updating to an IP range that has no start
   test "network_update: ip range with no start" do
-    net_name = "public"
-    net_barclamp = Barclamp.new(Rails.logger)
-    create_a_network(net_barclamp, net_name)
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
 
-    http_error, network = net_barclamp.network_update(
+    net_name = "public"
+    create_a_network(barclamp, deployment, net_name)
+
+    http_error, network = barclamp.network_update(
         net_name,
         "intf0",
         "192.168.122.0/24",
@@ -209,11 +220,13 @@ class BarclampTest < ActiveSupport::TestCase
 
   # Test updating to an IP range that has no end
   test "network_update: ip range with no end" do
-    net_name = "public"
-    net_barclamp = Barclamp.new(Rails.logger)
-    create_a_network(net_barclamp, net_name)
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
 
-    http_error, network = net_barclamp.network_update(
+    net_name = "public"
+    create_a_network(barclamp, deployment, net_name)
+
+    http_error, network = barclamp.network_update(
         net_name,
         "intf0",
         "192.168.122.0/24",
@@ -229,11 +242,13 @@ class BarclampTest < ActiveSupport::TestCase
 
   # Test failed network update due to missing router_pref
   test "network_update: missing router_pref" do
-    net_name = "public"
-    net_barclamp = Barclamp.new(Rails.logger)
-    create_a_network(net_barclamp, net_name)
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
 
-    http_error, network = net_barclamp.network_update(
+    net_name = "public"
+    create_a_network(barclamp, deployment, net_name)
+
+    http_error, network = barclamp.network_update(
         net_name,
         "intf0",
         "192.168.122.0/24",
@@ -249,11 +264,13 @@ class BarclampTest < ActiveSupport::TestCase
 
   # Test failed network update due to missing router_ip
   test "network_update: missing router_ip" do
-    net_name = "public"
-    net_barclamp = Barclamp.new(Rails.logger)
-    create_a_network(net_barclamp, net_name)
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
 
-    http_error, network = net_barclamp.network_update(
+    net_name = "public"
+    create_a_network(barclamp, deployment, net_name)
+
+    http_error, network = barclamp.network_update(
         net_name,
         "intf0",
         "192.168.122.0/24",
@@ -269,206 +286,210 @@ class BarclampTest < ActiveSupport::TestCase
 
   # Test deletion of non-existant network
   test "network_delete: non-existant network" do
-    delete_nonexistant_network( Barclamp.new(Rails.logger), "zippityDoDa")
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    delete_nonexistant_network( barclamp, "zippityDoDa")
   end
 
 
   # Test deletion
   test "network_delete: success" do
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+
     net_name = "public"
-    net_barclamp = Barclamp.new(Rails.logger)
-    create_a_network(net_barclamp, net_name)
+    create_a_network(barclamp, deployment, net_name)
 
     # Delete by name
-    http_error, msg = net_barclamp.network_delete(net_name)
+    http_error, msg = barclamp.network_delete(net_name)
     assert_equal 200, http_error, "HTTP error code returned: #{http_error}, #{msg}"
 
     # Verify deletion
-    delete_nonexistant_network(net_barclamp, net_name)
+    delete_nonexistant_network(barclamp, net_name)
   end
 
 
   # Test population of network defaults
   test "network_defaults_populate" do
-    template_file = File.join(Rails.root,"..","barclamps","network","bc-template-network.json")
-    json = JSON::load File.open(template_file, 'r')
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
 
-    barclamp_config = net_barclamp.create_proposal()
-
-    net_barclamp = Barclamp.new(Rails.logger)
-    net_barclamp.populate_network_defaults( json["attributes"]["network"], barclamp_config.proposed_instance )
-
-    assert Conduit.count > 0, "There are no Conduits"
-    assert InterfaceMap.count == 1, "There is no InterfaceMap"
-    assert Network.count > 0, "There are no Networks"
+    assert BarclampNetwork::Conduit.count > 0, "There are no Conduits"
+    assert BarclampNetwork::InterfaceMap.count == 1, "There is no InterfaceMap"
+    assert BarclampNetwork::Network.count > 0, "There are no Networks"
   end
 
 
   # Allocate IP failure due to missing network_id
   test "network_allocate_ip: failure due to missing network_id" do
-    net_barclamp = Barclamp.new(Rails.logger)
-    http_error, message = net_barclamp.network_allocate_ip("default",nil,"host","fred")
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    http_error, message = barclamp.network_allocate_ip("default",nil,"host","fred")
     assert_equal 400, http_error
   end
 
 
   # Allocate IP failure due to missing node_id
   test "network_allocate_ip: failure due to missing node_id" do
-    net_barclamp = Barclamp.new(Rails.logger)
-    http_error, message = net_barclamp.network_allocate_ip("default","network1","host",nil)
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    http_error, message = barclamp.network_allocate_ip("default","network1","host",nil)
     assert_equal 400, http_error
   end
 
 
   # Allocate IP failure due to bad node_id
   test "network_allocate_ip: failure due to bad node_id" do
-    net_barclamp = Barclamp.new(Rails.logger)
-    http_error, message = net_barclamp.network_allocate_ip("default","network1","host","fred")
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    http_error, message = barclamp.network_allocate_ip("default","network1","host","fred")
     assert_equal 404, http_error
   end
 
 
-  # Allocate IP failure due to unable to lookup BarclampConfig or Network
-  test "network_allocate_ip: failure due to unable to lookup BarclampConfig or Network" do
+  # Allocate IP failure due to unable to lookup Deployment or Network
+  test "network_allocate_ip: failure due to unable to lookup Deployment or Network" do
     node = Node.new(:name => "fred.flintstone.org")
     node.save!
-    net_barclamp = Barclamp.new(Rails.logger)
-    http_error, message = net_barclamp.network_allocate_ip("betty","wilma","host","fred.flintstone.org")
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    http_error, message = barclamp.network_allocate_ip("betty","wilma","host","fred.flintstone.org")
     assert_not_equal 200, http_error
   end
 
 
   # Allocate IP success - perfect path
   test "network_allocate_ip: success" do
-    net_barclamp = Barclamp.new(Rails.logger)
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
 
     node = Node.new(:name => "fred.flintstone.org")
     node.save!
 
-    network = create_a_network(net_barclamp, "public")
+    network = create_a_network(barclamp, deployment, "public")
     network.save!
 
-    http_error, message = net_barclamp.network_allocate_ip(nil,network.id,"host","fred.flintstone.org")
+    http_error, message = barclamp.network_allocate_ip(deployment.id, network.id, "host", "fred.flintstone.org")
     assert_equal 200, http_error
   end
 
 
   # Deallocate IP failure due to missing network_id
   test "network_deallocate_ip: failure due to missing network_id" do
-    net_barclamp = Barclamp.new(Rails.logger)
-    http_error, message = net_barclamp.network_deallocate_ip("default",nil,"fred")
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    http_error, message = barclamp.network_deallocate_ip("default",nil,"fred")
     assert_equal 400, http_error
   end
 
 
   # Deallocate IP failure due to missing node_id
   test "network_deallocate_ip: failure due to missing node_id" do
-    net_barclamp = Barclamp.new(Rails.logger)
-    http_error, message = net_barclamp.network_deallocate_ip("default","network1",nil)
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    http_error, message = barclamp.network_deallocate_ip("default","network1",nil)
     assert_equal 400, http_error
   end
 
 
   # Deallocate IP failure due to bad node_id
   test "network_deallocate_ip: failure due to bad node_id" do
-    net_barclamp = Barclamp.new(Rails.logger)
-    http_error, message = net_barclamp.network_deallocate_ip("default","network1","fred")
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    http_error, message = barclamp.network_deallocate_ip("default","network1","fred")
     assert_equal 404, http_error
   end
 
 
-  # Deallocate IP failure due to unable to lookup BarclampConfig or Network
-  test "network_deallocate_ip: failure due to unable to lookup BarclampConfig or Network" do
+  # Deallocate IP failure due to unable to lookup Deployment or Network
+  test "network_deallocate_ip: failure due to unable to lookup Deployment or Network" do
     node = Node.new(:name => "fred.flintstone.org")
     node.save!
-    net_barclamp = Barclamp.new(Rails.logger)
-    http_error, message = net_barclamp.network_deallocate_ip("betty","wilma","fred.flintstone.org")
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    http_error, message = barclamp.network_deallocate_ip("betty","wilma","fred.flintstone.org")
     assert_not_equal 200, http_error
   end
   
 
   # Deallocate IP success - perfect path
   test "network_deallocate_ip: success" do
-    net_barclamp = Barclamp.new(Rails.logger)
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
 
     node = Node.new(:name => "fred.flintstone.org")
     node.save!
 
-    network = create_a_network(net_barclamp, "public")
+    network = create_a_network(barclamp, deployment, "public")
     network.save!
 
-    intf = PhysicalInterface.new(:name => "eth0")
+    intf = BarclampNetwork::PhysicalInterface.new(:name => "eth0")
     intf.node = node
-    ip = AllocatedIpAddress.new(:ip => "192.168.122.2")
+    ip = BarclampNetwork::AllocatedIpAddress.new(:ip => "192.168.122.2")
     ip.network = network
     intf.allocated_ip_addresses << ip
     intf.save!
 
-    http_error, message = net_barclamp.network_deallocate_ip(nil,network.id,"fred.flintstone.org")
+    http_error, message = barclamp.network_deallocate_ip(deployment.id,network.id,"fred.flintstone.org")
     assert_equal 200, http_error
   end
 
 
   # Enable interface failure due to missing network_id
   test "network_enable_interface: failure due to missing network_id" do
-    net_barclamp = Barclamp.new(Rails.logger)
-    http_error, message = net_barclamp.network_enable_interface("default",nil,"fred")
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+
+    http_error, message = barclamp.network_enable_interface(deployment.id,nil,"fred")
     assert_equal 400, http_error
   end
 
 
   # Enable interface failure due to missing node_id
   test "network_enable_interface: failure due to missing node_id" do
-    net_barclamp = Barclamp.new(Rails.logger)
-    http_error, message = net_barclamp.network_enable_interface("default","network1",nil)
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+
+    http_error, message = barclamp.network_enable_interface(deployment.id,"network1",nil)
     assert_equal 400, http_error
   end
 
 
   # Enable interface failure due to bad node_id
   test "network_enable_interface: failure due to bad node_id" do
-    net_barclamp = Barclamp.new(Rails.logger)
-    http_error, message = net_barclamp.network_enable_interface("default","network1","fred")
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+
+    http_error, message = barclamp.network_enable_interface(deployment.id,"network1","fred")
     assert_equal 404, http_error
   end
 
 
-  # Enable interface failure due to unable to lookup BarclampConfig or Network
-  test "network_enable_interface: failure due to unable to lookup BarclampConfig or Network" do
+  # Enable interface failure due to unable to lookup Deployment or Network
+  test "network_enable_interface: failure due to unable to lookup Deployment or Network" do
     node = Node.new(:name => "fred.flintstone.org")
     node.save!
-    net_barclamp = Barclamp.new(Rails.logger)
-    http_error, message = net_barclamp.network_enable_interface("betty","wilma","fred.flintstone.org")
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    http_error, message = barclamp.network_enable_interface("betty","wilma","fred.flintstone.org")
     assert_not_equal 200, http_error
   end
   
 
   # Enable interface success - perfect path
   test "network_enable_interface: success" do
-    net_barclamp = Barclamp.new(Rails.logger)
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
 
     node = Node.new(:name => "fred.flintstone.org")
     node.save!
 
-    network = create_a_network(net_barclamp, "public")
+    network = create_a_network(barclamp, deployment, "public")
     network.save!
     
-    http_error, message = net_barclamp.network_enable_interface(nil,network.id,"fred.flintstone.org")
+    http_error, message = barclamp.network_enable_interface(deployment.id,network.id,"fred.flintstone.org")
     assert_equal 200, http_error
   end
   
 
   # Create a Network
-  def create_a_network(net_barclamp, name)
-    # HACK!  We should remove this line when conduits are prepopulated in the system
-    conduit = NetworkTestHelper.create_or_get_conduit("intf0")
+  def create_a_network(barclamp, deployment, name)
+    conduit = NetworkTestHelper.create_or_get_conduit(deployment, "intf0")
     conduit.save!
 
-    barclamp_config = net_barclamp.create_proposal()
-
-    http_error, network = net_barclamp.network_create(
+    http_error, network = barclamp.network_create(
         name,
-        barclamp_config.id,
+        deployment.id,
         "intf0",
         "192.168.122.0/24",
         false,
@@ -484,8 +505,8 @@ class BarclampTest < ActiveSupport::TestCase
 
   private
   # Retrieve a Network
-  def get_a_network(net_barclamp, id)
-    http_error, network = net_barclamp.network_get(id)
+  def get_a_network(barclamp, id)
+    http_error, network = barclamp.network_get(id)
     assert_not_nil network
     assert_equal 200, http_error, "HTTP error code returned: #{http_error}, #{network}"
     network
@@ -493,8 +514,8 @@ class BarclampTest < ActiveSupport::TestCase
 
 
   # Try to delete a Network that does not exist
-  def delete_nonexistant_network( net_barclamp, id )
-    http_error, msg = net_barclamp.network_delete(id)
+  def delete_nonexistant_network( barclamp, id )
+    http_error, msg = barclamp.network_delete(id)
     assert_not_nil msg, "Expected to get error message, but got nil"
     assert_equal 404, http_error, "HTTP error code returned: #{http_error}, #{msg}"
   end

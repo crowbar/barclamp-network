@@ -23,8 +23,8 @@ class BarclampNetwork::NetworkModeFilter < BarclampNetwork::ConduitFilter
     # The below is an ugly hack to read in the configured network mode from
     # the new network json
     # Start HACK
-    new_json = NetworkService.read_new_network_json()
-    configured_teaming_mode = new_json["attributes"]["network"]["mode"]
+    json = BarclampNetwork::Barclamp.read_network_json()
+    configured_teaming_mode = json["attributes"]["network"]["mode"]
     # End HACK
 
     value.casecmp(configured_teaming_mode) == 0

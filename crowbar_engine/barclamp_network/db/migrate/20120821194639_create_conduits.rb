@@ -14,9 +14,9 @@
 
 class CreateConduits < ActiveRecord::Migration
   def change
-    create_table :conduits do |t|
+    create_table :bc_net_conduits do |t|
       t.string :name
-      t.references :barclamp_instance
+      t.references :snapshot
 
       t.timestamps
     end

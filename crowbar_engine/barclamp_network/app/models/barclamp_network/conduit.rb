@@ -14,16 +14,16 @@
 
 class BarclampNetwork::Conduit < ActiveRecord::Base
   attr_protected :id
-  has_many :networks, :inverse_of => :conduit, :dependent => :nullify
-  has_many :conduit_rules, :dependent => :destroy
-  belongs_to :barclamp_instance
+  has_many :networks, :inverse_of => :conduit, :dependent => :nullify, :class_name => "BarclampNetwork::Network"
+  has_many :conduit_rules, :dependent => :destroy, :class_name => "BarclampNetwork::ConduitRule"
+  belongs_to :snapshot
 
   attr_accessible :name
   accepts_nested_attributes_for :networks, :conduit_rules
 
-  validates_uniqueness_of :name, :presence => true, :scope => :barclamp_instance_id
+  validates_uniqueness_of :name, :presence => true, :scope => :snapshot_id
   validates :conduit_rules, :presence => true
-  validates :barclamp_instance_id, :presence => true
+  validates :snapshot, :presence => true
 
 
   # This method finds the conduit rule associated with each conduit that passes
@@ -32,7 +32,7 @@ class BarclampNetwork::Conduit < ActiveRecord::Base
   def self.get_conduit_rules(node)
     conduit_rules = {}
     # Loop thru each of the Conduits (intf0, intf1, etc)
-    Conduit.all.each do |conduit|
+    BarclampNetwork::Conduit.all.each do |conduit|
 
       # Find the ConduitRule where each of the supplied ConduitFilters match 
       next if conduit.conduit_rules.nil?
@@ -52,10 +52,10 @@ class BarclampNetwork::Conduit < ActiveRecord::Base
 
 
   def self.build_node_map(node)
-    bus_order = InterfaceMap.get_bus_order(node)
+    bus_order = BarclampNetwork::InterfaceMap.get_bus_order(node)
 
     # Find the conduit rule for each conduit that is applicable to the node
-    rules = Conduit.get_conduit_rules(node)
+    rules = BarclampNetwork::Conduit.get_conduit_rules(node)
     return {} if rules.empty?
 
     # Build up a map that maps conduit_name to an array of interface names

@@ -20,12 +20,13 @@ class BarclampNetwork::Barclamp < Barclamp
 
 
   def create_proposal(config=nil)
-    bc = super
+    deployment = super
 
-    json = read_network_json()
+    json = BarclampNetwork::Barclamp.read_network_json()
     attrs_config = json["attributes"]
 
-    populate_network_defaults( attrs_config["network"], bc.proposed_instance )
+    populate_network_defaults( attrs_config["network"], deployment.proposed_snapshot )
+    deployment
   end
 
 
@@ -35,26 +36,26 @@ class BarclampNetwork::Barclamp < Barclamp
   end
 
 
-  def populate_network_defaults( network_attrs_config, barclamp_instance )
-    create_interface_map( network_attrs_config, barclamp_instance )
-    create_conduits( network_attrs_config, barclamp_instance )
-    create_networks( network_attrs_config, barclamp_instance )
+  def populate_network_defaults( network_attrs_config, snapshot )
+    create_interface_map( network_attrs_config, snapshot )
+    create_conduits( network_attrs_config, snapshot )
+    create_networks( network_attrs_config, snapshot )
   end
 
 
-  def create_interface_map( network_attrs_config, barclamp_instance )
-    interface_map = InterfaceMap.new()
-    interface_map.barclamp_instance = barclamp_instance
+  def create_interface_map( network_attrs_config, snapshot )
+    interface_map = BarclampNetwork::InterfaceMap.new()
+    interface_map.snapshot = snapshot
     interface_map_config = network_attrs_config["interface_map"]
     interface_map_config.each { |bus_map_config|
-      bus_map = BusMap.new()
+      bus_map = BarclampNetwork::BusMap.new()
       bus_map.pattern = bus_map_config["pattern"]
       interface_map.bus_maps << bus_map
 
       bus_index = 0
       bus_order_config = bus_map_config["bus_order"]
       bus_order_config.each { |bus_config|
-        bus = Bus.new()
+        bus = BarclampNetwork::Bus.new()
         bus.path = bus_config
         bus.order = bus_index
         bus_index += 1
@@ -67,21 +68,21 @@ class BarclampNetwork::Barclamp < Barclamp
   end
 
 
-  def create_conduits( network_attrs_config, barclamp_instance )
+  def create_conduits( network_attrs_config, snapshot )
     conduits_config = network_attrs_config["conduit_map"]
     conduits_config.each { |conduit_config|
-      conduit = Conduit.new()
-      conduit.barclamp_instance = barclamp_instance
+      conduit = BarclampNetwork::Conduit.new()
+      conduit.snapshot = snapshot
       conduit.name = conduit_config["conduit_name"]
 
       conduit_rules_config = conduit_config["conduit_rules"]
       conduit_rules_config.each { |conduit_rule_config|
-        conduit_rule = ConduitRule.new()
+        conduit_rule = BarclampNetwork::ConduitRule.new()
         conduit.conduit_rules << conduit_rule
 
         conduit_filters_config = conduit_rule_config["conduit_filters"]
         conduit_filters_config.each { |conduit_filter_name, conduit_filter_parms|
-          conduit_filter = Object.const_get(conduit_filter_name).new()
+          conduit_filter = BarclampNetwork.const_get(conduit_filter_name).new()
           conduit_rule.conduit_filters << conduit_filter
           conduit_filter_parms.each { |param_name, param_value|
             conduit_filter.send( "#{param_name}=", param_value )
@@ -91,11 +92,11 @@ class BarclampNetwork::Barclamp < Barclamp
 
         interface_selectors_config = conduit_rule_config["interface_selectors"]
         interface_selectors_config.each { |interface_selector_config|
-          interface_selector = InterfaceSelector.new()
+          interface_selector = BarclampNetwork::InterfaceSelector.new()
           conduit_rule.interface_selectors << interface_selector
 
           interface_selector_config.each { |selector_name, selector_parms|
-            selector = Object.const_get(selector_name).new()
+            selector = BarclampNetwork.const_get(selector_name).new()
             interface_selector.selectors << selector
             selector_parms.each { |param_name, param_value|
               selector.send( "#{param_name}=", param_value )
@@ -108,7 +109,7 @@ class BarclampNetwork::Barclamp < Barclamp
         conduit_actions_config = conduit_rule_config["conduit_actions"]
         conduit_actions_config.each { |conduit_action_config|
           conduit_action_config.each { |conduit_action_name, conduit_action_parms|
-            conduit_action = Object.const_get(conduit_action_name).new()
+            conduit_action = BarclampNetwork.const_get(conduit_action_name).new()
             conduit_rule.conduit_actions << conduit_action
             conduit_action_parms.each { |param_name, param_value|
               conduit_action.send( "#{param_name}=", param_value )
@@ -124,37 +125,37 @@ class BarclampNetwork::Barclamp < Barclamp
   end
 
 
-  def create_networks( network_attrs_config, barclamp_instance )
+  def create_networks( network_attrs_config, snapshot )
     networks_config = network_attrs_config["networks"]
     networks_config.each { |network_name, network_config|
-      network = Network.new()
-      network.barclamp_instance = barclamp_instance
+      network = BarclampNetwork::Network.new()
+      network.snapshot = snapshot
       network.name = network_name
       network_config.each { |param_name, param_value|
         case param_name
         when "conduit"
-          network.conduit = Conduit.find_key(param_value)
+          network.conduit = BarclampNetwork::Conduit.find_key(param_value)
         when "use_vlan"
           network.use_vlan = param_value
         when "vlan"
-          network.vlan = Vlan.new(:tag => param_value)
+          network.vlan = BarclampNetwork::Vlan.new(:tag => param_value)
         when "subnet"
-          network.subnet = IpAddress.new(:cidr => param_value)
+          network.subnet = BarclampNetwork::IpAddress.new(:cidr => param_value)
         when "dhcp_enabled"
           network.dhcp_enabled = param_value
         when "router"
-          network.router = Router.new() if network.router.nil?
-          network.router.ip = IpAddress.new(:cidr => param_value)
+          network.router = BarclampNetwork::Router.new() if network.router.nil?
+          network.router.ip = BarclampNetwork::IpAddress.new(:cidr => param_value)
         when "router_pref"
-          network.router = Router.new() if network.router.nil?
+          network.router = BarclampNetwork::Router.new() if network.router.nil?
           network.router.pref = param_value.to_i
         when "ranges"
           param_value.each { |range_name, range|
-            ip_range = IpRange.new(:name => range_name)
+            ip_range = BarclampNetwork::IpRange.new(:name => range_name)
             start_address = range["start"]
-            ip_range.start_address = IpAddress.new(:cidr => start_address)
+            ip_range.start_address = BarclampNetwork::IpAddress.new(:cidr => start_address)
             end_address = range["end"]
-            ip_range.end_address = IpAddress.new(:cidr => end_address)
+            ip_range.end_address = BarclampNetwork::IpAddress.new(:cidr => end_address)
             network.ip_ranges << ip_range
           }
         end
@@ -165,11 +166,11 @@ class BarclampNetwork::Barclamp < Barclamp
   end
 
 
-  def network_allocate_ip(barclamp_config_id, network_id, range, node_id, suggestion = nil)
-    @logger.debug("Entering network_allocate_ip(barclamp_config_id: #{barclamp_config_id}, network_id: #{network_id}, range: #{range}, node_id: #{node_id}, suggestion: #{suggestion})")
+  def network_allocate_ip(deployment_id, network_id, range, node_id, suggestion = nil)
+    Rails.logger.debug("Entering network_allocate_ip(deployment_id: #{deployment_id}, network_id: #{network_id}, range: #{range}, node_id: #{node_id}, suggestion: #{suggestion})")
 
-    barclamp_config_id = barclamp_config_id.to_s
-    barclamp_config_id = nil if barclamp_config_id.empty?
+    deployment_id = deployment_id.to_s
+    deployment_id = nil if deployment_id.empty?
 
     # Validate inputs
     return [400, "No network_id specified"] if network_id.nil?
@@ -180,7 +181,7 @@ class BarclampNetwork::Barclamp < Barclamp
     return [404, "Node #{node_id} does not exist"] if node.nil?
 
     # Find the network
-    error_code, result = NetworkUtils.find_network(network_id, barclamp_config_id)
+    error_code, result = BarclampNetwork::NetworkUtils.find_network(network_id, deployment_id)
     return [error_code, result] if error_code != 200
     network = result
 
@@ -188,11 +189,11 @@ class BarclampNetwork::Barclamp < Barclamp
   end
 
 
-  def network_deallocate_ip(barclamp_config_id, network_id, node_id)
-    @logger.debug("Entering network_deallocate_ip(barclamp_config_id: #{barclamp_config_id}, network_id: #{network_id}, node_id: #{node_id}")
+  def network_deallocate_ip(deployment_id, network_id, node_id)
+    Rails.logger.debug("Entering network_deallocate_ip(deployment_id: #{deployment_id}, network_id: #{network_id}, node_id: #{node_id}")
 
-    barclamp_config_id = barclamp_config_id.to_s
-    barclamp_config_id = nil if barclamp_config_id.empty?
+    deployment_id = deployment_id.to_s
+    deployment_id = nil if deployment_id.empty?
     
     return [400, "No network_id specified"] if network_id.nil?
     return [400, "No node_id specified"] if node_id.nil?
@@ -201,8 +202,8 @@ class BarclampNetwork::Barclamp < Barclamp
     node = Node.find_key(node_id)
     return [404, "Node #{node_id} does not exist"] if node.nil?
     
-    # Find the BarclampConfig and network
-    error_code, result = NetworkUtils.find_network(network_id, barclamp_config_id)
+    # Find the Deployment and Network
+    error_code, result = BarclampNetwork::NetworkUtils.find_network(network_id, deployment_id)
     return [error_code, result] if error_code != 200
     network = result
 
@@ -211,26 +212,26 @@ class BarclampNetwork::Barclamp < Barclamp
 
 
   def transition(inst, name, state)
-    @logger.debug("Network transition: Entering #{name} for #{state}")
+    Rails.logger.debug("Network transition: Entering #{name} for #{state}")
 
     if state == "discovered"
       node = Node.find_by_name(name)
       if node.is_admin?
-        @logger.error("Admin node transitioning to discovered state.  Adding switch_config role.")
+        Rails.logger.error("Admin node transitioning to discovered state.  Adding switch_config role.")
         result = add_role_to_instance_and_node(name, inst, "switch_config")
       end
 
-      @logger.debug("Network transition: make sure that network role is on all nodes: #{name} for #{state}")
+      Rails.logger.debug("Network transition: make sure that network role is on all nodes: #{name} for #{state}")
       result = add_role_to_instance_and_node(name, inst, "network")
 
-      @logger.debug("Network transition: Exiting #{name} for #{state} discovered path")
+      Rails.logger.debug("Network transition: Exiting #{name} for #{state} discovered path")
       return [200, ""] if result
       return [400, "Failed to add role to node"] unless result
     end
 
     if state == "delete" or state == "reset"
       node = NodeObject.find_node_by_name name
-      @logger.error("Network transition: return node not found: #{name}") if node.nil?
+      Rails.logger.error("Network transition: return node not found: #{name}") if node.nil?
       return [404, "No node found"] if node.nil?
 
       nets = node.crowbar["crowbar"]["network"].keys
@@ -240,16 +241,16 @@ class BarclampNetwork::Barclamp < Barclamp
       end
     end
 
-    @logger.debug("Network transition: Exiting #{name} for #{state}")
+    Rails.logger.debug("Network transition: Exiting #{name} for #{state}")
     [200, ""]
   end
 
 
-  def network_enable_interface(barclamp_config_id, network_id, node_id)
-    @logger.debug("Entering network_enable_interface(barclamp_config_id: #{barclamp_config_id}, network_id: #{network_id}, node_id: #{node_id})")
+  def network_enable_interface(deployment_id, network_id, node_id)
+    Rails.logger.debug("Entering network_enable_interface(deployment_id: #{deployment_id}, network_id: #{network_id}, node_id: #{node_id})")
 
-    barclamp_config_id = barclamp_config_id.to_s
-    barclamp_config_id = nil if barclamp_config_id.empty?
+    deployment_id = deployment_id.to_s
+    deployment_id = nil if deployment_id.empty?
     
     return [400, "No network_id specified"] if network_id.nil?
     return [400, "No node_id specified"] if node_id.nil?
@@ -259,7 +260,7 @@ class BarclampNetwork::Barclamp < Barclamp
     return [404, "Node #{node_id} does not exist"] if node.nil?
 
     # Find the network
-    error_code, result = NetworkUtils.find_network(network_id, barclamp_config_id)
+    error_code, result = BarclampNetwork::NetworkUtils.find_network(network_id, deployment_id)
     return [error_code, result] if error_code != 200
     network = result
 
@@ -269,40 +270,39 @@ class BarclampNetwork::Barclamp < Barclamp
 
   def network_get(id)
     begin
-      network = Network.find_key(id)
+      network = BarclampNetwork::Network.find_key(id)
       if network.nil?
         return [404, "Network #{id} does not exist."]
       else
-        return [200, Network.find_key(id)]
+        return [200, BarclampNetwork::Network.find_key(id)]
       end
     rescue RuntimeError => ex
-      @logger.error(ex.message)
+      Rails.logger.error(ex.message)
       [500, ex.message]
     end
   end
 
 
-  def network_create(name, barclamp_config_id, conduit_id, subnet, dhcp_enabled, use_vlan, ip_ranges, router_pref, router_ip)
-    @logger.debug("Entering service network_create #{name}")
+  def network_create(name, deployment_id, conduit_id, subnet, dhcp_enabled, use_vlan, ip_ranges, router_pref, router_ip)
+    Rails.logger.debug("Entering service network_create #{name}")
 
     network = nil
     begin
-      Network.transaction do
-        subnet = IpAddress.create!(:cidr => subnet)
-        network = Network.new(
+      BarclampNetwork::Network.transaction do
+        subnet = BarclampNetwork::IpAddress.create!(:cidr => subnet)
+        network = BarclampNetwork::Network.new(
             :name => name,
             :dhcp_enabled => dhcp_enabled,
             :use_vlan => use_vlan)
         network.subnet = subnet
 
-        # TODO: Remove this HACK and replace it with the "right" code
-        bi = BarclampInstance.new()
-        bi.barclamp_configuration = self.barclamp_configurations[0]
-        bi.barclamp = self
-        network.barclamp_instance = bi
-        # End HACK
+        deployment = Deployment.find_key(deployment_id)
+        raise ArgumentError, "There is no Deployment with an id of #{deployment_id}" if deployment.nil?
+        network.snapshot = deployment.proposed_snapshot
 
-        network.conduit = Conduit.find_key(conduit_id)
+        conduit = BarclampNetwork::Conduit.find_key(conduit_id)
+        raise ArgumentError, "There is no Conduit with an id of #{conduit_id}" if conduit.nil?
+        network.conduit = conduit
 
         # Either both router_pref and router_ip are passed, or neither are
         if !((router_pref.nil? and router_ip.nil?) or
@@ -327,55 +327,48 @@ class BarclampNetwork::Barclamp < Barclamp
 
       [200, network]
     rescue ActiveRecord::RecordNotFound, ActiveRecord::RecordInvalid, ArgumentError => ex
-      @logger.warn(ex.message)
+      Rails.logger.warn(ex.message)
       [400, ex.message]
     rescue RuntimeError => ex
-      @logger.error(ex.message)
+      Rails.logger.error(ex.message)
       [500, ex.message]
     end
   end
 
 
   def network_update(id, conduit_id, subnet, dhcp_enabled, use_vlan, ip_ranges, router_pref, router_ip)
-    @logger.debug("Entering service network_update #{id}")
+    Rails.logger.debug("Entering service network_update #{id}")
 
     network = nil
     begin
-      Network.transaction do
-        network = Network.find_key(id)
+      BarclampNetwork::Network.transaction do
+        network = BarclampNetwork::Network.find_key(id)
         if network.nil?
           return [400, "Network #{id} cannot be updated because it does not exist"]
         end
 
-        conduit = Conduit.find_key(conduit_id)
+        conduit = BarclampNetwork::Conduit.find_key(conduit_id)
         if conduit.nil?
           return [400, "Update of network #{id} failed because conduit #{conduit_id} does not exist"]
         end
 
-        # TODO: Remove this HACK and replace it with the "right" code
-        bi = BarclampInstance.new()
-        bi.barclamp_configuration = self.barclamp_configurations[0]
-        bi.barclamp = self
-        network.barclamp_instance = bi
-        # End HACK
-        
         if conduit.name != network.conduit.name
-          @logger.debug("Updating conduit to #{conduit_id}")
+          Rails.logger.debug("Updating conduit to #{conduit_id}")
           network.conduit = conduit
         end
 
         if network.subnet.cidr != subnet
-          @logger.debug("Updating subnet to #{subnet}")
-          network.subnet = IpAddress.new(:cidr => subnet)
+          Rails.logger.debug("Updating subnet to #{subnet}")
+          network.subnet = BarclampNetwork::IpAddress.new(:cidr => subnet)
         end
 
         if network.dhcp_enabled != dhcp_enabled
-          @logger.debug("Updating dhcp_enabled to #{dhcp_enabled}")
+          Rails.logger.debug("Updating dhcp_enabled to #{dhcp_enabled}")
           network.dhcp_enabled = dhcp_enabled
         end
 
         if network.use_vlan != use_vlan
-          @logger.debug("Updating use_vlan to #{use_vlan}")
+          Rails.logger.debug("Updating use_vlan to #{use_vlan}")
           network.use_vlan = use_vlan
         end
 
@@ -400,7 +393,7 @@ class BarclampNetwork::Barclamp < Barclamp
               raise ArgumentError, "The ip_range #{ip_range_name} is missing a \"start\" address."
             end
             if ip_range.start_address.cidr != start_ip_str
-              @logger.debug("Setting starting address of ip_range #{ip_range_name} to #{start_ip_str}")
+              Rails.logger.debug("Setting starting address of ip_range #{ip_range_name} to #{start_ip_str}")
               ip_range.start_address.cidr = start_ip_str
               ip_range.start_address.save!
             end
@@ -410,7 +403,7 @@ class BarclampNetwork::Barclamp < Barclamp
               raise ArgumentError, "The ip_range #{ip_range_name} is missing an \"end\" address."
             end
             if ip_range.end_address.cidr != end_ip_str
-              @logger.debug("Setting ending address of ip_range #{ip_range_name} to #{end_ip_str}")
+              Rails.logger.debug("Setting ending address of ip_range #{ip_range_name} to #{end_ip_str}")
               ip_range.end_address.cidr = end_ip_str
               ip_range.end_address.save!
             end
@@ -418,7 +411,7 @@ class BarclampNetwork::Barclamp < Barclamp
         }
 
         ranges.each_pair { |range_name, range|
-          @logger.debug("Destroying ip_range #{range_name}(#{range.id})")
+          Rails.logger.debug("Destroying ip_range #{range_name}(#{range.id})")
           range.destroy
         }
 
@@ -429,20 +422,20 @@ class BarclampNetwork::Barclamp < Barclamp
         end
 
         if router_pref.nil? and !network.router.nil?
-          @logger.debug("Deleting associated router #{network.router.id}")
+          Rails.logger.debug("Deleting associated router #{network.router.id}")
           network.router.destroy
         elsif network.router.nil? and !router_pref.nil?
-          @logger.debug("Creating associated router")
+          Rails.logger.debug("Creating associated router")
           network.router = create_router(router_pref, router_ip)
         else
           if network.router.pref != router_pref.to_i
-            @logger.debug("Updating router_pref to #{router_pref.to_i}")
+            Rails.logger.debug("Updating router_pref to #{router_pref.to_i}")
             network.router.pref = router_pref.to_i
             network.router.save!
           end
 
           if router_ip != network.router.ip.cidr
-            @logger.debug("Updating router_ip to #{router_ip}")
+            Rails.logger.debug("Updating router_ip to #{router_ip}")
             network.router.ip.cidr = router_ip
             network.router.ip.save!
           end
@@ -453,31 +446,31 @@ class BarclampNetwork::Barclamp < Barclamp
 
       [200, network]
     rescue ActiveRecord::RecordNotFound, ArgumentError => ex
-      @logger.warn(ex.message)
+      Rails.logger.warn(ex.message)
       [400, ex.message]
     rescue RuntimeError => ex
-      @logger.error(ex.message)
+      Rails.logger.error(ex.message)
       [500, ex.message]
     end
   end
 
 
   def network_delete(id)
-    @logger.debug("Entering service network_delete #{id}")
+    Rails.logger.debug("Entering service network_delete #{id}")
 
     begin
-      network = Network.find_key(id)
+      network = BarclampNetwork::Network.find_key(id)
       if network.nil?
         err_msg = "Network #{id} cannot be deleted because it does not exist."
-        @logger.warn(err_msg)
+        Rails.logger.warn(err_msg)
         return [404, err_msg]
       end
 
-      @logger.debug("Deleting network #{network.id}/\"#{network.name}\"")
+      Rails.logger.debug("Deleting network #{network.id}/\"#{network.name}\"")
       network.destroy
       [200, ""]
     rescue RuntimeError => ex
-      @logger.error(ex.message)
+      Rails.logger.error(ex.message)
       [500, ex.message]
     end
   end
@@ -485,23 +478,23 @@ class BarclampNetwork::Barclamp < Barclamp
 
   private
   def create_ip_range( ip_range_name, ip_range_hash )
-    @logger.debug("Creating ip_range #{ip_range_name}")
-    ip_range = IpRange.new( :name => ip_range_name )
+    Rails.logger.debug("Creating ip_range #{ip_range_name}")
+    ip_range = BarclampNetwork::IpRange.new( :name => ip_range_name )
 
     start_ip_str = ip_range_hash[ "start" ]
     if start_ip_str.nil? or start_ip_str.empty?
       raise ArgumentError, "The ip_range #{ip_range_name} is missing a \"start\" address."
     end
-    @logger.debug("Creating start ip #{start_ip_str}")
-    start_ip = IpAddress.create!( :cidr => start_ip_str )
+    Rails.logger.debug("Creating start ip #{start_ip_str}")
+    start_ip = BarclampNetwork::IpAddress.create!( :cidr => start_ip_str )
     ip_range.start_address = start_ip
 
     end_ip_str = ip_range_hash[ "end" ]
     if end_ip_str.nil? or end_ip_str.empty?
       raise ArgumentError, "The ip_range #{ip_range_name} is missing an \"end\" address."
     end
-    @logger.debug("Creating end ip #{end_ip_str}")
-    end_ip = IpAddress.create!( :cidr => end_ip_str )
+    Rails.logger.debug("Creating end ip #{end_ip_str}")
+    end_ip = BarclampNetwork::IpAddress.create!( :cidr => end_ip_str )
     ip_range.end_address = end_ip
 
     ip_range.save!
@@ -510,10 +503,10 @@ class BarclampNetwork::Barclamp < Barclamp
 
 
   def create_router(router_pref, router_ip)
-    router = Router.new( :pref => router_pref )
+    router = BarclampNetwork::Router.new( :pref => router_pref )
 
-    @logger.debug("Creating router_ip #{router_ip}")
-    router.ip = IpAddress.create!( :cidr => router_ip )
+    Rails.logger.debug("Creating router_ip #{router_ip}")
+    router.ip = BarclampNetwork::IpAddress.create!( :cidr => router_ip )
 
     router.save!
     router

@@ -14,7 +14,7 @@
 
 class CreateVlans < ActiveRecord::Migration
   def change
-    create_table :vlans do |t|
+    create_table :bc_net_vlans do |t|
       t.integer :tag
       t.references :network
 

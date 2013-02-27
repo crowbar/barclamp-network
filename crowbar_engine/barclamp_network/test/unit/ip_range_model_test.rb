@@ -26,12 +26,12 @@ class IpRangeModelTest < ActiveSupport::TestCase
 
   # Test creation failure due to missing name
   test "IpRange creation: failure due to missing name" do
-    ip_range = IpRange.new()
+    ip_range = BarclampNetwork::IpRange.new()
 
-    ip = IpAddress.new( :cidr => "192.168.24.23" )
+    ip = BarclampNetwork::IpAddress.new( :cidr => "192.168.24.23" )
     ip_range.start_address = ip
 
-    ip = IpAddress.new( :cidr => "192.168.24.99" )
+    ip = BarclampNetwork::IpAddress.new( :cidr => "192.168.24.99" )
     ip_range.end_address = ip
 
     assert_raise ActiveRecord::RecordInvalid do
@@ -42,9 +42,9 @@ class IpRangeModelTest < ActiveSupport::TestCase
 
   # Test creation failure due to missing start_address
   test "IpRange creation: failure due to start address" do
-    ip_range = IpRange.new( :name => "dhcp" )
+    ip_range = BarclampNetwork::IpRange.new( :name => "dhcp" )
 
-    ip = IpAddress.new( :cidr => "192.168.24.99" )
+    ip = BarclampNetwork::IpAddress.new( :cidr => "192.168.24.99" )
     ip_range.end_address = ip
 
     assert_raise ActiveRecord::RecordInvalid do
@@ -55,9 +55,9 @@ class IpRangeModelTest < ActiveSupport::TestCase
 
   # Test creation failure due to missing end_address
   test "IpRange creation: failure due to end address" do
-    ip_range = IpRange.new( :name => "dhcp" )
+    ip_range = BarclampNetwork::IpRange.new( :name => "dhcp" )
 
-    ip = IpAddress.new( :cidr => "192.168.24.99" )
+    ip = BarclampNetwork::IpAddress.new( :cidr => "192.168.24.99" )
     ip_range.start_address = ip
 
     assert_raise ActiveRecord::RecordInvalid do
@@ -74,10 +74,10 @@ class IpRangeModelTest < ActiveSupport::TestCase
     ip_range_id = ip_range.id
     ip_range.destroy()
 
-    ip_ranges = IpAddress.where( :start_ip_range_id => ip_range_id )
+    ip_ranges = BarclampNetwork::IpAddress.where( :start_ip_range_id => ip_range_id )
     assert_equal 0, ip_ranges.size
 
-    ip_ranges = IpAddress.where( :end_ip_range_id => ip_range_id )
+    ip_ranges = BarclampNetwork::IpAddress.where( :end_ip_range_id => ip_range_id )
     assert_equal 0, ip_ranges.size
   end
 end

@@ -14,7 +14,7 @@
 
 class CreateIpAddresses < ActiveRecord::Migration
   def change
-    create_table :ip_addresses do |t|
+    create_table :bc_net_ip_addresses do |t|
       t.string :cidr
       t.integer :subnet_id
       t.integer :router_id

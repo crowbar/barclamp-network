@@ -18,6 +18,6 @@ class ConduitActionTest < ActiveSupport::TestCase
 
   # Test successful creation
   test "ConduitAction creation: success" do
-    ConduitAction.create!
+    BarclampNetwork::ConduitAction.create!
   end
 end

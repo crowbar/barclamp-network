@@ -15,7 +15,7 @@
 class BarclampNetwork::Selector < ActiveRecord::Base
   attr_accessible :value
 
-  belongs_to :interface_selector, :inverse_of => :selectors
+  belongs_to :interface_selector, :inverse_of => :selectors, :class_name => "BarclampNetwork::InterfaceSelector"
 
   validates :value, :presence => true
 

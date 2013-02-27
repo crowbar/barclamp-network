@@ -18,14 +18,14 @@ class InterfaceModelTest < ActiveSupport::TestCase
 
   # Test successful creation
   test "Interface creation: success" do
-    interface = Interface.new(:name => "fred")
+    interface = BarclampNetwork::Interface.new(:name => "fred")
     interface.save!
   end
 
 
   # Test creation failure due to missing team_mode
   test "Interface creation: failure due to missing name" do
-    interface = Interface.new()
+    interface = BarclampNetwork::Interface.new()
     assert_raise ActiveRecord::RecordInvalid do
       interface.save!
     end
@@ -34,20 +34,23 @@ class InterfaceModelTest < ActiveSupport::TestCase
 
   # Test cascade allocated ip deletion on interface deletion
   test "Interface deletion: cascade delete to allocated ips" do
-    network = NetworkTestHelper.create_a_network()
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+
+    network = NetworkTestHelper.create_a_network(deployment)
     network.save!
 
-    allocated_ip = AllocatedIpAddress.new(:ip => "192.168.130.24")
+    allocated_ip = BarclampNetwork::AllocatedIpAddress.new(:ip => "192.168.130.24")
     allocated_ip.network = network
 
-    interface = Interface.new(:name => "fred")
+    interface = BarclampNetwork::Interface.new(:name => "fred")
     interface.allocated_ip_addresses << allocated_ip
     interface.save!
 
     ip_id = interface.allocated_ip_addresses.first.id
     interface.destroy()
 
-    ips = AllocatedIpAddress.where( :id => ip_id )
+    ips = BarclampNetwork::AllocatedIpAddress.where( :id => ip_id )
     assert_equal 0, ips.size
   end
 end

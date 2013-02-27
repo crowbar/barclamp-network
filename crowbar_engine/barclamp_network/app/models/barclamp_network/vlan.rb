@@ -13,8 +13,8 @@
 # limitations under the License.
 
 class BarclampNetwork::Vlan < ActiveRecord::Base
-  belongs_to :network, :inverse_of => :vlan
-  has_many :vlan_interfaces, :inverse_of => :vlan, :dependent => :destroy
+  belongs_to :network, :inverse_of => :vlan, :class_name => "BarclampNetwork::Network"
+  has_many :vlan_interfaces, :inverse_of => :vlan, :dependent => :destroy, :class_name => "BarclampNetwork::VlanInterface"
 
   attr_accessible :tag
 

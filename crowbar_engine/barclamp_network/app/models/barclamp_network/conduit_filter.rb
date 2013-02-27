@@ -13,7 +13,7 @@
 # limitations under the License.
 
 class BarclampNetwork::ConduitFilter < ActiveRecord::Base
-  belongs_to :conduit_rule, :inverse_of => :conduit_filters
+  belongs_to :conduit_rule, :inverse_of => :conduit_filters, :class_name => "BarclampNetwork::ConduitRule"
 
   attr_accessible :attr, :comparitor, :end_value, :start_value, :value
 

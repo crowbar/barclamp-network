@@ -16,7 +16,7 @@ require 'test_helper'
  
 class NodeAttributeFilterTest < ActiveSupport::TestCase
   test "Test successful match" do
-    cf = NodeAttributeFilter.new()
+    cf = BarclampNetwork::NodeAttributeFilter.new()
     cf.attr = "nics.size"
     cf.comparitor = "=="
     cf.value = 2
@@ -30,7 +30,7 @@ class NodeAttributeFilterTest < ActiveSupport::TestCase
 
 
   test "Test unsuccessful match" do
-    cf = NodeAttributeFilter.new()
+    cf = BarclampNetwork::NodeAttributeFilter.new()
     cf.attr = "nics.size"
     cf.comparitor = "=="
     cf.value = 42
