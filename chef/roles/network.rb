@@ -12,30 +12,27 @@ default_attributes({ "network" => {
       "mode" => 6
     },
     "conduit_map" => [
-                    {
-                      "conduit_name"  => "intf0",
-                      "conduit_rules" => [
-                                        {
-                                          "conduit_filters" => {
-                                            "NetworkModeFilter"  => {
-                                              "network_mode" => "single"
-                                            }
-                                          },
-                                          "interface_selectors" => [
-                                                                  {
-                                                                    "SelectBySpeed" => {
-                                                                      "value" => "?1g"
-                                                                    },
-                                                                    "SelectByIndex" => {
-                                                                      "value" => "1"
-                                                                    }
-                                                                  }
-                                                                 ],
-                                          "conduit_actions" => [
-                                                             ]
-                                        } ]
-                    }
-                   ],
+                      {
+                        "pattern" => ".*/.*/.*",
+                        "conduit_list" => {
+                          "intf0" => {
+                            "if_list" => [
+                                          "1g1"
+                                         ]
+                          },
+                          "intf1" => {
+                            "if_list" => [
+                                          "1g1"
+                                         ]
+                          },
+                          "intf2" => {
+                            "if_list" => [
+                                          "1g1"
+                                         ]
+                          }
+                        }
+                      }
+                     ],
     "networks" => {
       "admin" => {
         "conduit" => "intf0",
