@@ -36,136 +36,6 @@ class BarclampNetwork::Barclamp < Barclamp
   end
 
 
-  def populate_network_defaults( network_attrs_config, snapshot )
-    create_interface_map( network_attrs_config, snapshot )
-    create_conduits( network_attrs_config, snapshot )
-    create_networks( network_attrs_config, snapshot )
-  end
-
-
-  def create_interface_map( network_attrs_config, snapshot )
-    interface_map = BarclampNetwork::InterfaceMap.new()
-    interface_map.snapshot = snapshot
-    interface_map_config = network_attrs_config["interface_map"]
-    interface_map_config.each { |bus_map_config|
-      bus_map = BarclampNetwork::BusMap.new()
-      bus_map.pattern = bus_map_config["pattern"]
-      interface_map.bus_maps << bus_map
-
-      bus_index = 0
-      bus_order_config = bus_map_config["bus_order"]
-      bus_order_config.each { |bus_config|
-        bus = BarclampNetwork::Bus.new()
-        bus.path = bus_config
-        bus.order = bus_index
-        bus_index += 1
-        bus_map.buses << bus
-      }
-    }
-
-    interface_map.save!
-    interface_map
-  end
-
-
-  def create_conduits( network_attrs_config, snapshot )
-    conduits_config = network_attrs_config["conduit_map"]
-    conduits_config.each { |conduit_config|
-      conduit = BarclampNetwork::Conduit.new()
-      conduit.snapshot = snapshot
-      conduit.name = conduit_config["conduit_name"]
-
-      conduit_rules_config = conduit_config["conduit_rules"]
-      conduit_rules_config.each { |conduit_rule_config|
-        conduit_rule = BarclampNetwork::ConduitRule.new()
-        conduit.conduit_rules << conduit_rule
-
-        conduit_filters_config = conduit_rule_config["conduit_filters"]
-        conduit_filters_config.each { |conduit_filter_name, conduit_filter_parms|
-          conduit_filter = BarclampNetwork.const_get(conduit_filter_name).new()
-          conduit_rule.conduit_filters << conduit_filter
-          conduit_filter_parms.each { |param_name, param_value|
-            conduit_filter.send( "#{param_name}=", param_value )
-          }
-          conduit_filter.save!
-        }
-
-        interface_selectors_config = conduit_rule_config["interface_selectors"]
-        interface_selectors_config.each { |interface_selector_config|
-          interface_selector = BarclampNetwork::InterfaceSelector.new()
-          conduit_rule.interface_selectors << interface_selector
-
-          interface_selector_config.each { |selector_name, selector_parms|
-            selector = BarclampNetwork.const_get(selector_name).new()
-            interface_selector.selectors << selector
-            selector_parms.each { |param_name, param_value|
-              selector.send( "#{param_name}=", param_value )
-            }
-            selector.save!
-          }
-          interface_selector.save!
-        }
-
-        conduit_actions_config = conduit_rule_config["conduit_actions"]
-        conduit_actions_config.each { |conduit_action_config|
-          conduit_action_config.each { |conduit_action_name, conduit_action_parms|
-            conduit_action = BarclampNetwork.const_get(conduit_action_name).new()
-            conduit_rule.conduit_actions << conduit_action
-            conduit_action_parms.each { |param_name, param_value|
-              conduit_action.send( "#{param_name}=", param_value )
-            }
-            conduit_action.save!
-          }
-        }
-        conduit_rule.save!
-      }
-
-      conduit.save!
-    }
-  end
-
-
-  def create_networks( network_attrs_config, snapshot )
-    networks_config = network_attrs_config["networks"]
-    networks_config.each { |network_name, network_config|
-      network = BarclampNetwork::Network.new()
-      network.snapshot = snapshot
-      network.name = network_name
-      network_config.each { |param_name, param_value|
-        case param_name
-        when "conduit"
-          network.conduit = BarclampNetwork::Conduit.find_key(param_value)
-        when "use_vlan"
-          network.use_vlan = param_value
-        when "vlan"
-          network.vlan = BarclampNetwork::Vlan.new(:tag => param_value)
-        when "subnet"
-          network.subnet = BarclampNetwork::IpAddress.new(:cidr => param_value)
-        when "dhcp_enabled"
-          network.dhcp_enabled = param_value
-        when "router"
-          network.router = BarclampNetwork::Router.new() if network.router.nil?
-          network.router.ip = BarclampNetwork::IpAddress.new(:cidr => param_value)
-        when "router_pref"
-          network.router = BarclampNetwork::Router.new() if network.router.nil?
-          network.router.pref = param_value.to_i
-        when "ranges"
-          param_value.each { |range_name, range|
-            ip_range = BarclampNetwork::IpRange.new(:name => range_name)
-            start_address = range["start"]
-            ip_range.start_address = BarclampNetwork::IpAddress.new(:cidr => start_address)
-            end_address = range["end"]
-            ip_range.end_address = BarclampNetwork::IpAddress.new(:cidr => end_address)
-            network.ip_ranges << ip_range
-          }
-        end
-      }
-
-      network.save!
-    }
-  end
-
-
   def network_allocate_ip(deployment_id, network_id, range, node_id, suggestion = nil)
     Rails.logger.debug("Entering network_allocate_ip(deployment_id: #{deployment_id}, network_id: #{network_id}, range: #{range}, node_id: #{node_id}, suggestion: #{suggestion})")
 
@@ -510,5 +380,135 @@ class BarclampNetwork::Barclamp < Barclamp
 
     router.save!
     router
+  end
+
+
+  def populate_network_defaults( network_attrs_config, snapshot )
+    create_interface_map( network_attrs_config, snapshot )
+    create_conduits( network_attrs_config, snapshot )
+    create_networks( network_attrs_config, snapshot )
+  end
+
+
+  def create_interface_map( network_attrs_config, snapshot )
+    interface_map = BarclampNetwork::InterfaceMap.new()
+    interface_map.snapshot = snapshot
+    interface_map_config = network_attrs_config["interface_map"]
+    interface_map_config.each { |bus_map_config|
+      bus_map = BarclampNetwork::BusMap.new()
+      bus_map.pattern = bus_map_config["pattern"]
+      interface_map.bus_maps << bus_map
+
+      bus_index = 0
+      bus_order_config = bus_map_config["bus_order"]
+      bus_order_config.each { |bus_config|
+        bus = BarclampNetwork::Bus.new()
+        bus.path = bus_config
+        bus.order = bus_index
+        bus_index += 1
+        bus_map.buses << bus
+      }
+    }
+
+    interface_map.save!
+    interface_map
+  end
+
+
+  def create_conduits( network_attrs_config, snapshot )
+    conduits_config = network_attrs_config["conduit_map"]
+    conduits_config.each { |conduit_config|
+      conduit = BarclampNetwork::Conduit.new()
+      conduit.snapshot = snapshot
+      conduit.name = conduit_config["conduit_name"]
+
+      conduit_rules_config = conduit_config["conduit_rules"]
+      conduit_rules_config.each { |conduit_rule_config|
+        conduit_rule = BarclampNetwork::ConduitRule.new()
+        conduit.conduit_rules << conduit_rule
+
+        conduit_filters_config = conduit_rule_config["conduit_filters"]
+        conduit_filters_config.each { |conduit_filter_name, conduit_filter_parms|
+          conduit_filter = BarclampNetwork.const_get(conduit_filter_name).new()
+          conduit_rule.conduit_filters << conduit_filter
+          conduit_filter_parms.each { |param_name, param_value|
+            conduit_filter.send( "#{param_name}=", param_value )
+          }
+          conduit_filter.save!
+        }
+
+        interface_selectors_config = conduit_rule_config["interface_selectors"]
+        interface_selectors_config.each { |interface_selector_config|
+          interface_selector = BarclampNetwork::InterfaceSelector.new()
+          conduit_rule.interface_selectors << interface_selector
+
+          interface_selector_config.each { |selector_name, selector_parms|
+            selector = BarclampNetwork.const_get(selector_name).new()
+            interface_selector.selectors << selector
+            selector_parms.each { |param_name, param_value|
+              selector.send( "#{param_name}=", param_value )
+            }
+            selector.save!
+          }
+          interface_selector.save!
+        }
+
+        conduit_actions_config = conduit_rule_config["conduit_actions"]
+        conduit_actions_config.each { |conduit_action_config|
+          conduit_action_config.each { |conduit_action_name, conduit_action_parms|
+            conduit_action = BarclampNetwork.const_get(conduit_action_name).new()
+            conduit_rule.conduit_actions << conduit_action
+            conduit_action_parms.each { |param_name, param_value|
+              conduit_action.send( "#{param_name}=", param_value )
+            }
+            conduit_action.save!
+          }
+        }
+        conduit_rule.save!
+      }
+
+      conduit.save!
+    }
+  end
+
+
+  def create_networks( network_attrs_config, snapshot )
+    networks_config = network_attrs_config["networks"]
+    networks_config.each { |network_name, network_config|
+      network = BarclampNetwork::Network.new()
+      network.snapshot = snapshot
+      network.name = network_name
+      network_config.each { |param_name, param_value|
+        case param_name
+        when "conduit"
+          network.conduit = BarclampNetwork::Conduit.find_key(param_value)
+        when "use_vlan"
+          network.use_vlan = param_value
+        when "vlan"
+          network.vlan = BarclampNetwork::Vlan.new(:tag => param_value)
+        when "subnet"
+          network.subnet = BarclampNetwork::IpAddress.new(:cidr => param_value)
+        when "dhcp_enabled"
+          network.dhcp_enabled = param_value
+        when "router"
+          network.router = BarclampNetwork::Router.new() if network.router.nil?
+          network.router.ip = BarclampNetwork::IpAddress.new(:cidr => param_value)
+        when "router_pref"
+          network.router = BarclampNetwork::Router.new() if network.router.nil?
+          network.router.pref = param_value.to_i
+        when "ranges"
+          param_value.each { |range_name, range|
+            ip_range = BarclampNetwork::IpRange.new(:name => range_name)
+            start_address = range["start"]
+            ip_range.start_address = BarclampNetwork::IpAddress.new(:cidr => start_address)
+            end_address = range["end"]
+            ip_range.end_address = BarclampNetwork::IpAddress.new(:cidr => end_address)
+            network.ip_ranges << ip_range
+          }
+        end
+      }
+
+      network.save!
+    }
   end
 end

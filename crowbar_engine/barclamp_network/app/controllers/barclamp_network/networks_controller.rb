@@ -17,6 +17,7 @@ class NetworksController < BarclampController
   # Make a copy of the barclamp controller help
   self.help_contents = Array.new(superclass.help_contents)
  
+
   add_help(:network_list,[],[:get])
   def networks
     Rails.logger.debug("Listing networks");
@@ -33,6 +34,7 @@ class NetworksController < BarclampController
     end
   end
 
+
   add_help(:network_show,[:id],[:get])
   def network_show
     id = params[:id]
@@ -47,6 +49,7 @@ class NetworksController < BarclampController
       format.json { render :json => ret[1].to_json( :include => {:subnet => {:only => :cidr}, :router => {:only => :pref, :include => {:ip => {:only => :cidr}}}, :ip_ranges => {:only => :name, :include => {:start_address => {:only => :cidr}, :end_address => {:only => :cidr}}}})}
     end
   end
+
 
   add_help(:network_create,[:name, :deployment_id, :conduit_id, :subnet, :dhcp_enabled, :use_vlan, :ip_ranges, :router_pref, :router_ip],[:post])
   def network_create
@@ -71,6 +74,7 @@ class NetworksController < BarclampController
     end
   end
 
+
   add_help(:network_update,[:id, :conduit_id, :subnet, :dhcp_enabled, :use_vlan, :ip_ranges, :router_pref, :router_ip],[:put])
   def network_update
     id = params[:id]
@@ -93,6 +97,7 @@ class NetworksController < BarclampController
     end
   end
 
+
   add_help(:network_delete,[:id],[:delete])
   def network_delete
     Rails.logger.debug("Deleting network #{params[:id]}");
@@ -102,18 +107,6 @@ class NetworksController < BarclampController
     render :json => ret[1]
   end
 
-  add_help(:allocate_ip,[:id,:network,:range,:name],[:post])
-  def allocate_ip
-    id = params[:id]       # Network id
-    network = params[:network]
-    range = params[:range]
-    name = params[:name]
-    suggestion = params[:suggestion]
-
-    ret = operations.allocate_ip(id, network, range, name, suggestion)
-    return render :text => ret[1], :status => ret[0] if ret[0] != 200
-    render :json => ret[1]
-  end
 
   add_help(:network_allocate_ip,[:id,:network_id,:node_id,:range],[:post])
   def network_allocate_ip
@@ -128,17 +121,7 @@ class NetworksController < BarclampController
     return render :text => ret[1], :status => ret[0] if ret[0] != 200
     render :json => ret[1]
   end
-  
-  add_help(:deallocate_ip,[:id,:network,:name],[:post])
-  def deallocate_ip
-    id = params[:id]       # Network id
-    network = params[:network]
-    name = params[:name]
 
-    ret = operations.deallocate_ip(id, network, name)
-    return render :text => ret[1], :status => ret[0] if ret[0] != 200
-    render :json => ret[1]
-  end
 
   add_help(:network_deallocate_ip,[:id,:network_id,:node_id],[:delete])
   def network_deallocate_ip
@@ -152,16 +135,6 @@ class NetworksController < BarclampController
     render :json => ret[1]
   end
   
-  add_help(:enable_interface,[:id,:network,:name],[:post])
-  def enable_interface
-    id = params[:id]       # Network id
-    network = params[:network]
-    name = params[:name]
-
-    ret = operations.enable_interface(id, network, name)
-    return render :text => ret[1], :status => ret[0] if ret[0] != 200
-    render :json => ret[1]
-  end
 
   add_help(:network_enable_interface,[:id,:network_id,:node_id],[:post])
   def network_enable_interface
@@ -175,16 +148,6 @@ class NetworksController < BarclampController
     render :json => ret[1]
   end
   
-  add_help(:disable_interface,[:id,:network,:name],[:post])
-  def disable_interface
-    id = params[:id]       # Network id
-    network = params[:network]
-    name = params[:name]
-
-    ret = operations.disable_interface(id, network, name)
-    return render :text => ret[1], :status => ret[0] if ret[0] != 200
-    render :json => ret[1]
-  end
 
   def switch
     @vports = {}
