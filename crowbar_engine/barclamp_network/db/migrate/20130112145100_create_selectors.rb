@@ -14,7 +14,7 @@
 
 class CreateSelectors < ActiveRecord::Migration
   def change
-    create_table :bc_net_selectors do |t|
+    create_table "#{BarclampNetwork::TABLE_PREFIX}selectors" do |t|
       t.references :interface_selector
       t.string :type
       t.string :value

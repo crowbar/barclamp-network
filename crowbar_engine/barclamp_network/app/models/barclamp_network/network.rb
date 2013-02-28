@@ -23,7 +23,7 @@ class BarclampNetwork::Network < ActiveRecord::Base
   has_many :ip_ranges, :dependent => :destroy, :class_name => "BarclampNetwork::IpRange"
   belongs_to :snapshot
   has_one :vlan, :inverse_of => :network, :dependent => :destroy, :class_name => "BarclampNetwork::Vlan"
-  has_and_belongs_to_many :interfaces, :join_table => "bc_net_interfaces_networks", :class_name => "BarclampNetwork::Interface"
+  has_and_belongs_to_many :interfaces, :join_table => "#{BarclampNetwork::TABLE_PREFIX}interfaces_networks", :class_name => "BarclampNetwork::Interface"
 
   # attr_accessible :name, :dhcp_enabled, :use_vlan
 
@@ -43,7 +43,7 @@ class BarclampNetwork::Network < ActiveRecord::Base
     return [400, "No node specified"] if node.nil?
 
     # If the node already has an IP on this network then just return success
-    results = BarclampNetwork::AllocatedIpAddress.joins(:interface).where(:bc_net_interfaces => {:node_id => node.id}).where(:network_id => id)
+    results = BarclampNetwork::AllocatedIpAddress.joins(:interface).where("#{BarclampNetwork::TABLE_PREFIX}interfaces" => {:node_id => node.id}).where(:network_id => id)
     if results.length > 0
       allocated_ip = results.first.ip
       logger.info("Network.allocate_ip: node #{BarclampNetwork::NetworkUtils.log_name(node)} already has address #{allocated_ip} on network #{BarclampNetwork::NetworkUtils.log_name(self)}, range #{range}")
@@ -154,7 +154,7 @@ class BarclampNetwork::Network < ActiveRecord::Base
     return [400, "No node specified"] if node.nil?
 
     # If we don't have one allocated, return success
-    results = BarclampNetwork::AllocatedIpAddress.joins(:interface).where(:bc_net_interfaces => {:node_id => node.id}).where(:network_id => id)
+    results = BarclampNetwork::AllocatedIpAddress.joins(:interface).where("#{BarclampNetwork::TABLE_PREFIX}interfaces" => {:node_id => node.id}).where(:network_id => id)
     if results.length == 0
       logger.warn("Network.deallocate_ip: node #{BarclampNetwork::NetworkUtils.log_name(node)} does not have an address allocated on network #{BarclampNetwork::NetworkUtils.log_name(self)}")
       return [200, nil]

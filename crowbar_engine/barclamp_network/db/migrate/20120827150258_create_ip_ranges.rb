@@ -14,7 +14,7 @@
 
 class CreateIpRanges < ActiveRecord::Migration
   def change
-    create_table :bc_net_ip_ranges do |t|
+    create_table "#{BarclampNetwork::TABLE_PREFIX}ip_ranges" do |t|
       t.string :name
       t.references :network
 

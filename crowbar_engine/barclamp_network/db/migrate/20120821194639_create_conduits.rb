@@ -14,7 +14,7 @@
 
 class CreateConduits < ActiveRecord::Migration
   def change
-    create_table :bc_net_conduits do |t|
+    create_table "#{BarclampNetwork::TABLE_PREFIX}conduits" do |t|
       t.string :name
       t.references :snapshot
 

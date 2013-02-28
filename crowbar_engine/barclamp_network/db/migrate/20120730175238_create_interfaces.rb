@@ -14,7 +14,7 @@
 
 class CreateInterfaces < ActiveRecord::Migration
   def change
-    create_table :bc_net_interfaces do |t|
+    create_table "#{BarclampNetwork::TABLE_PREFIX}interfaces" do |t|
       t.string :type
       t.string :name
       t.integer :team_mode
