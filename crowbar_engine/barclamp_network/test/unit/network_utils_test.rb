@@ -16,77 +16,94 @@ require 'test_helper'
  
 class NetworkUtilsTest < ActiveSupport::TestCase
 
-  # Failure to find BarclampConfig due to bad id
-  test "find_network: failure to find BarclampConfig due to bad id" do
-    http_error, result = NetworkUtils.find_network("fred", "badbcc")
+  # Failure to find Deployment due to bad id
+  test "find_network: failure to find Deployment due to bad id" do
+    http_error, result = BarclampNetwork::NetworkUtils.find_network("fred", "badbcc")
+    assert_equal 404, http_error
+  end
+
+
+  # Return nil if no active snapshot was found
+  test "find_network: return nil if no active snapshot found" do
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+
+    http_error, result = BarclampNetwork::NetworkUtils.find_network("fred", deployment.id, BarclampNetwork::NetworkUtils::ACTIVE_SNAPSHOT)
     assert_equal 404, http_error
   end
 
 
   # Failure to find network due to bad network id when proposal unspecified
   test "find_network: failure to find network due to bad network id" do
-    barclamp = BarclampNetwork::Barclamp.new()
-    barclamp_config = barclamp.create_proposal()
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
 
-    http_error, result = NetworkUtils.find_network("fred", barclamp_config.id)
+    http_error, result = BarclampNetwork::NetworkUtils.find_network("fred", deployment.id)
     assert_equal 404, http_error
   end
 
 
-  # Consistency check of barclamp instance id given network DB id
+  # Consistency check of snapshot id given network DB id
   test "find_network: consistency check of network id failure" do
-    barclamp = BarclampNetwork::Barclamp.new()
-    barclamp_config = barclamp.create_proposal()
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
 
-    network = NetworkTestHelper.create_a_network("public", BarclampInstance.create!())
+    network = NetworkTestHelper.create_a_network(deployment)
+
+    # This is somewhat contrived, but is the only way to test this case at the moment
+    snapshot = Snapshot.new()
+    snapshot.barclamp = barclamp
+    snapshot.save!
+    network.snapshot = snapshot
+
     network.save!
 
-    http_error, network = NetworkUtils.find_network(network.id)
+    http_error, network = BarclampNetwork::NetworkUtils.find_network(network.id)
     assert_equal 400, http_error
   end
 
 
   # Successfully find network when only network name supplied
   test "find_network: success when only network name supplied" do
-    barclamp = BarclampNetwork::Barclamp.new()
-    barclamp_config = barclamp.create_proposal()
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
 
-    network = NetworkTestHelper.create_a_network("public", barclamp_config.proposed_instance)
+    network = NetworkTestHelper.create_a_network(deployment, "public")
     network.save!
 
-    http_error, network = NetworkUtils.find_network("public")
+    http_error, network = BarclampNetwork::NetworkUtils.find_network("public")
     assert_equal 200, http_error
     assert_not_nil network
-    assert_equal network.barclamp_instance.id, barclamp_config.proposed_instance.id
+    assert_equal network.snapshot.id, deployment.proposed_snapshot.id
   end
 
 
-  # Successfully find network when network name and BarclampConfig supplied
-  test "find_network: success when network name and BarclampConfig supplied" do
-    barclamp = BarclampNetwork::Barclamp.new()
-    barclamp_config = barclamp.create_proposal()
+  # Successfully find network when network name and Deployment supplied
+  test "find_network: success when network name and Deployment supplied" do
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
 
-    network = NetworkTestHelper.create_a_network("public", barclamp_config.proposed_instance)
+    network = NetworkTestHelper.create_a_network(deployment, "public")
     network.save!
 
-    http_error, network = NetworkUtils.find_network("public", barclamp_config)
+    http_error, network = BarclampNetwork::NetworkUtils.find_network("public", deployment)
     assert_equal 200, http_error
     assert_not_nil network
-    assert_equal network.barclamp_instance.id, barclamp_config.proposed_instance.id
+    assert_equal network.snapshot.id, deployment.proposed_snapshot.id
   end
 
 
-  # Successfully find network when network name, BarclampConfig, and proposed type supplied
-  test "find_network: success when network name, BarclampConfig, and active supplied" do
-    barclamp = BarclampNetwork::Barclamp.new()
-    barclamp_config = barclamp.create_proposal()
+  # Successfully find network when network name, Deployment, and proposed type supplied
+  test "find_network: success when network name, Deployment, and active supplied" do
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
 
-    network = NetworkTestHelper.create_a_network("public", barclamp_config.proposed_instance)
+    network = NetworkTestHelper.create_a_network(deployment, "public")
     network.save!
 
-    http_error, network = NetworkUtils.find_network("public", barclamp_config, NetworkUtils.PROPOSED_BARCLAMP_INSTANCE)
+    http_error, network = BarclampNetwork::NetworkUtils.find_network("public", deployment, BarclampNetwork::NetworkUtils::PROPOSED_SNAPSHOT)
     assert_equal 200, http_error
     assert_not_nil network
-    assert_equal network.barclamp_instance.id, barclamp_config.proposed_instance.id
+    assert_equal network.snapshot.id, deployment.proposed_snapshot.id
   end
 end

@@ -14,7 +14,7 @@
 
 class CreateBusMaps < ActiveRecord::Migration
   def change
-    create_table :bus_maps do |t|
+    create_table :bc_net_bus_maps do |t|
       t.string :pattern
 
       t.references :interface_map

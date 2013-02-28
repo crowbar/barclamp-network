@@ -15,9 +15,9 @@
 
 class BarclampNetwork::IpRange < ActiveRecord::Base
   attr_protected :id
-  belongs_to :network, :inverse_of => :ip_ranges
-  has_one :start_address, :foreign_key => "start_ip_range_id", :class_name => "IpAddress", :dependent => :destroy
-  has_one :end_address, :foreign_key => "end_ip_range_id", :class_name => "IpAddress", :dependent => :destroy
+  belongs_to :network, :inverse_of => :ip_ranges, :class_name => "BarclampNetwork::Network"
+  has_one :start_address, :foreign_key => "start_ip_range_id", :dependent => :destroy, :class_name => "BarclampNetwork::IpAddress"
+  has_one :end_address, :foreign_key => "end_ip_range_id", :dependent => :destroy, :class_name => "BarclampNetwork::IpAddress"
 
   # attr_accessible :name, :start_address, :end_address
   accepts_nested_attributes_for :start_address, :end_address

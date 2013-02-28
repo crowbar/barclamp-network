@@ -18,7 +18,7 @@ class SelectorTest < ActiveSupport::TestCase
 
   # Test successful creation & select exception
   test "Selector creation: success and select exception" do
-    s = Selector.create!( :value => "7" )
+    s = BarclampNetwork::Selector.create!( :value => "7" )
 
     assert_raise RuntimeError do
       s.select({})

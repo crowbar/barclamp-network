@@ -17,10 +17,13 @@ require 'test_helper'
 class AllocatedIpAddressModelTest < ActiveSupport::TestCase
   # Test creation failure, no ip
   test "AllocatedIpAddress creation: failure no ip" do
-    network = NetworkTestHelper.create_a_network()
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+
+    network = NetworkTestHelper.create_a_network(deployment)
     network.save!
 
-    aip = AllocatedIpAddress.new()
+    aip = BarclampNetwork::AllocatedIpAddress.new()
     aip.network = network
 
     assert_raise( ActiveRecord::RecordInvalid ) do
@@ -31,7 +34,7 @@ class AllocatedIpAddressModelTest < ActiveSupport::TestCase
 
   # Test creation failure, no network
   test "AllocatedIpAddress creation: failure no network" do
-    aip = AllocatedIpAddress.new(:ip => "192.168.122.2")
+    aip = BarclampNetwork::AllocatedIpAddress.new(:ip => "192.168.122.2")
 
     assert_raise( ActiveRecord::RecordInvalid ) do
       aip.save!
@@ -41,10 +44,13 @@ class AllocatedIpAddressModelTest < ActiveSupport::TestCase
 
   # Test successful creation, min
   test "AllocatedIpAddress creation: min success" do
-    network = NetworkTestHelper.create_a_network()
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+
+    network = NetworkTestHelper.create_a_network(deployment)
     network.save!
 
-    aip = AllocatedIpAddress.new(:ip => "0.0.0.0")
+    aip = BarclampNetwork::AllocatedIpAddress.new(:ip => "0.0.0.0")
     aip.network = network
     aip.save!
   end
@@ -52,10 +58,13 @@ class AllocatedIpAddressModelTest < ActiveSupport::TestCase
 
   # Test successful creation, max
   test "AllocatedIpAddress creation: max success" do
-    network = NetworkTestHelper.create_a_network()
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+
+    network = NetworkTestHelper.create_a_network(deployment)
     network.save!
 
-    aip = AllocatedIpAddress.new(:ip => "255.255.255.255")
+    aip = BarclampNetwork::AllocatedIpAddress.new(:ip => "255.255.255.255")
     aip.network = network
     aip.save!
   end
@@ -63,10 +72,13 @@ class AllocatedIpAddressModelTest < ActiveSupport::TestCase
 
   # Test successful creation, normal
   test "AllocatedIpAddress creation: success" do
-    network = NetworkTestHelper.create_a_network()
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+
+    network = NetworkTestHelper.create_a_network(deployment)
     network.save!
 
-    aip = AllocatedIpAddress.new(:ip => "192.168.132.124")
+    aip = BarclampNetwork::AllocatedIpAddress.new(:ip => "192.168.132.124")
     aip.network = network
     aip.save!
   end
@@ -74,10 +86,13 @@ class AllocatedIpAddressModelTest < ActiveSupport::TestCase
 
   # Test validation: alpha
   test "AllocatedIpAddress creation: alpha failure" do
-    network = NetworkTestHelper.create_a_network()
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+
+    network = NetworkTestHelper.create_a_network(deployment)
     network.save!
 
-    aip = AllocatedIpAddress.new(:ip => "192.blah.132.124")
+    aip = BarclampNetwork::AllocatedIpAddress.new(:ip => "192.blah.132.124")
     aip.network = network
     assert_raise( ActiveRecord::RecordInvalid ) do
       aip.save!
@@ -87,10 +102,13 @@ class AllocatedIpAddressModelTest < ActiveSupport::TestCase
 
   # Test validation: overflow 1st octet
   test "AllocatedIpAddress creation: 1st octet overflow failure" do
-    network = NetworkTestHelper.create_a_network()
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+
+    network = NetworkTestHelper.create_a_network(deployment)
     network.save!
 
-    aip = AllocatedIpAddress.new(:ip => "256.168.132.124")
+    aip = BarclampNetwork::AllocatedIpAddress.new(:ip => "256.168.132.124")
     aip.network = network
     
     assert_raise( ActiveRecord::RecordInvalid ) do
@@ -101,10 +119,13 @@ class AllocatedIpAddressModelTest < ActiveSupport::TestCase
 
   # Test validation: overflow 2nd octet
   test "AllocatedIpAddress creation: 2nd octet overflow failure" do
-    network = NetworkTestHelper.create_a_network()
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+
+    network = NetworkTestHelper.create_a_network(deployment)
     network.save!
 
-    aip = AllocatedIpAddress.new(:ip => "192.256.132.124")
+    aip = BarclampNetwork::AllocatedIpAddress.new(:ip => "192.256.132.124")
     aip.network = network
 
     assert_raise( ActiveRecord::RecordInvalid ) do
@@ -115,10 +136,13 @@ class AllocatedIpAddressModelTest < ActiveSupport::TestCase
 
   # Test validation: overflow 3rd octet
   test "AllocatedIpAddress creation: 3rd octet overflow failure" do
-    network = NetworkTestHelper.create_a_network()
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+
+    network = NetworkTestHelper.create_a_network(deployment)
     network.save!
 
-    aip = AllocatedIpAddress.new(:ip => "192.168.256.124")
+    aip = BarclampNetwork::AllocatedIpAddress.new(:ip => "192.168.256.124")
     aip.network = network
 
     assert_raise( ActiveRecord::RecordInvalid ) do
@@ -129,10 +153,13 @@ class AllocatedIpAddressModelTest < ActiveSupport::TestCase
 
   # Test validation: overflow 4th octet
   test "AllocatedIpAddress creation: 4th octet overflow failure" do
-    network = NetworkTestHelper.create_a_network()
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+
+    network = NetworkTestHelper.create_a_network(deployment)
     network.save!
 
-    aip = AllocatedIpAddress.new(:ip => "192.168.132.256")
+    aip = BarclampNetwork::AllocatedIpAddress.new(:ip => "192.168.132.256")
     aip.network = network
     
     assert_raise( ActiveRecord::RecordInvalid ) do

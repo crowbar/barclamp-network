@@ -14,7 +14,7 @@
 
 class CreateIpRanges < ActiveRecord::Migration
   def change
-    create_table :ip_ranges do |t|
+    create_table :bc_net_ip_ranges do |t|
       t.string :name
       t.references :network
 

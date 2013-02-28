@@ -13,5 +13,5 @@
 # limitations under the License.
 
 class BarclampNetwork::PhysicalInterface < BarclampNetwork::Interface
-  belongs_to :bond, :inverse_of => :physical_interfaces
+  belongs_to :bond, :inverse_of => :physical_interfaces, :class_name => "BarclampNetwork::Bond"
 end

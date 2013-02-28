@@ -14,18 +14,21 @@
 
 require 'test_helper'
  
-class AttribInstanceBusOrderTest < ActiveSupport::TestCase
+class AttribBusOrderTest < ActiveSupport::TestCase
 
   # Test retrieval of bus order
   test "BusOrder retrieval: success" do
-    interface_map = NetworkTestHelper.create_an_interface_map()
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
+
+    interface_map = NetworkTestHelper.create_an_interface_map(deployment)
     interface_map.save!
 
     node = Node.new(:name => "fred.flintstone.org")
     node.save!
 
     node.set_attrib("product_name", "PowerEdge R710")
-    node.set_attrib("bus_order", nil, 0, AttribInstanceBusOrder)
+    node.set_attrib("bus_order", nil, 0, BarclampNetwork::AttribBusOrder)
 
     bus_order_ai = node.get_attrib("bus_order")
     json = JSON.parse(bus_order_ai.value)

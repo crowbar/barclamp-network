@@ -27,15 +27,15 @@ class RouterModelTest < ActiveSupport::TestCase
   # Test validation: creation failed due to no ip
   test "Router creation: failure due to no ip" do
     assert_raise ActiveRecord::RecordInvalid do
-      Router.create!( :pref => 5 )
+      BarclampNetwork::Router.create!( :pref => 5 )
     end
   end
 
 
   # Test validation: creation failed due to no pref
   test "Router creation: failure due to no pref" do
-    ip = IpAddress.new(:cidr => "192.168.130.12")
-    router = Router.new()
+    ip = BarclampNetwork::IpAddress.new(:cidr => "192.168.130.12")
+    router = BarclampNetwork::Router.new()
     router.ip = ip
     assert_raise ActiveRecord::RecordInvalid do
       router.save!()
@@ -45,8 +45,8 @@ class RouterModelTest < ActiveSupport::TestCase
 
   # Test validation: creation failed due to alpha pref
   test "Router creation: failure due to alpha pref" do
-    ip = IpAddress.new(:cidr => "192.168.130.12")
-    router = Router.new()
+    ip = BarclampNetwork::IpAddress.new(:cidr => "192.168.130.12")
+    router = BarclampNetwork::Router.new()
     router.pref = "asdf"
     router.ip = ip
     assert_raise ActiveRecord::RecordInvalid do
@@ -62,7 +62,7 @@ class RouterModelTest < ActiveSupport::TestCase
     ip_id = router.ip.id
     router.destroy()
 
-    ips = IpAddress.where( :id => ip_id )
+    ips = BarclampNetwork::IpAddress.where( :id => ip_id )
     assert_equal 0, ips.size
   end
 end

@@ -14,7 +14,7 @@
 
 class CreateConduitActions < ActiveRecord::Migration
   def change
-    create_table :conduit_actions do |t|
+    create_table :bc_net_conduit_actions do |t|
       t.references :conduit_rule
       t.string :type
       t.string :name

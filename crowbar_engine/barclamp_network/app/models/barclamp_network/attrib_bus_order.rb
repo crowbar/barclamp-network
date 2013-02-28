@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class BarclampNetwork::AttribInstanceBusOrder < AttribInstance
+class BarclampNetwork::AttribBusOrder < Attrib
   def state 
-    AttribInstance.calc_state(value_actual , value_request, jig_run_id)
+    Attrib.calc_state(value_actual , value_request, jig_run_id)
   end
   
 
@@ -35,7 +35,7 @@ class BarclampNetwork::AttribInstanceBusOrder < AttribInstance
   
 
   def actual
-    buses = InterfaceMap.get_bus_order(node)
+    buses = BarclampNetwork::InterfaceMap.get_bus_order(node)
     bus_order=[]
     buses.each {|bus|
       bus_order << bus.path

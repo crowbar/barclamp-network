@@ -14,8 +14,8 @@
 
 class BarclampNetwork::Router < ActiveRecord::Base
   attr_protected :id
-  belongs_to :network, :inverse_of => :router
-  has_one :ip, :foreign_key => "router_id", :class_name => "IpAddress", :dependent => :destroy
+  belongs_to :network, :inverse_of => :router, :class_name => "BarclampNetwork::Network"
+  has_one :ip, :foreign_key => "router_id", :dependent => :destroy, :class_name => "BarclampNetwork::IpAddress"
 
   #attr_accessible :pref
   accepts_nested_attributes_for :ip
