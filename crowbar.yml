@@ -23,6 +23,8 @@ barclamp:
   api_version: "v2"
   api_version_accepts: "v2"
   online_help: 'https://github.com/dellcloudedge/crowbar/wiki/Network--barclamp'
+  requires:
+    - chef
   member:
     - crowbar
 
