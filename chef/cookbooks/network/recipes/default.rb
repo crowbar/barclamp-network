@@ -181,7 +181,8 @@ node["crowbar"]["network"].keys.sort{|a,b|
   ifs[our_iface.name]["addresses"] ||= Array.new
   if addr
     ifs[our_iface.name]["addresses"] << addr
-    addr_mapping[name] = addr.to_s
+    addr_mapping[name] ||= Array.new
+    addr_mapping[name] << addr.to_s
     # Ditto for our default route
     if network["router_pref"] && (network["router_pref"].to_i < route_pref)
       Chef::Log.info("#{name}: Will use #{network["router"]} as our default route")
@@ -289,8 +290,8 @@ Chef::Log.info("Waiting up to 60 seconds for the net to come back")
   sleep 1
 end if provisioner
 
-node["crowbar_wall"] ||= Mash.new
-node["crowbar_wall"]["network"] ||= Mash.new
+node.set["crowbar_wall"] ||= Mash.new
+node.set["crowbar_wall"]["network"] ||= Mash.new
 saved_ifs = Mash.new
 ifs.each {|k,v|
   addrs = v["addresses"].map{|a|a.to_s}.sort
@@ -299,9 +300,9 @@ ifs.each {|k,v|
 }
 Chef::Log.info("Saving interfaces to crowbar_wall: #{saved_ifs.inspect}")
 
-node["crowbar_wall"]["network"]["interfaces"] = saved_ifs
-node["crowbar_wall"]["network"]["nets"] = if_mapping
-node["crowbar_wall"]["network"]["addrs"] = addr_mapping
+node.set["crowbar_wall"]["network"]["interfaces"] = saved_ifs
+node.set["crowbar_wall"]["network"]["nets"] = if_mapping
+node.set["crowbar_wall"]["network"]["addrs"] = addr_mapping
 node.save
 
 case node["platform"]
