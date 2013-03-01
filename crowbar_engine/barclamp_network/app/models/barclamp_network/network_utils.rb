@@ -14,8 +14,6 @@
 
 class BarclampNetwork::NetworkUtils
 
-  TABLE_PREFIX = "bc_net_"
-
   ACTIVE_SNAPSHOT = 0
   PROPOSED_SNAPSHOT = 1
 

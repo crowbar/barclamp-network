@@ -14,10 +14,10 @@
 #
 class CreateInterfacesNetworks < ActiveRecord::Migration
   def change
-    create_table :bc_net_interfaces_networks, :id=>false do |t|
+    create_table "#{BarclampNetwork::TABLE_PREFIX}interfaces_networks", :id=>false do |t|
       t.references  :interface
       t.references  :network
     end
-    add_index(:bc_net_interfaces_networks, [:interface_id, :network_id], :unique => true)
+    add_index("#{BarclampNetwork::TABLE_PREFIX}interfaces_networks", [:interface_id, :network_id], :unique => true)
   end
 end

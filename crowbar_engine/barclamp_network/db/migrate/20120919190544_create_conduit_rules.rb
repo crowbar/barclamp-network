@@ -14,7 +14,7 @@
 
 class CreateConduitRules < ActiveRecord::Migration
   def change
-    create_table :bc_net_conduit_rules do |t|
+    create_table "#{BarclampNetwork::TABLE_PREFIX}conduit_rules" do |t|
 
       t.references :conduit
       t.timestamps
