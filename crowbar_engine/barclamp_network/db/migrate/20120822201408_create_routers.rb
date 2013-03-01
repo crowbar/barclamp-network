@@ -14,7 +14,7 @@
 
 class CreateRouters < ActiveRecord::Migration
   def change
-    create_table :bc_net_routers do |t|
+    create_table "#{BarclampNetwork::TABLE_PREFIX}routers" do |t|
       t.integer :pref
       t.references :network
 

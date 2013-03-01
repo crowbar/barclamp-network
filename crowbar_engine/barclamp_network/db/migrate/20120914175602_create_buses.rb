@@ -14,7 +14,7 @@
 
 class CreateBuses < ActiveRecord::Migration
   def change
-    create_table :bc_net_buses do |t|
+    create_table "#{BarclampNetwork::TABLE_PREFIX}buses" do |t|
       t.integer :order
       t.string :path
 

@@ -14,7 +14,7 @@
 
 class CreateVlans < ActiveRecord::Migration
   def change
-    create_table :bc_net_vlans do |t|
+    create_table "#{BarclampNetwork::TABLE_PREFIX}vlans" do |t|
       t.integer :tag
       t.references :network
 

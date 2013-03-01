@@ -14,7 +14,7 @@
 
 class CreateNetworks < ActiveRecord::Migration
   def change
-    create_table :bc_net_networks do |t|
+    create_table "#{BarclampNetwork::TABLE_PREFIX}networks" do |t|
       t.string :name
       t.boolean :dhcp_enabled
       t.boolean :use_vlan
