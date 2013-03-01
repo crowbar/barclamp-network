@@ -5,6 +5,7 @@ run_list("recipe[network]")
 # These attributes are for scaffolding purposes ONLY!
 # Once the crowbar framework side of things is functional, they
 # need to go away.
+host_name = %x{hostname}
 default_attributes({ "network" => {
     "start_up_delay" => 30,
     "mode" => "single",
@@ -72,7 +73,7 @@ default_attributes({ "network" => {
         "usage" => "admin",
         "vlan" => 100,
         "broadcast" => "192.168.124.255",
-        "node" => "admin.smoke.test"
+        "node" => "#{host_name}"
       }
     }
   }
