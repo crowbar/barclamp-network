@@ -13,9 +13,13 @@ def quote(s)
 end
 iface=@interfaces[@nic.name]
 -%>
-NAME='<%=quote(@nic.name)%>'
+NAME=<%=quote(@nic.name)%>
 STARTMODE=auto
+<% if iface["slave"] -%>
 BOOTPROTO=none
+<% else -%>
+BOOTPROTO=static
+<% end -%>
 <% case
    when @nic.kind_of?(Nic::Bridge) -%>
 BRIDGE=yes
@@ -30,7 +34,7 @@ BONDING_MODULE_OPTS=<%=quote("mode=#{@nic.mode} miimon=#{@nic.miimon}")%>
 BONDING_SLAVE_<%=i%>=<%=quote(slave)%>
 <% end -%>
 <% end -%>
-<% if addr=iface["address"].detect{|i|i.kind_of?(IP::IP4)} -%>
-IPADDR=<%=addr.addr%>
-NETMASK=<%=addr.netmask%>
+<% v4addrs, v6addrs = iface["addresses"].map{|a|::IP.coerce(a)}.partition{|a|a.kind_of? IP::IP4}
+   v4addrs.each_index do |i| -%>
+IPADDR<%=(i == 0)?'':(i+1).to_s%>=<%=v4addrs[i].to_s%>
 <% end -%>
