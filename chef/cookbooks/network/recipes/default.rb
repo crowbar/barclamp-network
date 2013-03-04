@@ -16,14 +16,14 @@
 
 # Make sure packages we need will be present
 case node[:platform]
-when "ubuntu","debian"
+when "ubuntu","debian","suse"
   %w{bridge-utils vlan}.each do |pkg|
     p = package pkg do
       action :nothing
     end
     p.run_action :install
   end
-when "centos","redhat","suse"
+when "centos","redhat"
   %w{bridge-utils vconfig}.each do |pkg|
     p = package pkg do
       action :nothing
