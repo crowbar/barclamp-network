@@ -18,14 +18,14 @@ class CreateBondTest < ActiveSupport::TestCase
 
   # Test successful creation
   test "CreateBond creation: success" do
-    BarclampNetwork::CreateBond.create!( :name => "fred", :team_mode => 6 )
+    BarclampNetwork::CreateBond.create!( :order => 1, :team_mode => 5 )
   end
 
 
   # Test creation failure due to missing team_mode
   test "CreateBond creation: failure due to missing team_mode" do
     assert_raise ActiveRecord::RecordInvalid do
-      BarclampNetwork::CreateBond.create!( :name => "fred" )
+      BarclampNetwork::CreateBond.create!()
     end
   end
 
@@ -33,7 +33,7 @@ class CreateBondTest < ActiveSupport::TestCase
   # Test creation failure due to low team_mode
   test "CreateBond creation: failure due to low team_mode" do
     assert_raise ActiveRecord::RecordInvalid do
-      BarclampNetwork::CreateBond.create!( :name => "fred", :team_mode => -1 )
+      BarclampNetwork::CreateBond.create!( :team_mode => -1 )
     end
   end
 
@@ -41,7 +41,7 @@ class CreateBondTest < ActiveSupport::TestCase
   # Test creation failure due to high team_mode
   test "CreateBond creation: failure due to high team_mode" do
     assert_raise ActiveRecord::RecordInvalid do
-      BarclampNetwork::CreateBond.create!( :name => "fred", :team_mode => 7 )
+      BarclampNetwork::CreateBond.create!( :team_mode => 7 )
     end
   end
 end

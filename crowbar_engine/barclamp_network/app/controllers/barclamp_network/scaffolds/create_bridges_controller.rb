@@ -11,9 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
-class BarclampNetwork::CreateVlan < BarclampNetwork::ConfigAction
-  attr_accessible :tag
 
-  validates_presence_of :tag
-end
+class Scaffolds::CreateBridgesController < ApplicationController
+  active_scaffold :'barclamp_network/create_bridge' do |conf|
+  end
+end 

@@ -12,6 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class BarclampNetwork::ConduitAction < ActiveRecord::Base
-  belongs_to :conduit_rule, :inverse_of => :conduit_actions, :class_name => "BarclampNetwork::ConduitRule"
+class BarclampNetwork::CreateBridge < BarclampNetwork::ConfigAction
+  has_one :ip, :foreign_key => "bridge_id", :dependent => :destroy, :class_name => "BarclampNetwork::IpAddress"
+
+
+  def handle_parameter(param_name, param_value)
+    if param_name == "ip"
+      self.ip = BarclampNetwork::IpAddress.create!(:cidr => param_value)
+    else
+      super
+    end
+  end
 end

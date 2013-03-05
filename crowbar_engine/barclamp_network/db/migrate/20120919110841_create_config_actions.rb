@@ -12,8 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class BarclampNetwork::CreateVlan < BarclampNetwork::ConfigAction
-  attr_accessible :tag
+class CreateConfigActions < ActiveRecord::Migration
+  def change
+    create_table "#{BarclampNetwork::TABLE_PREFIX}config_actions" do |t|
+      t.references :conduit_rule
+      t.references :network
+      t.string :type
+      t.string :name
+      t.string :team_mode
+      t.string :ip
+      t.integer :order
+      t.integer :tag
 
-  validates_presence_of :tag
+      t.timestamps
+    end
+  end
 end

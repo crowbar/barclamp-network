@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class BarclampNetwork::CreateBond < BarclampNetwork::ConduitAction
+class BarclampNetwork::CreateBond < BarclampNetwork::ConfigAction
   attr_accessible :team_mode
 
   validates :team_mode, :presence => true, :numericality => { :only_integer => true, :greater_than_or_equal_to => 0, :less_than_or_equal_to => 6 }
