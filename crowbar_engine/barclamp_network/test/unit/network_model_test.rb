@@ -105,23 +105,6 @@ class NetworkModelTest < ActiveSupport::TestCase
   end
 
 
-  # dhcp_enabled must be true or false
-  test "Network creation: failure due to invalid dhcp_enabled" do
-    barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
-
-    network = BarclampNetwork::Network.new
-    network.name = "fred"
-    network.dhcp_enabled = "blah"
-    network.subnet = BarclampNetwork::IpAddress.create!( :cidr => "192.168.130.11/24" )
-    network.conduit = NetworkTestHelper.create_or_get_conduit(deployment, "intf0")
-    network.ip_ranges << NetworkTestHelper.create_an_ip_range()
-    assert_raise ActiveRecord::RecordInvalid do
-      network.save!
-    end
-  end
-  
-
   # subnet does not exist
   test "Network creation: failure due to missing subnet" do
     barclamp = NetworkTestHelper.create_a_barclamp()

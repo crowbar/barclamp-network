@@ -51,21 +51,20 @@ class NetworksController < BarclampController
   end
 
 
-  add_help(:network_create,[:name, :deployment_id, :conduit_id, :subnet, :dhcp_enabled, :use_vlan, :ip_ranges, :router_pref, :router_ip],[:post])
+  add_help(:network_create,[:deployment_id, :name, :conduit_id, :subnet, :dhcp_enabled, :ip_ranges, :router_pref, :router_ip],[:post])
   def network_create
-    name = params[:name]
     deployment_id = params[:deployment_id]
+    name = params[:name]
     conduit_id = params[:conduit_id]
     subnet = params[:subnet]
     dhcp_enabled = to_bool( params[:dhcp_enabled] )
-    use_vlan = to_bool( params[:use_vlan] )
     ip_ranges = params[:ip_ranges]
     router_pref = params[:router_pref]
     router_ip = params[:router_ip]
 
     Rails.logger.debug("Creating network #{name}");
 
-    ret = operations.network_create(name, deployment_id, conduit_id, subnet, dhcp_enabled, use_vlan, ip_ranges, router_pref, router_ip)
+    ret = operations.network_create(deployment_id, name, conduit_id, subnet, dhcp_enabled, ip_ranges, router_pref, router_ip)
 
     return render :text => ret[1], :status => ret[0] if ret[0] != 200
 
@@ -75,20 +74,19 @@ class NetworksController < BarclampController
   end
 
 
-  add_help(:network_update,[:id, :conduit_id, :subnet, :dhcp_enabled, :use_vlan, :ip_ranges, :router_pref, :router_ip],[:put])
+  add_help(:network_update,[:id, :conduit_id, :subnet, :dhcp_enabled, :ip_ranges, :router_pref, :router_ip],[:put])
   def network_update
     id = params[:id]
     conduit_id = params[:conduit_id]
     subnet = params[:subnet]
     dhcp_enabled = to_bool( params[:dhcp_enabled] )
-    use_vlan = to_bool( params[:use_vlan] )
     ip_ranges = params[:ip_ranges]
     router_pref = params[:router_pref]
     router_ip = params[:router_ip]
 
     Rails.logger.debug("Updating network #{id}");
 
-    ret = operations.network_update(id, conduit_id, subnet, dhcp_enabled, use_vlan, ip_ranges, router_pref, router_ip)
+    ret = operations.network_update(id, conduit_id, subnet, dhcp_enabled, ip_ranges, router_pref, router_ip)
 
     return render :text => ret[1], :status => ret[0] if ret[0] != 200
 

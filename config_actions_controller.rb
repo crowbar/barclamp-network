@@ -14,7 +14,7 @@
 #
 
 
-class Scaffolds::ConduitActionsController < ApplicationController
-  active_scaffold :'barclamp_network/conduit_action' do |conf|
+class Scaffolds::ConfigActionsController < ApplicationController
+  active_scaffold :'barclamp_network/config_action' do |conf|
   end
 end 

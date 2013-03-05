@@ -12,5 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class BarclampNetwork::CreateVlan < BarclampNetwork::ConduitAction
+class BarclampNetwork::CreateVlan < BarclampNetwork::ConfigAction
+  attr_accessible :tag
+
+  validates_presence_of :tag
 end

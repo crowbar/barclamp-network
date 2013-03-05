@@ -24,12 +24,13 @@ class BarclampNetwork::Network < ActiveRecord::Base
   belongs_to :snapshot
   has_one :vlan, :inverse_of => :network, :dependent => :destroy, :class_name => "BarclampNetwork::Vlan"
   has_and_belongs_to_many :interfaces, :join_table => "#{BarclampNetwork::TABLE_PREFIX}interfaces_networks", :class_name => "BarclampNetwork::Interface"
+  has_many :network_actions, :dependent => :destroy, :class_name => "BarclampNetwork::ConfigAction"
 
-  # attr_accessible :name, :dhcp_enabled, :use_vlan
+  # attr_accessible :name, :dhcp_enabled
 
-  validates_uniqueness_of :name, :presence => true, :scope => :snapshot_id
-  validates :use_vlan, :inclusion => { :in => [true, false] }
-  validates :dhcp_enabled, :inclusion => { :in => [true, false] }
+  validates :name, :presence => true
+  validates_uniqueness_of :name, :scope => :snapshot_id
+  validates_inclusion_of :dhcp_enabled, :in => [true, false]
   validates :subnet, :presence => true
   validates :ip_ranges, :presence => true
   #validates :snapshot, :presence => true
@@ -203,9 +204,7 @@ class BarclampNetwork::Network < ActiveRecord::Base
       "router" => router_addr,
       "subnet" => subnet.get_ip,
       "broadcast" => subnet.get_broadcast().to_s,
-      "usage" => name, 
-      "use_vlan" => "#{use_vlan}",
-      "vlan" => vlan.nil? ? "" :"#{vlan.tag}" }
+      "usage" => name }
     net_info["router_pref"] = "#{router_pref}" unless router_pref.nil?
     net_info
   end

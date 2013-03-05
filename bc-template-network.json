@@ -85,9 +85,8 @@
               ],
               "conduit_actions": [
                 {
-                  "CreateBond": {
-                    "team_mode": "6"
-                  }
+                  "action": "CreateBond",
+                  "team_mode": "6"
                 }
               ]
             },
@@ -176,9 +175,8 @@
               ],
               "conduit_actions": [
                 {
-                  "CreateBond": {
-                    "team_mode": "6"
-                  }
+                  "action": "CreateBond",
+                  "team_mode": "6"
                 }
               ]
             },
@@ -267,9 +265,8 @@
               ],
               "conduit_actions": [
                 {
-                  "CreateBond": {
-                    "team_mode": "6"
-                  }
+                  "action": "CreateBond",
+                  "team_mode": "6"
                 }
               ]
             },
@@ -332,31 +329,30 @@
       ],
       "networks": {
         "bmc": {
-          "vlan": 100,
-          "use_vlan": false,
-          "add_bridge": false,
           "subnet": "192.168.124.0/24",
           "dhcp_enabled": false,
           "ranges": {
             "host": { "start": "192.168.124.162", "end": "192.168.124.240" }
-          }
+          },
+          "network_actions": [
+          ]
         },
         "bmc_vlan": {
           "conduit": "intf2",
-          "vlan": 100,
-          "use_vlan": true,
-          "add_bridge": false,
           "subnet": "192.168.124.0/24",
           "dhcp_enabled": false,
           "ranges": {
             "host": { "start": "192.168.124.161", "end": "192.168.124.161" }
-          }
+          },
+          "network_actions": [
+            {
+              "action": "CreateVlan",
+              "tag": "100"
+            }
+          ]
         },
         "admin": {
           "conduit": "intf0",
-          "vlan": 100,
-          "use_vlan": false,
-          "add_bridge": false,
           "subnet": "192.168.124.0/24",
           "dhcp_enabled": false,
           "router": "192.168.124.1",
@@ -366,7 +362,9 @@
             "dhcp": { "start": "192.168.124.21", "end": "192.168.124.80" },
             "host": { "start": "192.168.124.81", "end": "192.168.124.160" },
             "switch": { "start": "192.168.124.241", "end": "192.168.124.250" }
-          }
+          },
+          "network_actions": [
+          ]
         }
       }
     }

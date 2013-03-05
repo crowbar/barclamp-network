@@ -19,7 +19,7 @@ class BarclampNetwork::Barclamp < Barclamp
   end
 
 
-  def create_proposal(config=nil)
+  def create_deployment(deployment_name=nil)
     deployment = super
 
     json = BarclampNetwork::Barclamp.read_network_json()
@@ -153,8 +153,8 @@ class BarclampNetwork::Barclamp < Barclamp
   end
 
 
-  def network_create(name, deployment_id, conduit_id, subnet, dhcp_enabled, use_vlan, ip_ranges, router_pref, router_ip)
-    Rails.logger.debug("Entering service network_create #{name}")
+  def network_create(deployment_id, name, conduit_id, subnet, dhcp_enabled, ip_ranges, router_pref, router_ip)
+    Rails.logger.debug("Entering network_create #{name}")
 
     network = nil
     begin
@@ -162,8 +162,7 @@ class BarclampNetwork::Barclamp < Barclamp
         subnet = BarclampNetwork::IpAddress.create!(:cidr => subnet)
         network = BarclampNetwork::Network.new(
             :name => name,
-            :dhcp_enabled => dhcp_enabled,
-            :use_vlan => use_vlan)
+            :dhcp_enabled => dhcp_enabled)
         network.subnet = subnet
 
         deployment = Deployment.find_key(deployment_id)
@@ -206,8 +205,8 @@ class BarclampNetwork::Barclamp < Barclamp
   end
 
 
-  def network_update(id, conduit_id, subnet, dhcp_enabled, use_vlan, ip_ranges, router_pref, router_ip)
-    Rails.logger.debug("Entering service network_update #{id}")
+  def network_update(id, conduit_id, subnet, dhcp_enabled, ip_ranges, router_pref, router_ip)
+    Rails.logger.debug("Entering network_update #{id}")
 
     network = nil
     begin
@@ -235,11 +234,6 @@ class BarclampNetwork::Barclamp < Barclamp
         if network.dhcp_enabled != dhcp_enabled
           Rails.logger.debug("Updating dhcp_enabled to #{dhcp_enabled}")
           network.dhcp_enabled = dhcp_enabled
-        end
-
-        if network.use_vlan != use_vlan
-          Rails.logger.debug("Updating use_vlan to #{use_vlan}")
-          network.use_vlan = use_vlan
         end
 
         if ip_ranges.nil? || ip_ranges.size < 1
@@ -326,7 +320,7 @@ class BarclampNetwork::Barclamp < Barclamp
 
 
   def network_delete(id)
-    Rails.logger.debug("Entering service network_delete #{id}")
+    Rails.logger.debug("Entering network_delete #{id}")
 
     begin
       network = BarclampNetwork::Network.find_key(id)
@@ -454,16 +448,8 @@ class BarclampNetwork::Barclamp < Barclamp
         }
 
         conduit_actions_config = conduit_rule_config["conduit_actions"]
-        conduit_actions_config.each { |conduit_action_config|
-          conduit_action_config.each { |conduit_action_name, conduit_action_parms|
-            conduit_action = BarclampNetwork.const_get(conduit_action_name).new()
-            conduit_rule.conduit_actions << conduit_action
-            conduit_action_parms.each { |param_name, param_value|
-              conduit_action.send( "#{param_name}=", param_value )
-            }
-            conduit_action.save!
-          }
-        }
+        conduit_actions = BarclampNetwork::ConfigAction.create_actions(conduit_actions_config)
+        conduit_rule.conduit_actions << conduit_actions
         conduit_rule.save!
       }
 
@@ -482,8 +468,6 @@ class BarclampNetwork::Barclamp < Barclamp
         case param_name
         when "conduit"
           network.conduit = BarclampNetwork::Conduit.find_key(param_value)
-        when "use_vlan"
-          network.use_vlan = param_value
         when "vlan"
           network.vlan = BarclampNetwork::Vlan.new(:tag => param_value)
         when "subnet"
@@ -505,6 +489,9 @@ class BarclampNetwork::Barclamp < Barclamp
             ip_range.end_address = BarclampNetwork::IpAddress.new(:cidr => end_address)
             network.ip_ranges << ip_range
           }
+        when "network_actions"
+          network_actions = BarclampNetwork::ConfigAction.create_actions(param_value)
+          network.network_actions << network_actions
         end
       }
 

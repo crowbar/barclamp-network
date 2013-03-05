@@ -15,7 +15,7 @@
 class BarclampNetwork::ConduitRule < ActiveRecord::Base
   has_many :conduit_filters, :dependent => :destroy, :class_name => "BarclampNetwork::ConduitFilter"
   has_many :interface_selectors, :dependent => :destroy, :class_name => "BarclampNetwork::InterfaceSelector"
-  has_many :conduit_actions, :dependent => :destroy, :class_name => "BarclampNetwork::ConduitAction"
+  has_many :conduit_actions, :dependent => :destroy, :class_name => "BarclampNetwork::ConfigAction"
   belongs_to :conduit, :inverse_of => :conduit_rules, :class_name => "BarclampNetwork::Conduit"
 
   validates :interface_selectors, :presence => true

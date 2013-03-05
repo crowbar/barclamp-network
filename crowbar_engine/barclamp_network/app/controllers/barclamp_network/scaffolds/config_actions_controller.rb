@@ -11,16 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
-class CreateConduitActions < ActiveRecord::Migration
-  def change
-    create_table "#{BarclampNetwork::TABLE_PREFIX}conduit_actions" do |t|
-      t.references :conduit_rule
-      t.string :type
-      t.string :name
-      t.string :team_mode
-
-      t.timestamps
-    end
+class Scaffolds::ConfigActionsController < ApplicationController
+  active_scaffold :'barclamp_network/config_action' do |conf|
   end
-end
+end 

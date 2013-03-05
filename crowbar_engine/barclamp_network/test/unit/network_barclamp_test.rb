@@ -32,11 +32,10 @@ class NetworkBarclampTest < ActiveSupport::TestCase
     deployment = barclamp.create_proposal()
 
     http_error, network = barclamp.network_create(
-        "public2",
         deployment.id,
+        "public2",
         "intf0",
         "192.168.122.0/24",
-        false,
         false,
         JSON.parse('{ "host": { "start": "192.168.122.2", "end": "192.168.122.49" }, "dhcp": { "start": "192.168.122.50", "end": "192.168.122.127" }}'),
         nil,
@@ -52,11 +51,10 @@ class NetworkBarclampTest < ActiveSupport::TestCase
     deployment = barclamp.create_proposal()
 
     http_error, network = barclamp.network_create(
-        "public3",
         deployment.id,
+        "public3",
         "intf0",
         "192.168.122.0/24",
-        false,
         false,
         JSON.parse('{ "host": { "start": "192.168.122.2", "end": "192.168.122.49" }, "dhcp": { "start": "192.168.122.50", "end": "192.168.122.127" }}'),
         "5",
@@ -72,11 +70,10 @@ class NetworkBarclampTest < ActiveSupport::TestCase
     deployment = barclamp.create_proposal()
 
     http_error, network = barclamp.network_create(
-        "public4",
         deployment.id,
+        "public4",
         "intf0",
         "192.168.122.0/24",
-        false,
         false,
         nil,
         5,
@@ -139,7 +136,6 @@ class NetworkBarclampTest < ActiveSupport::TestCase
         "intf0",
         "192.168.122.0/24",
         false,
-        false,
         JSON.parse('{ "host": { "start": "192.168.122.2", "end": "192.168.122.49" }, "dhcp": { "start": "192.168.122.50", "end": "192.168.122.127" }, "admin": { "start": "192.168.122.128", "end": "192.168.122.149" }}'),
         5,
         "192.168.122.1" )
@@ -162,7 +158,6 @@ class NetworkBarclampTest < ActiveSupport::TestCase
         net_name,
         "intf0",
         "192.168.122.0/24",
-        false,
         false,
         JSON.parse('{ "host": { "start": "192.168.122.2", "end": "192.168.122.49" }}'),
         5,
@@ -187,7 +182,6 @@ class NetworkBarclampTest < ActiveSupport::TestCase
         "intf0",
         "192.168.122.0/24",
         false,
-        false,
         '',
         5,
         "192.168.122.1" )
@@ -208,7 +202,6 @@ class NetworkBarclampTest < ActiveSupport::TestCase
         net_name,
         "intf0",
         "192.168.122.0/24",
-        false,
         false,
         JSON.parse('{ "host": { "end": "192.168.122.49" }, "dhcp": { "start": "192.168.122.50", "end": "192.168.122.127" }}'),
         5,
@@ -231,7 +224,6 @@ class NetworkBarclampTest < ActiveSupport::TestCase
         "intf0",
         "192.168.122.0/24",
         false,
-        false,
         JSON.parse('{ "host": { "start": "192.168.122.2" }, "dhcp": { "start": "192.168.122.50", "end": "192.168.122.127" }}'),
         5,
         "192.168.122.1" )
@@ -253,7 +245,6 @@ class NetworkBarclampTest < ActiveSupport::TestCase
         "intf0",
         "192.168.122.0/24",
         false,
-        false,
         JSON.parse('{ "host": { "start": "192.168.122.2", "end": "192.168.122.49" }, "dhcp": { "start": "192.168.122.50", "end": "192.168.122.127" }}'),
         nil,
         "192.168.122.1" )
@@ -274,7 +265,6 @@ class NetworkBarclampTest < ActiveSupport::TestCase
         net_name,
         "intf0",
         "192.168.122.0/24",
-        false,
         false,
         JSON.parse('{ "host": { "start": "192.168.122.2", "end": "192.168.122.49" }, "dhcp": { "start": "192.168.122.50", "end": "192.168.122.127" }}'),
         "5",
@@ -488,11 +478,10 @@ class NetworkBarclampTest < ActiveSupport::TestCase
     conduit.save!
 
     http_error, network = barclamp.network_create(
-        name,
         deployment.id,
+        name,
         "intf0",
         "192.168.122.0/24",
-        false,
         false,
         JSON.parse('{ "host": { "start": "192.168.122.2", "end": "192.168.122.5" }, "dhcp": { "start": "192.168.122.50", "end": "192.168.122.127" }}'),
         "5",

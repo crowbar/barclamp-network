@@ -35,12 +35,13 @@ en:
         bonds: Bonds
         bus_maps: Bus Maps
         buses: Buses
-        conduit_actions: Conduit Actions
+        config_actions: Config Actions
         conduit_filters: Conduit Filters
         conduit_rules: Conduit Rules
         conduits: Conduits
         create_bonds: Create Bonds
         create_vlans: Create VLANs
+        create_bridges: Create Bridges
         interface_maps: Interface Maps
         interface_selectors: Interface Selectors
         interfaces: Interfaces

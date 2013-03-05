@@ -28,7 +28,7 @@ class ConduitRuleTest < ActiveSupport::TestCase
   test "ConduitRule creation: failure due to missing interface selectors" do
     rule = BarclampNetwork::ConduitRule.new()
     rule.conduit_filters << NetworkTestHelper.create_a_conduit_filter()
-    rule.conduit_actions << NetworkTestHelper.create_a_conduit_action()
+    rule.conduit_actions << NetworkTestHelper.create_a_config_action()
     assert_raise ActiveRecord::RecordInvalid do
       rule.save!
     end    
@@ -53,7 +53,7 @@ class ConduitRuleTest < ActiveSupport::TestCase
 
     # Verify conduit action destroyed on conduit rule destroy
     assert_raise ActiveRecord::RecordNotFound do
-      BarclampNetwork::ConduitAction.find(conduit_action_id)
+      BarclampNetwork::ConfigAction.find(conduit_action_id)
     end
 
     # Verify interface selector destroyed on conduit rule destroy

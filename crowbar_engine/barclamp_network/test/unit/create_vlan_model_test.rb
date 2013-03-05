@@ -14,10 +14,18 @@
 
 require 'test_helper'
  
-class ConduitActionTest < ActiveSupport::TestCase
+class CreateVlanTest < ActiveSupport::TestCase
 
   # Test successful creation
-  test "ConduitAction creation: success" do
-    BarclampNetwork::ConduitAction.create!
+  test "CreateVlan creation: success" do
+    BarclampNetwork::CreateVlan.create!( :order => 1, :tag => 200 )
+  end
+
+
+  # Test creation failure when missing tag
+  test "CreateVlan creation: failure when missing tag" do
+    assert_raise ActiveRecord::RecordInvalid do
+      BarclampNetwork::CreateVlan.create!( :order => 1 )
+    end
   end
 end
