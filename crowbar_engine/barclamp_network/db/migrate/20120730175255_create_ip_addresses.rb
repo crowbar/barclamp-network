@@ -18,6 +18,7 @@ class CreateIpAddresses < ActiveRecord::Migration
       t.string :cidr
       t.integer :subnet_id
       t.integer :router_id
+      t.integer :bridge_id
       t.integer :start_ip_range_id
       t.integer :end_ip_range_id
 

@@ -6,11 +6,12 @@ BarclampNetwork::Engine.routes.draw do
     resources :bonds do as_routes end
     resources :bus_maps do as_routes end
     resources :buses do as_routes end
-    resources :conduit_actions do as_routes end
+    resources :config_actions do as_routes end
     resources :conduit_filters do as_routes end
     resources :conduit_rules do as_routes end
     resources :conduits do as_routes end
     resources :create_bonds do as_routes end
+    resources :create_bridges do as_routes end
     resources :create_vlans do as_routes end
     resources :interface_maps do as_routes end
     resources :interface_selectors do as_routes end
