@@ -33,6 +33,7 @@ en:
         allocated_ip_addresses: Allocated IP Addresses
         bmc_interfaces: BMC Interfaces
         bonds: Bonds
+        bridges: Bridges
         bus_maps: Bus Maps
         buses: Buses
         config_actions: Config Actions

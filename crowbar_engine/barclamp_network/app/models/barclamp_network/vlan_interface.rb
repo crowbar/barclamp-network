@@ -13,6 +13,5 @@
 # limitations under the License.
 
 class BarclampNetwork::VlanInterface < BarclampNetwork::Interface
-  has_many :interfaces, :inverse_of => :vlan_interface, :dependent => :nullify, :class_name => "BarclampNetwork::Interface"
   belongs_to :vlan, :inverse_of => :vlan_interfaces, :class_name => "BarclampNetwork::Vlan"
 end
