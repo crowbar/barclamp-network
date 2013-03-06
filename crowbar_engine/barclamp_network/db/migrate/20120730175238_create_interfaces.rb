@@ -17,11 +17,10 @@ class CreateInterfaces < ActiveRecord::Migration
     create_table "#{BarclampNetwork::TABLE_PREFIX}interfaces" do |t|
       t.string :type
       t.string :name
-      t.integer :team_mode
-      t.references :vlan_interface
-      t.references :bond
-      t.references :vlan
       t.references :node
+      t.references :interface
+      t.integer :team_mode
+      t.references :vlan
 
       t.timestamps
     end

@@ -4,6 +4,7 @@ BarclampNetwork::Engine.routes.draw do
     resources :allocated_ip_addresses do as_routes end
     resources :bmc_interfaces do as_routes end
     resources :bonds do as_routes end
+    resources :bridges do as_routes end
     resources :bus_maps do as_routes end
     resources :buses do as_routes end
     resources :config_actions do as_routes end
