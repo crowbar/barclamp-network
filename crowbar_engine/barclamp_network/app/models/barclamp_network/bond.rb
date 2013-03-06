@@ -13,17 +13,15 @@
 # limitations under the License.
 
 class BarclampNetwork::Bond < BarclampNetwork::Interface
-  attr_accessible :team_mode, :name
-
-  has_many :physical_interfaces, :dependent => :nullify, :class_name => "BarclampNetwork::PhysicalInterface"
+  attr_accessible :team_mode
 
   validates :team_mode, :presence => true, :numericality => { :only_integer => true, :greater_than_or_equal_to => 0, :less_than_or_equal_to => 6 }
-  validate :has_two_or_more_physical_interfaces
+  validate :has_two_or_more_interfaces
 
 
-  def has_two_or_more_physical_interfaces
-    if physical_interfaces.size < 2
-      errors.add(:two_or_more_physical_interfaces, "A Bond must have at least two physical interfaces")
+  def has_two_or_more_interfaces
+    if interfaces.size < 2
+      errors.add(:two_or_more_interfaces, "A Bond must have at least two interfaces")
     end
   end
 end

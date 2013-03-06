@@ -13,7 +13,7 @@
 # limitations under the License. 
 # 
 
-class NetworksController < BarclampController
+class BarclampNetwork::NetworksController < BarclampsController
   # Make a copy of the barclamp controller help
   self.help_contents = Array.new(superclass.help_contents)
  

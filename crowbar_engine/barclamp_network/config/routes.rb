@@ -4,6 +4,7 @@ BarclampNetwork::Engine.routes.draw do
     resources :allocated_ip_addresses do as_routes end
     resources :bmc_interfaces do as_routes end
     resources :bonds do as_routes end
+    resources :bridges do as_routes end
     resources :bus_maps do as_routes end
     resources :buses do as_routes end
     resources :config_actions do as_routes end
@@ -29,7 +30,6 @@ BarclampNetwork::Engine.routes.draw do
     resources :vlans do as_routes end
   end
 
-  # CB1 - should move to network barclamp!
   scope 'network' do
     version = "2.0"
     resources :networks, :conduits
@@ -38,26 +38,19 @@ BarclampNetwork::Engine.routes.draw do
     get 'vlan(/:id)', :controller => 'networks', :action=>'vlan', :constraints => { :id => /.*/ }, :as => :vlan
   end
 
-  # API routes (must be json and must prefix 2.0)()
   scope :defaults => {:format=> 'json'} do
-  # 2.0 API Pattern
-  # depricated 2.0 API Pattern
-    scope '2.0' do
-      constraints(:id => /([a-zA-Z0-9\-\.\_]*)/, :version => /[0-9].[0-9]/ ) do
-        scope 'crowbar' do    # MOVE TO GENERIC!
-          scope '2.0' do      # MOVE TO GENERIC!
-            get    "network/networks", :controller => 'networks', :action=>'networks'     # MOVE TO GENERIC!
-            get    "network/networks/:id", :controller => 'networks', :action=>'network_show'     # MOVE TO GENERIC!
-            post   "network/networks", :controller => 'networks', :action=>'network_create'     # MOVE TO GENERIC!
-            put    "network/networks/:id", :controller => 'networks', :action=>'network_update'     # MOVE TO GENERIC!
-            delete "network/networks/:id", :controller => 'networks', :action=>'network_delete'     # MOVE TO GENERIC!
-            post   "network/networks/:id/allocate_ip", :controller => 'networks', :action=>'network_allocate_ip'
-            delete "network/networks/:id/deallocate_ip/:network_id/:node_id", :controller => 'networks', :action=>'network_deallocate_ip'
-            post   "network/networks/:id/enable_interface", :controller => 'networks', :action=>'network_enable_interface'
+    constraints( :version => /v[1-9]/ ) do
+      scope ':version' do
+        scope :module => "barclamp_network" do
+          resources :networks do
+            member do  
+              put 'allocate_ip'
+              put 'deallocate_ip'
+              put 'enable_interface'
+            end
           end
         end
       end
     end
   end
-
 end
