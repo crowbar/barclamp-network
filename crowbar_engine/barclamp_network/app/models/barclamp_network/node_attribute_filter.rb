@@ -14,11 +14,21 @@
 
 class BarclampNetwork::NodeAttributeFilter < BarclampNetwork::ConduitFilter
   def match(node)
-    attr_name = self.attr.split(".")
-    attrib = node.get_attrib(attr_name[0])
+    self.attr =~ /([^.]+)(\..+)?/
+    match = Regexp.last_match
+    attr_name = match[1]
+    attrib = node.get_attrib(attr_name)
 
-    op_str = ".#{attr_name[1]}" if attr_name.length > 1
+    eval_str = "self.value #{self.comparitor} attrib.value()#{match[2]}"
 
-    eval "self.value #{self.comparitor} attrib.value()#{op_str}"
+    begin
+      result = eval eval_str
+    rescue => ex
+      Rails.logger.error("Caught an exception while evaluating \"#{eval_str}\"")
+      Rails.logger.error("#{ex.message}")
+      Rails.logger.error("#{ex.backtrack.join('\n')}")
+    end
+
+    result
   end
 end

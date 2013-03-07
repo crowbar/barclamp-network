@@ -72,7 +72,7 @@ class NetworkUtilsTest < ActiveSupport::TestCase
     network.save!
 
     http_error, network = BarclampNetwork::NetworkUtils.find_network("public")
-    assert_equal 200, http_error
+    assert_equal 200, http_error, "Return code of 200 expected, got #{http_error}: #{network}"
     assert_not_nil network
     assert_equal network.snapshot.id, deployment.proposed_snapshot.id
   end
