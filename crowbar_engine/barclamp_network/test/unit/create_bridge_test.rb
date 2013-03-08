@@ -26,8 +26,8 @@ class CreateBridgeTest < ActiveSupport::TestCase
   test "CreateBridge creation: success with ip" do
     actions = create_bridge_with_ip()
     
-    assert 1, actions.size
-    assert 1, actions[0].order
+    assert_equal 1, actions.size
+    assert_equal 1, actions[0].order
     assert actions[0].instance_of? BarclampNetwork::CreateBridge
     assert_equal "192.168.123.1", actions[0].ip.cidr
   end

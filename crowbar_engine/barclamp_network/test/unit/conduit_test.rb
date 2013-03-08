@@ -64,7 +64,7 @@ class ConduitTest < ActiveSupport::TestCase
     destroy_preloaded_conduits()
 
     # Create a node with a couple of Roles
-    node = Node.new(:name => "fred.flintstone.org")
+    node = NetworkTestHelper.create_node()
 
     NetworkTestHelper.add_role(snapshot, node, "ganglia_client")
     NetworkTestHelper.add_role(snapshot, node, "dns_server")
@@ -94,7 +94,7 @@ class ConduitTest < ActiveSupport::TestCase
     rule1.conduit_filters << BarclampNetwork::RoleFilter.create!(:value => "^ganglia_.+")
 
     naf1 = BarclampNetwork::NodeAttributeFilter.new()
-    naf1.attr = "nics.size"
+    naf1.attr = "nics.size.to_s"
     naf1.comparitor = "=="
     naf1.value = "2"
     rule1.conduit_filters << naf1
@@ -120,7 +120,7 @@ class ConduitTest < ActiveSupport::TestCase
     rule2.conduit_filters << BarclampNetwork::RoleFilter.create!(:value => "^dns_.+")
 
     naf2 = BarclampNetwork::NodeAttributeFilter.new()
-    naf2.attr = "nics.size"
+    naf2.attr = "nics.size.to_s"
     naf2.comparitor = "=="
     naf2.value = "2"
     rule2.conduit_filters << naf2
@@ -153,7 +153,7 @@ class ConduitTest < ActiveSupport::TestCase
     rule3.conduit_filters << BarclampNetwork::RoleFilter.create!(:value => "^dns_.+")
 
     naf3 = BarclampNetwork::NodeAttributeFilter.new()
-    naf3.attr = "nics.size"
+    naf3.attr = "nics.size.to_s"
     naf3.comparitor = "=="
     naf3.value = "42"
     rule3.conduit_filters << naf3
@@ -179,7 +179,7 @@ class ConduitTest < ActiveSupport::TestCase
     rule4.conduit_filters << BarclampNetwork::RoleFilter.create!(:value => "^ganglia_.+")
 
     naf4 = BarclampNetwork::NodeAttributeFilter.new()
-    naf4.attr = "nics.size"
+    naf4.attr = "nics.size.to_s"
     naf4.comparitor = "=="
     naf4.value = "2"
     rule4.conduit_filters << naf4
@@ -213,10 +213,12 @@ class ConduitTest < ActiveSupport::TestCase
     result = BarclampNetwork::Conduit.get_conduit_rules(node)
 
     result_conduit_rule1 = result["intf0"]
-    assert rule1, result_conduit_rule1
+    assert_not_nil result_conduit_rule1
+    assert_equal rule1.id, result_conduit_rule1.id
 
     result_conduit_rule2 = result["intf1"]
-    assert rule4, result_conduit_rule2
+    assert_not_nil result_conduit_rule2
+    assert_equal rule4.id, result_conduit_rule2.id
 
     result_conduit_rule3 = result["intf2"]
     assert result_conduit_rule3.nil?

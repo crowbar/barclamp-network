@@ -35,10 +35,10 @@ class ConfigActionModelTest < ActiveSupport::TestCase
 
     actions = BarclampNetwork::ConfigAction.create_actions(actions_config)
 
-    assert 3, actions.size
-    assert 1, actions[0].order
-    assert 2, actions[1].order
-    assert 3, actions[2].order
+    assert_equal 3, actions.size
+    assert_equal 1, actions[0].order
+    assert_equal 2, actions[1].order
+    assert_equal 3, actions[2].order
     assert actions[0].instance_of? BarclampNetwork::ConfigAction
     assert actions[1].instance_of? BarclampNetwork::CreateBond
     assert actions[2].instance_of? BarclampNetwork::CreateVlan
