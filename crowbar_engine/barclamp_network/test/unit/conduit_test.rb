@@ -20,7 +20,7 @@ class ConduitTest < ActiveSupport::TestCase
   # Test successful creation
   test "Conduit creation: success" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
     destroy_preloaded_conduits()
 
     conduit = NetworkTestHelper.create_or_get_conduit(deployment, "intf0")
@@ -41,7 +41,7 @@ class ConduitTest < ActiveSupport::TestCase
   # Test delete cascade
   test "Conduit deletion: cascade to conduit rules" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
     destroy_preloaded_conduits()
 
     conduit = NetworkTestHelper.create_or_get_conduit(deployment, "intf0")
@@ -59,7 +59,7 @@ class ConduitTest < ActiveSupport::TestCase
   # Test successful retrieval of conduit rules
   test "Successful retrieval of conduit rules" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
     snapshot = deployment.proposed_snapshot
     destroy_preloaded_conduits()
 
@@ -363,7 +363,7 @@ class ConduitTest < ActiveSupport::TestCase
 
   def test_build_node_map(role_pattern, c1_intf_selectors, c2_intf_selectors)
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
     snapshot = deployment.proposed_snapshot
     destroy_preloaded_conduits()
 

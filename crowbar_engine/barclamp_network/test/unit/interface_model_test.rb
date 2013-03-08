@@ -35,7 +35,7 @@ class InterfaceModelTest < ActiveSupport::TestCase
   # Test cascade allocated ip deletion on interface deletion
   test "Interface deletion: cascade delete to allocated ips" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     network = NetworkTestHelper.create_a_network(deployment)
     network.save!

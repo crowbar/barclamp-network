@@ -20,7 +20,7 @@ class NetworkModelTest < ActiveSupport::TestCase
   # Successful create
   test "Network creation: success" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     network = NetworkTestHelper.create_a_network(deployment)
     network.save!
@@ -30,7 +30,7 @@ class NetworkModelTest < ActiveSupport::TestCase
   # Successful delete
   test "Network deletion: success" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     network = NetworkTestHelper.create_a_network(deployment)
     network.save!
@@ -76,7 +76,7 @@ class NetworkModelTest < ActiveSupport::TestCase
   # name does not exist
   test "Network creation: failure due to missing name" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     network = BarclampNetwork::Network.new()
     network.dhcp_enabled = true
@@ -92,7 +92,7 @@ class NetworkModelTest < ActiveSupport::TestCase
   # dhcp_enabled does not exist
   test "Network creation: failure due to missing dhcp_enabled" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     network = BarclampNetwork::Network.new
     network.name = "fred"
@@ -108,7 +108,7 @@ class NetworkModelTest < ActiveSupport::TestCase
   # subnet does not exist
   test "Network creation: failure due to missing subnet" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     network = BarclampNetwork::Network.new
     network.name = "fred"
@@ -124,7 +124,7 @@ class NetworkModelTest < ActiveSupport::TestCase
   # no ip_ranges specified
   test "Network creation: failure due to no ip_ranges" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     network = BarclampNetwork::Network.new
     network.name = "fred"
@@ -140,7 +140,7 @@ class NetworkModelTest < ActiveSupport::TestCase
   # Test cascade Vlan deletion on Network deletion
   test "Network deletion: cascade delete to Vlans" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     network = NetworkTestHelper.create_a_network(deployment)
     network.vlan = BarclampNetwork::Vlan.new(:tag => 100)
@@ -157,7 +157,7 @@ class NetworkModelTest < ActiveSupport::TestCase
   # Test ip alloc failure due to no range
   test "Network allocate ip: failure due to no range" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     network = NetworkTestHelper.create_a_network(deployment)
     network.save!
@@ -173,7 +173,7 @@ class NetworkModelTest < ActiveSupport::TestCase
   # Test ip alloc failure due to no node
   test "Network allocate ip: failure due to no node" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     network = NetworkTestHelper.create_a_network(deployment)
     network.save!
@@ -186,7 +186,7 @@ class NetworkModelTest < ActiveSupport::TestCase
   # Test ip alloc success due to node already has an ip
   test "Network allocate_ip: success due to node already has allocated IP" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     node = Node.new(:name => "fred.flintstone.org")
     node.save!
@@ -211,7 +211,7 @@ class NetworkModelTest < ActiveSupport::TestCase
   # Test ip alloc success due to suggested ip ok
   test "Network allocate_ip: success due to suggested IP being available" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     ip_address = "192.168.122.3"
     node = Node.new(:name => "fred.flintstone.org")
@@ -231,7 +231,7 @@ class NetworkModelTest < ActiveSupport::TestCase
   # Test ip alloc success
   test "Network allocate_ip: success" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     node = Node.new(:name => "fred.flintstone.org")
     node.save!
@@ -252,7 +252,7 @@ class NetworkModelTest < ActiveSupport::TestCase
   # Test ip alloc success when suggested ip already allocated
   test "Network allocate_ip: success due to suggested IP unavailable" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     network = NetworkTestHelper.create_a_network(deployment)
     network.save!
@@ -276,7 +276,7 @@ class NetworkModelTest < ActiveSupport::TestCase
   # Test ip alloc failure due to out of addresses
   test "Network allocate_ip: failure due to out of addresses" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     network = NetworkTestHelper.create_a_network(deployment)
     network.save!
@@ -298,7 +298,7 @@ class NetworkModelTest < ActiveSupport::TestCase
   # Deallocate IP failure due to missing node
   test "Network deallocate_ip: failure due to missing node" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     network = NetworkTestHelper.create_a_network(deployment)
     network.save!
@@ -311,7 +311,7 @@ class NetworkModelTest < ActiveSupport::TestCase
   # Deallocate IP success due to no IP allocated to node
   test "Network deallocate_ip: success due to no IP allocated" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     node = Node.new(:name => "fred.flintstone.org")
     node.save!
@@ -331,7 +331,7 @@ class NetworkModelTest < ActiveSupport::TestCase
   # Deallocate IP success - perfect path
   test "Network deallocate_ip: success" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     node = Node.new(:name => "fred.flintstone.org")
     node.save!
@@ -356,7 +356,7 @@ class NetworkModelTest < ActiveSupport::TestCase
   # Enable interface success due to no existing interface
   test "Network enable_ip: success" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     node = Node.new(:name => "fred.flintstone.org")
     node.save!
@@ -373,7 +373,7 @@ class NetworkModelTest < ActiveSupport::TestCase
   test "Network enable_ip: success due to existing interface" do
     barclamp = NetworkTestHelper.create_a_barclamp()
     barclamp.save!
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
     deployment.save!
 
     node = Node.new(:name => "fred.flintstone.org")
