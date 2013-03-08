@@ -15,12 +15,12 @@
 class BarclampNetwork::NetworkUtils
 
   ACTIVE_SNAPSHOT = 0
-  PROPOSED_SNAPSHOT = 1
+  PROPOSED_SNAPSHOT = 1 
 
 
   def self.find_network(
       network_id,
-      deployment_id = Barclamp::DEFAULT_DEPLOYMENT_NAME,
+      deployment_id = BarclampNetwork::Barclamp::DEPLOYMENT_NAME,
       snapshot_type = PROPOSED_SNAPSHOT)
 
     deployment = find_deployment deployment_id
