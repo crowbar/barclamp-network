@@ -23,35 +23,22 @@ class BarclampNetwork::NetworkUtils
       deployment_id = Barclamp::DEFAULT_DEPLOYMENT_NAME,
       snapshot_type = PROPOSED_SNAPSHOT)
 
-    # Find the barclamp config
-    deployment = Deployment.find_key(deployment_id)
+    # If the passed deployment_id is a DB ID then...
+    if Deployment.db_id?(deployment_id)
+      # Do a straight lookup on the deployment
+      deployment = Deployment.find_key(deployment_id)
+    else
+      # The deployment_id must be a name, and deployment names are only unique
+      # within a given barclamp, so first get the barclamp
+      barclamp = BarclampNetwork::Barclamp.find_key(BarclampNetwork::Barclamp::BARCLAMP_NAME)
+      deployment = Deployment.where("barclamp_id = ? AND name = ?", barclamp.id, deployment_id).first
+    end
+
     return [404, "There is no Deployment with id #{deployment_id}"] if deployment.nil?
 
     # If there is no proposed, then return the active one instead
-    puts("Requested snapshot_type=#{snapshot_type}")
     snapshot_type = ACTIVE_SNAPSHOT if snapshot_type == PROPOSED_SNAPSHOT && deployment.proposed_snapshot.nil?
-    puts("Using snapshot_type=#{snapshot_type}")
     snapshot = (snapshot_type == ACTIVE_SNAPSHOT ? deployment.active :  deployment.proposed)
-
-    if deployment.active.nil?
-      puts("fn: deployment.active=nil")
-    else
-      puts("fn: deployment.active.id=#{deployment.active.id}")
-    end
-
-    if deployment.proposed.nil?
-      puts("deployment.proposed=nil")
-    else
-      puts("deployment.proposed.id=#{deployment.proposed.id}")
-    end
-
-    if snapshot.nil?
-      puts("snapshot=nil")
-    else
-      puts("snapshot.id=#{snapshot.id}")
-      puts("snapshot is the active one") if !deployment.active.nil? and snapshot.id == deployment.active.id
-      puts("snapshot is the proposed one") if !deployment.proposed.nil? and snapshot.id == deployment.proposed.id
-    end
 
     return [404, "There is no active snapshot"] if snapshot.nil?
 
@@ -70,7 +57,6 @@ class BarclampNetwork::NetworkUtils
       end
     else
       # network_id is a name, so look up the network by Snapshot ID and network name
-      puts("Looking up Networks by snapshot_id=#{snapshot.id}, and network_id=#{network_id}")
       network = BarclampNetwork::Network.where("snapshot_id = ? AND name = ?", snapshot.id, network_id).first
       return [404, "There is no network #{network_id} with Deployment/Instance #{log_name(deployment)}/#{log_name(snapshot)}"] if network.nil?
     end
