@@ -11,8 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#en.barclamp_network.networks.index.network_count
-en:
+#
   network_name: &network_name Network Name
   network_id: &network_id Network ID
   dhcp_enabled: &dhcp_enabled DHCP Enabled
