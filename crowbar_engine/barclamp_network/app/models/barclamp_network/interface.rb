@@ -13,14 +13,15 @@
 # limitations under the License.
 
 class BarclampNetwork::Interface < ActiveRecord::Base
-  attr_protected :id
+  attr_accessible :id
+  attr_accessible :name
   
   has_many :allocated_ip_addresses, :inverse_of => :interface, :dependent => :destroy, :class_name => "BarclampNetwork::AllocatedIpAddress"
-  belongs_to :vlan_interface, :inverse_of => :interfaces, :class_name => "BarclampNetwork::VlanInterface"
   belongs_to :node
   has_and_belongs_to_many :networks, :join_table => "#{BarclampNetwork::TABLE_PREFIX}interfaces_networks", :class_name => "BarclampNetwork::Network"
-  
-  # attr_accessible :name
+
+  has_many :interfaces, :inverse_of => :interface, :dependent => :nullify, :class_name => "BarclampNetwork::Interface"
+  belongs_to :interface, :inverse_of => :interfaces, :class_name => "BarclampNetwork::Interface"
 
   validates :name, :presence => true
 end

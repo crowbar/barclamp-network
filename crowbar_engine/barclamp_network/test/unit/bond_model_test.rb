@@ -19,22 +19,22 @@ class BondModelTest < ActiveSupport::TestCase
   # Test successful creation
   test "Bond creation: success" do
     bond = BarclampNetwork::Bond.new( :name => "fred", :team_mode => 6 )
-    bond.physical_interfaces << BarclampNetwork::PhysicalInterface.new(:name => "wilma")
-    bond.physical_interfaces << BarclampNetwork::PhysicalInterface.new(:name => "betty")
+    bond.interfaces << BarclampNetwork::PhysicalInterface.new(:name => "wilma")
+    bond.interfaces << BarclampNetwork::PhysicalInterface.new(:name => "betty")
     assert bond.save!
     assert_equal "fred", bond.name
     assert_equal 6, bond.team_mode
-    assert_equal 2, bond.physical_interfaces.count
-    assert bond.physical_interfaces.first.name.in? %w(wilma betty)
-    assert bond.physical_interfaces.second.name.in? %w(wilma betty)
+    assert_equal 2, bond.interfaces.count
+    assert bond.interfaces.first.name.in? %w(wilma betty)
+    assert bond.interfaces.second.name.in? %w(wilma betty)
   end
 
 
   # Test creation failure due to missing team_mode
   test "Bond creation: failure due to missing team_mode" do
     bond = BarclampNetwork::Bond.new( :name => "fred" )
-    bond.physical_interfaces << BarclampNetwork::PhysicalInterface.new(:name => "wilma")
-    bond.physical_interfaces << BarclampNetwork::PhysicalInterface.new(:name => "betty")
+    bond.interfaces << BarclampNetwork::PhysicalInterface.new(:name => "wilma")
+    bond.interfaces << BarclampNetwork::PhysicalInterface.new(:name => "betty")
     assert_raise ActiveRecord::RecordInvalid do
       bond.save!
     end
@@ -44,8 +44,8 @@ class BondModelTest < ActiveSupport::TestCase
   # Test creation failure due to low team_mode
   test "Bond creation: failure due to low team_mode" do
     bond = BarclampNetwork::Bond.new( :name => "fred", :team_mode => -1 )
-    bond.physical_interfaces << BarclampNetwork::PhysicalInterface.new(:name => "wilma")
-    bond.physical_interfaces << BarclampNetwork::PhysicalInterface.new(:name => "betty")
+    bond.interfaces << BarclampNetwork::PhysicalInterface.new(:name => "wilma")
+    bond.interfaces << BarclampNetwork::PhysicalInterface.new(:name => "betty")
     assert_raise ActiveRecord::RecordInvalid do
       bond.save!
     end
@@ -55,8 +55,8 @@ class BondModelTest < ActiveSupport::TestCase
   # Test creation failure due to high team_mode
   test "Bond creation: failure due to high team_mode" do
     bond = BarclampNetwork::Bond.new( :name => "fred", :team_mode => 7 )
-    bond.physical_interfaces << BarclampNetwork::PhysicalInterface.new(:name => "wilma")
-    bond.physical_interfaces << BarclampNetwork::PhysicalInterface.new(:name => "betty")
+    bond.interfaces << BarclampNetwork::PhysicalInterface.new(:name => "wilma")
+    bond.interfaces << BarclampNetwork::PhysicalInterface.new(:name => "betty")
     assert_raise ActiveRecord::RecordInvalid do
       bond.save!
     end
@@ -65,7 +65,7 @@ class BondModelTest < ActiveSupport::TestCase
 
   # Test creation failure due to no physical interfaces
   test "Bond creation: failure due to no physical interfaces" do
-    bond = BarclampNetwork::Bond.new( :name => "fred", :team_mode => 7 )
+    bond = BarclampNetwork::Bond.new( :name => "fred", :team_mode => 6 )
     assert_raise ActiveRecord::RecordInvalid do
       bond.save!
     end
@@ -74,8 +74,8 @@ class BondModelTest < ActiveSupport::TestCase
 
   # Test creation failure due to 1 physical interface
   test "Bond creation: failure due to 1 physical interface" do
-    bond = BarclampNetwork::Bond.new( :name => "fred", :team_mode => 7 )
-    bond.physical_interfaces << BarclampNetwork::PhysicalInterface.new(:name => "wilma")
+    bond = BarclampNetwork::Bond.new( :name => "fred", :team_mode => 6 )
+    bond.interfaces << BarclampNetwork::PhysicalInterface.new(:name => "wilma")
     assert_raise ActiveRecord::RecordInvalid do
       bond.save!
     end

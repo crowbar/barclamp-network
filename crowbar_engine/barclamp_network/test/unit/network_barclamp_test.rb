@@ -92,7 +92,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
     create_a_network(barclamp, deployment, net_name)
 
     # Get by name
-    network = get_a_network(barclamp, net_name)
+    network = get_a_network(barclamp, deployment.id, net_name)
     assert_equal net_name, network.name, "Expected to get network with name #{net_name}, got network with name #{network.name}"
   end
 
@@ -107,7 +107,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
 
     # Get by id
     id=network.id
-    network = get_a_network(barclamp, id)
+    network = get_a_network(barclamp, deployment.id, id)
     assert_equal id, network.id, "Expected to get network with id #{id}, got network with id #{network.id}"
   end
   
@@ -115,9 +115,10 @@ class NetworkBarclampTest < ActiveSupport::TestCase
   # Test retrieval of non-existant object
   test "network_get: non-existant network" do
     barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_proposal()
 
     # Get by name
-    http_error, network = barclamp.network_get("zippityDoDa")
+    http_error, network = barclamp.network_get(deployment.id, "zippityDoDa")
     assert_not_nil network, "Expected to get error message, but got nil"
     assert_equal 404, http_error, "Expected to get HTTP error code 404, got HTTP error code: #{http_error}, #{network}"
   end
@@ -132,6 +133,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
     create_a_network(barclamp, deployment, net_name)
 
     http_error, network = barclamp.network_update(
+        deployment.id,
         net_name,
         "intf0",
         "192.168.122.0/24",
@@ -155,6 +157,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
     create_a_network(barclamp, deployment, net_name)
 
     http_error, network = barclamp.network_update(
+        deployment.id,
         net_name,
         "intf0",
         "192.168.122.0/24",
@@ -178,6 +181,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
     create_a_network(barclamp, deployment, net_name)
 
     http_error, network = barclamp.network_update(
+        deployment.id,
         net_name,
         "intf0",
         "192.168.122.0/24",
@@ -199,6 +203,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
     create_a_network(barclamp, deployment, net_name)
 
     http_error, network = barclamp.network_update(
+        deployment.id,
         net_name,
         "intf0",
         "192.168.122.0/24",
@@ -220,6 +225,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
     create_a_network(barclamp, deployment, net_name)
 
     http_error, network = barclamp.network_update(
+        deployment.id,
         net_name,
         "intf0",
         "192.168.122.0/24",
@@ -241,6 +247,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
     create_a_network(barclamp, deployment, net_name)
 
     http_error, network = barclamp.network_update(
+        deployment.id,
         net_name,
         "intf0",
         "192.168.122.0/24",
@@ -262,6 +269,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
     create_a_network(barclamp, deployment, net_name)
 
     http_error, network = barclamp.network_update(
+        deployment.id,
         net_name,
         "intf0",
         "192.168.122.0/24",
@@ -277,7 +285,9 @@ class NetworkBarclampTest < ActiveSupport::TestCase
   # Test deletion of non-existant network
   test "network_delete: non-existant network" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    delete_nonexistant_network( barclamp, "zippityDoDa")
+    deployment = barclamp.create_proposal()
+
+    delete_nonexistant_network( barclamp, deployment.id, "zippityDoDa")
   end
 
 
@@ -290,11 +300,11 @@ class NetworkBarclampTest < ActiveSupport::TestCase
     create_a_network(barclamp, deployment, net_name)
 
     # Delete by name
-    http_error, msg = barclamp.network_delete(net_name)
+    http_error, msg = barclamp.network_destroy(deployment.id, net_name)
     assert_equal 200, http_error, "HTTP error code returned: #{http_error}, #{msg}"
 
     # Verify deletion
-    delete_nonexistant_network(barclamp, net_name)
+    delete_nonexistant_network(barclamp, deployment.id, net_name)
   end
 
 
@@ -494,8 +504,8 @@ class NetworkBarclampTest < ActiveSupport::TestCase
 
   private
   # Retrieve a Network
-  def get_a_network(barclamp, id)
-    http_error, network = barclamp.network_get(id)
+  def get_a_network(barclamp, deployment_id, network_id)
+    http_error, network = barclamp.network_get(deployment_id, network_id)
     assert_not_nil network
     assert_equal 200, http_error, "HTTP error code returned: #{http_error}, #{network}"
     network
@@ -503,8 +513,8 @@ class NetworkBarclampTest < ActiveSupport::TestCase
 
 
   # Try to delete a Network that does not exist
-  def delete_nonexistant_network( barclamp, id )
-    http_error, msg = barclamp.network_delete(id)
+  def delete_nonexistant_network( barclamp, deployment_id, network_id )
+    http_error, msg = barclamp.network_destroy(deployment_id, network_id)
     assert_not_nil msg, "Expected to get error message, but got nil"
     assert_equal 404, http_error, "HTTP error code returned: #{http_error}, #{msg}"
   end
