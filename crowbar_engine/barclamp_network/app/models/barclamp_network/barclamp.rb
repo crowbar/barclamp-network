@@ -37,7 +37,7 @@ class BarclampNetwork::Barclamp < Barclamp
 
 
   def network_allocate_ip(deployment_id, network_id, range, node_id, suggestion = nil)
-    Rails.logger.debug("Entering network_allocate_ip(deployment_id: #{deployment_id}, network_id: #{network_id}, range: #{range}, node_id: #{node_id}, suggestion: #{suggestion})")
+    Rails.logger.debug("Entering allocate_ip(deployment_id: #{deployment_id}, network_id: #{network_id}, range: #{range}, node_id: #{node_id}, suggestion: #{suggestion})")
 
     deployment_id = deployment_id.to_s
     deployment_id = nil if deployment_id.empty?
@@ -60,7 +60,7 @@ class BarclampNetwork::Barclamp < Barclamp
 
 
   def network_deallocate_ip(deployment_id, network_id, node_id)
-    Rails.logger.debug("Entering network_deallocate_ip(deployment_id: #{deployment_id}, network_id: #{network_id}, node_id: #{node_id}")
+    Rails.logger.debug("Entering deallocate_ip(deployment_id: #{deployment_id}, network_id: #{network_id}, node_id: #{node_id}")
 
     deployment_id = deployment_id.to_s
     deployment_id = nil if deployment_id.empty?
@@ -117,7 +117,7 @@ class BarclampNetwork::Barclamp < Barclamp
 
 
   def network_enable_interface(deployment_id, network_id, node_id)
-    Rails.logger.debug("Entering network_enable_interface(deployment_id: #{deployment_id}, network_id: #{network_id}, node_id: #{node_id})")
+    Rails.logger.debug("Entering enable_interface(deployment_id: #{deployment_id}, network_id: #{network_id}, node_id: #{node_id})")
 
     deployment_id = deployment_id.to_s
     deployment_id = nil if deployment_id.empty?
@@ -138,18 +138,8 @@ class BarclampNetwork::Barclamp < Barclamp
   end
 
 
-  def network_get(id)
-    begin
-      network = BarclampNetwork::Network.find_key(id)
-      if network.nil?
-        return [404, "Network #{id} does not exist."]
-      else
-        return [200, BarclampNetwork::Network.find_key(id)]
-      end
-    rescue RuntimeError => ex
-      Rails.logger.error(ex.message)
-      [500, ex.message]
-    end
+  def network_get(deployment_id, network_id)
+    BarclampNetwork::NetworkUtils.find_network(network_id, deployment_id)
   end
 
 
@@ -205,16 +195,15 @@ class BarclampNetwork::Barclamp < Barclamp
   end
 
 
-  def network_update(id, conduit_id, subnet, dhcp_enabled, ip_ranges, router_pref, router_ip)
-    Rails.logger.debug("Entering network_update #{id}")
+  def network_update(deployment_id, network_id, conduit_id, subnet, dhcp_enabled, ip_ranges, router_pref, router_ip)
+    Rails.logger.debug("Entering update_network #{id}")
 
     network = nil
     begin
       BarclampNetwork::Network.transaction do
-        network = BarclampNetwork::Network.find_key(id)
-        if network.nil?
-          return [400, "Network #{id} cannot be updated because it does not exist"]
-        end
+        error_code, result = BarclampNetwork::NetworkUtils.find_network(network_id, deployment_id)
+        return [error_code, result] if error_code != 200
+        network = result
 
         conduit = BarclampNetwork::Conduit.find_key(conduit_id)
         if conduit.nil?
@@ -319,18 +308,13 @@ class BarclampNetwork::Barclamp < Barclamp
   end
 
 
-  def network_delete(id)
-    Rails.logger.debug("Entering network_delete #{id}")
-
+  def network_destroy(deployment_id, network_id)
     begin
-      network = BarclampNetwork::Network.find_key(id)
-      if network.nil?
-        err_msg = "Network #{id} cannot be deleted because it does not exist."
-        Rails.logger.warn(err_msg)
-        return [404, err_msg]
-      end
+      error_code, result = BarclampNetwork::NetworkUtils.find_network(network_id, deployment_id)
+      return [error_code, result] if error_code != 200
+      network = result
 
-      Rails.logger.debug("Deleting network #{network.id}/\"#{network.name}\"")
+      Rails.logger.debug("Destroying network #{network.id}/\"#{network.name}\"")
       network.destroy
       [200, ""]
     rescue RuntimeError => ex
