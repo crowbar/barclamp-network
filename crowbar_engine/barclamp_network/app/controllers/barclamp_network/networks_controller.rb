@@ -327,7 +327,7 @@ class BarclampNetwork::NetworksController < BarclampsController
  def fetch_networks
     deployment_id = params[:deployment_id] 
     
-    ret = BarclampNetwork::NetworkUtils.get_networks(deployment_id) 
+    ret = BarclampNetwork::NetworkUtils.find_networks(deployment_id) 
     @networks = ret[1] if ret[0] == 200
     Rails.logger.debug("BarclampNetwork::NetworksController#fetch_networks, ret is: #{ret.inspect}")
     ret

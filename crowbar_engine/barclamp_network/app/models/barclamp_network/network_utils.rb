@@ -23,16 +23,7 @@ class BarclampNetwork::NetworkUtils
       deployment_id = Barclamp::DEFAULT_DEPLOYMENT_NAME,
       snapshot_type = PROPOSED_SNAPSHOT)
 
-    # If the passed deployment_id is a DB ID then...
-    if Deployment.db_id?(deployment_id)
-      # Do a straight lookup on the deployment
-      deployment = Deployment.find_key(deployment_id)
-    else
-      # The deployment_id must be a name, and deployment names are only unique
-      # within a given barclamp, so first get the barclamp
-      barclamp = BarclampNetwork::Barclamp.find_key(BarclampNetwork::Barclamp::BARCLAMP_NAME)
-      deployment = Deployment.where("barclamp_id = ? AND name = ?", barclamp.id, deployment_id).first
-    end
+    deployment = find_deployment deployment_id
 
     return [404, "There is no Deployment with id #{deployment_id}"] if deployment.nil?
 
@@ -64,15 +55,15 @@ class BarclampNetwork::NetworkUtils
     [200, network]
   end
   
- def self.get_networks(
+ def self.find_networks(
     deployment_id = Barclamp::DEFAULT_DEPLOYMENT_NAME,
     snapshot_type = PROPOSED_SNAPSHOT)
 
     networks = nil
     net_bc_id = BarclampNetwork::Barclamp.find_key("network").id
 
-    # Find the barclamp config
-    deployment = Deployment.find_key(deployment_id)
+    deployment = find_deployment deployment_id
+    
     return [404, "There is no Deployment with id #{deployment_id}"] if deployment.nil?
 
     # If there is no proposed, then return the active one instead
@@ -92,6 +83,20 @@ class BarclampNetwork::NetworkUtils
     end
 
     [200, networks]
+  end
+  
+  def self.find_deployment (deployment_id)
+     # If the passed deployment_id is a DB ID then...
+    if Deployment.db_id?(deployment_id)
+      # Do a straight lookup on the deployment
+      deployment = Deployment.find_key(deployment_id)
+    else
+      # The deployment_id must be a name, and deployment names are only unique
+      # within a given barclamp, so first get the barclamp
+      barclamp = BarclampNetwork::Barclamp.find_key(BarclampNetwork::Barclamp::BARCLAMP_NAME)
+      deployment = Deployment.where("barclamp_id = ? AND name = ?", barclamp.id, deployment_id).first     
+    end
+    deployment
   end
 
 
