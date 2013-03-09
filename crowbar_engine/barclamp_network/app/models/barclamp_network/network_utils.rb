@@ -56,7 +56,7 @@ class BarclampNetwork::NetworkUtils
   end
   
  def self.find_networks(
-    deployment_id = Barclamp::DEFAULT_DEPLOYMENT_NAME,
+    deployment_id = BarclampNetwork::Barclamp::DEPLOYMENT_NAME,
     snapshot_type = PROPOSED_SNAPSHOT)
 
     networks = nil
