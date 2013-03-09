@@ -92,7 +92,7 @@ class ConduitRuleTest < ActiveSupport::TestCase
 
   test "ConduitRule.sort_ifs: Test proper interface sorting when product_name in interface map" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     node = NetworkTestHelper.create_node()
     node.set_attrib("product_name", "PowerEdge C6145")
@@ -110,7 +110,7 @@ class ConduitRuleTest < ActiveSupport::TestCase
 
   test "ConduitRule.sort_ifs: Test proper interface sorting when product_name not in interface map" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     node = NetworkTestHelper.create_node()
     node.set_attrib("product_name", "Magical Mystery Box")
@@ -128,7 +128,7 @@ class ConduitRuleTest < ActiveSupport::TestCase
 
   test "ConduitRule.build_if_remap: Remap with known product name" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     node = NetworkTestHelper.create_node()
     node.set_attrib("product_name", "PowerEdge C6145")
@@ -155,7 +155,7 @@ class ConduitRuleTest < ActiveSupport::TestCase
 
   test "ConduitRule.build_if_remap: Remap with unknown product name" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     node = NetworkTestHelper.create_node()
     node.set_attrib("product_name", "Magical Mystery Box")
@@ -287,7 +287,7 @@ class ConduitRuleTest < ActiveSupport::TestCase
 
   def test_select_interfaces(ifs_selector)
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     node = NetworkTestHelper.create_node()
     node.set_attrib("product_name", "PowerEdge C6145")
