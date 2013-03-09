@@ -210,7 +210,6 @@ class BarclampNetwork::NetworksController < BarclampsController
         format.json do
           return render :text => ret[1], :status => ret[0] unless ret[0] == 200
           render :json => @network.to_json( :include => {:subnet => {:only => :cidr}, :router => {:only => :pref, :include => {:ip => {:only => :cidr}}}, :ip_ranges => {:only => :name, :include => {:start_address => {:only => :cidr}, :end_address => {:only => :cidr}}}})
-             # render :json => @network.to_json
         end
       end
     end
