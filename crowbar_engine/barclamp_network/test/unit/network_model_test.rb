@@ -137,23 +137,6 @@ class NetworkModelTest < ActiveSupport::TestCase
   end
 
 
-  # Test cascade Vlan deletion on Network deletion
-  test "Network deletion: cascade delete to Vlans" do
-    barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_or_get_deployment()
-
-    network = NetworkTestHelper.create_a_network(deployment)
-    network.vlan = BarclampNetwork::Vlan.new(:tag => 100)
-    network.save!
-
-    vlan_id = network.vlan.id
-    network.destroy()
-
-    vlans = BarclampNetwork::Vlan.where( :id => vlan_id )
-    assert_equal 0, vlans.size
-  end
-
-
   # Test ip alloc failure due to no range
   test "Network allocate ip: failure due to no range" do
     barclamp = NetworkTestHelper.create_a_barclamp()

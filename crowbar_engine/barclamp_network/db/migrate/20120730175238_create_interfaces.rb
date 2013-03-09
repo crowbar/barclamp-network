@@ -20,6 +20,7 @@ class CreateInterfaces < ActiveRecord::Migration
       t.references :node
       t.references :interface
       t.integer :team_mode
+      t.integer :tag
       t.references :vlan
 
       t.timestamps
