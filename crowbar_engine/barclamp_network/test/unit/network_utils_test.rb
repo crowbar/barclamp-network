@@ -66,12 +66,36 @@ class NetworkUtilsTest < ActiveSupport::TestCase
   # Successfully find network when only network name supplied
   test "find_network: success when only network name supplied" do
     barclamp = NetworkTestHelper.create_a_barclamp()
+    puts("Starting test")
     deployment = barclamp.create_proposal()
 
     network = NetworkTestHelper.create_a_network(deployment, "public")
     network.save!
+    puts("network.id=#{network.id}, network.name=#{network.name}, network.snapshot.id=#{network.snapshot.id}")
+
+    if deployment.proposed.nil?
+      puts("deployment.proposed=nil")
+    else
+      puts("deployment.proposed.id=#{deployment.proposed.id}")
+    end
+
+    if deployment.active.nil?
+      puts("deployment.active=nil")
+    else
+      puts("deployment.active.id=#{deployment.active.id}")
+    end
 
     http_error, network = BarclampNetwork::NetworkUtils.find_network("public")
+
+    puts("Listing all networks")
+    BarclampNetwork::Network.all.each { |network|
+      puts("l network.id=#{network.id}, network.name=#{network.name}")
+      puts("l network.snapshot=nil") if network.snapshot.nil?
+      puts("l network.snapshot.id=#{network.snapshot.id}") if !network.snapshot.nil?
+    }
+    puts("Done listing all networks")
+
+    puts("Examining test results")
     assert_equal 200, http_error, "Return code of 200 expected, got #{http_error}: #{network}"
     assert_not_nil network
     assert_equal network.snapshot.id, deployment.proposed_snapshot.id
