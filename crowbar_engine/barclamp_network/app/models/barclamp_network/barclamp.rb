@@ -19,6 +19,9 @@ class BarclampNetwork::Barclamp < Barclamp
   end
 
 
+  BARCLAMP_NAME = "network"
+
+
   def create_deployment(deployment_name=nil)
     deployment = super
 
