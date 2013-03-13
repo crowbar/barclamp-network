@@ -45,10 +45,8 @@ class NetworkUtilsTest < ActiveSupport::TestCase
 
   # Consistency check of snapshot id given network DB id
   test "find_network: consistency check of network id failure" do
-    puts("\nStarting find_network: consistency check of network id failure\n")
     barclamp = NetworkTestHelper.create_a_barclamp()
     deployment = barclamp.create_or_get_deployment()
-    puts("\nRetrieved deployment #{deployment.id}/#{deployment.name}\n")
 
     network = NetworkTestHelper.create_a_network(deployment)
 
@@ -61,23 +59,19 @@ class NetworkUtilsTest < ActiveSupport::TestCase
     network.save!
 
     http_error, network = BarclampNetwork::NetworkUtils.find_network(network.id)
-    puts("\nEvaluating test results\n")
     assert_equal 400, http_error, network
   end
 
 
   # Successfully find network when only network name supplied
   test "find_network: success when only network name supplied" do
-    puts("\nStarting find_network: success when only network name supplied\n")
     barclamp = NetworkTestHelper.create_a_barclamp()
     deployment = barclamp.create_or_get_deployment()
-    puts("\nRetrieved deployment #{deployment.id}/#{deployment.name}\n")
 
     network = NetworkTestHelper.create_a_network(deployment, "public")
     network.save!
 
     http_error, network = BarclampNetwork::NetworkUtils.find_network("public")
-    puts("\nEvaluating test results\n")
 
     assert_equal 200, http_error, "Return code of 200 expected, got #{http_error}: #{network}"
     assert_not_nil network
