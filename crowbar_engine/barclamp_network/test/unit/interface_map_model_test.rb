@@ -19,7 +19,7 @@ class InterfaceMapModelTest < ActiveSupport::TestCase
   # Test successful creation
   test "InterfaceMap creation: success" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     interface_map = NetworkTestHelper.create_an_interface_map(deployment)
     interface_map.save!
@@ -37,7 +37,7 @@ class InterfaceMapModelTest < ActiveSupport::TestCase
   # Test deletion cascade to BusMaps
   test "IntefaceMap deletion: cascade" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     interface_map = NetworkTestHelper.create_an_interface_map(deployment)
     interface_map.save!
@@ -53,7 +53,7 @@ class InterfaceMapModelTest < ActiveSupport::TestCase
   # Test retrieval of a bus order
   test "InterfaceMap: retrieval of bus order success" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     interface_map = NetworkTestHelper.create_an_interface_map(deployment)
     interface_map.save!
@@ -74,7 +74,7 @@ class InterfaceMapModelTest < ActiveSupport::TestCase
   # Test failure to retrieve bus order
   test "InterfaceMap: retrieval of bus order failure" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     interface_map = NetworkTestHelper.create_an_interface_map(deployment)
     interface_map.save!

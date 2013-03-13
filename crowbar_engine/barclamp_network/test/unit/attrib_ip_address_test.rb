@@ -19,7 +19,7 @@ class AttribIpAddressTest < ActiveSupport::TestCase
   # Test retrieval of ip address for default network
   test "Ip address retrieval: default network success" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     node = Node.new(:name => "fred.flintstone.org")
     node.save!
@@ -34,7 +34,7 @@ class AttribIpAddressTest < ActiveSupport::TestCase
   # Test retrieval of ip address for specified network
   test "Ip address retrieval: specified network success" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     node = Node.new(:name => "fred7.flintstone.org")
     node.save!

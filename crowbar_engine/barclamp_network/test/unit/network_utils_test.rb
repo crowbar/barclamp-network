@@ -26,17 +26,17 @@ class NetworkUtilsTest < ActiveSupport::TestCase
   # Return nil if no active snapshot was found
   test "find_network: return nil if no active snapshot found" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     http_error, result = BarclampNetwork::NetworkUtils.find_network("fred", deployment.id, BarclampNetwork::NetworkUtils::ACTIVE_SNAPSHOT)
     assert_equal 404, http_error, result
   end
 
 
-  # Failure to find network due to bad network id when proposal unspecified
+  # Failure to find network due to bad network id
   test "find_network: failure to find network due to bad network id" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     http_error, result = BarclampNetwork::NetworkUtils.find_network("fred", deployment.id)
     assert_equal 404, http_error, result
@@ -46,7 +46,7 @@ class NetworkUtilsTest < ActiveSupport::TestCase
   # Consistency check of snapshot id given network DB id
   test "find_network: consistency check of network id failure" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     network = NetworkTestHelper.create_a_network(deployment)
 
@@ -66,7 +66,7 @@ class NetworkUtilsTest < ActiveSupport::TestCase
   # Successfully find network when only network name supplied
   test "find_network: success when only network name supplied" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     network = NetworkTestHelper.create_a_network(deployment, "public")
     network.save!
@@ -82,7 +82,7 @@ class NetworkUtilsTest < ActiveSupport::TestCase
   # Successfully find network when network name and Deployment supplied
   test "find_network: success when network name and Deployment supplied" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     network = NetworkTestHelper.create_a_network(deployment, "public")
     network.save!
@@ -97,7 +97,7 @@ class NetworkUtilsTest < ActiveSupport::TestCase
   # Successfully find network when network name, Deployment, and proposed type supplied
   test "find_network: success when network name, Deployment, and proposed supplied" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     network = NetworkTestHelper.create_a_network(deployment, "public")
     network.save!

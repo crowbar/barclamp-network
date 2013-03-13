@@ -17,7 +17,7 @@ require 'test_helper'
 class RoleFilterTest < ActiveSupport::TestCase
   test "Test successful match" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
     snapshot = deployment.proposed_snapshot
 
     cf = BarclampNetwork::RoleFilter.new()
@@ -35,7 +35,7 @@ class RoleFilterTest < ActiveSupport::TestCase
 
   test "Test unsuccessful match" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
     snapshot = deployment.proposed_snapshot
 
     cf = BarclampNetwork::RoleFilter.new()

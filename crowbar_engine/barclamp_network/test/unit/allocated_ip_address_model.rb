@@ -18,7 +18,7 @@ class AllocatedIpAddressModelTest < ActiveSupport::TestCase
   # Test creation failure, no ip
   test "AllocatedIpAddress creation: failure no ip" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     network = NetworkTestHelper.create_a_network(deployment)
     network.save!
@@ -45,7 +45,7 @@ class AllocatedIpAddressModelTest < ActiveSupport::TestCase
   # Test successful creation, min
   test "AllocatedIpAddress creation: min success" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     network = NetworkTestHelper.create_a_network(deployment)
     network.save!
@@ -59,7 +59,7 @@ class AllocatedIpAddressModelTest < ActiveSupport::TestCase
   # Test successful creation, max
   test "AllocatedIpAddress creation: max success" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     network = NetworkTestHelper.create_a_network(deployment)
     network.save!
@@ -73,7 +73,7 @@ class AllocatedIpAddressModelTest < ActiveSupport::TestCase
   # Test successful creation, normal
   test "AllocatedIpAddress creation: success" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     network = NetworkTestHelper.create_a_network(deployment)
     network.save!
@@ -87,7 +87,7 @@ class AllocatedIpAddressModelTest < ActiveSupport::TestCase
   # Test validation: alpha
   test "AllocatedIpAddress creation: alpha failure" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     network = NetworkTestHelper.create_a_network(deployment)
     network.save!
@@ -103,7 +103,7 @@ class AllocatedIpAddressModelTest < ActiveSupport::TestCase
   # Test validation: overflow 1st octet
   test "AllocatedIpAddress creation: 1st octet overflow failure" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     network = NetworkTestHelper.create_a_network(deployment)
     network.save!
@@ -120,7 +120,7 @@ class AllocatedIpAddressModelTest < ActiveSupport::TestCase
   # Test validation: overflow 2nd octet
   test "AllocatedIpAddress creation: 2nd octet overflow failure" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     network = NetworkTestHelper.create_a_network(deployment)
     network.save!
@@ -137,7 +137,7 @@ class AllocatedIpAddressModelTest < ActiveSupport::TestCase
   # Test validation: overflow 3rd octet
   test "AllocatedIpAddress creation: 3rd octet overflow failure" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     network = NetworkTestHelper.create_a_network(deployment)
     network.save!
@@ -154,7 +154,7 @@ class AllocatedIpAddressModelTest < ActiveSupport::TestCase
   # Test validation: overflow 4th octet
   test "AllocatedIpAddress creation: 4th octet overflow failure" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     network = NetworkTestHelper.create_a_network(deployment)
     network.save!
