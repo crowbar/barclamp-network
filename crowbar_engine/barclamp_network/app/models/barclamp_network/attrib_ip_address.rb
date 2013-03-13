@@ -34,7 +34,7 @@ class BarclampNetwork::AttribIpAddress < Attrib
   end
   
 
-  def actual(network_id="admin", deployment_id=Barclamp::DEFAULT_DEPLOYMENT_NAME,
+  def actual(network_id="admin", deployment_id=BarclampNetwork::Barclamp::DEPLOYMENT_NAME,
              snapshot_type=BarclampNetwork::NetworkUtils::ACTIVE_SNAPSHOT)
     error_code, result = BarclampNetwork::NetworkUtils.find_network(
         network_id,
@@ -53,7 +53,7 @@ class BarclampNetwork::AttribIpAddress < Attrib
   end
 
 
-  def value(network_id="admin", deployment_id=Barclamp::DEFAULT_DEPLOYMENT_NAME,
+  def value(network_id="admin", deployment_id=BarclampNetwork::Barclamp::DEPLOYMENT_NAME,
              snapshot_type=BarclampNetwork::NetworkUtils::ACTIVE_SNAPSHOT)
     return self.actual(network_id, deployment_id, snapshot_type)
   end

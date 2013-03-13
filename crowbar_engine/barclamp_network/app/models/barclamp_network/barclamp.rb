@@ -20,6 +20,7 @@ class BarclampNetwork::Barclamp < Barclamp
 
 
   BARCLAMP_NAME = "network"
+  DEPLOYMENT_NAME = "default"
 
 
   def create_deployment(deployment_name=nil)
