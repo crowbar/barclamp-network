@@ -31,7 +31,13 @@ class BarclampNetwork::NetworkUtils
       # The deployment_id must be a name, and deployment names are only unique
       # within a given barclamp, so first get the barclamp
       barclamp = BarclampNetwork::Barclamp.find_key(BarclampNetwork::Barclamp::BARCLAMP_NAME)
+      puts("\nLooking for deployment where barclamp_id=#{barclamp.id}, and name=#{deployment_id}\n")
       deployment = Deployment.where("barclamp_id = ? AND name = ?", barclamp.id, deployment_id).first
+      if deployment.nil?
+        puts("\nNo deployment found\n")
+      else
+        puts("\nDeployment #{deployment.id}/#{deployment.name} found\n")
+      end
     end
 
     return [404, "There is no Deployment with id #{deployment_id}"] if deployment.nil?
