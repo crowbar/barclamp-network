@@ -22,7 +22,8 @@
 class CreateDeployment < ActiveRecord::Migration
   def self.up
     barclamp = BarclampNetwork::Barclamp.find_key(BarclampNetwork::Barclamp::BARCLAMP_NAME)
-    barclamp.create_deployment("Default")
+    deployment = barclamp.create_deployment("Default")
+    puts("\nCreated deployment #{deployment.id}/#{deployment.name}\n")
   end
 
   def self.down
