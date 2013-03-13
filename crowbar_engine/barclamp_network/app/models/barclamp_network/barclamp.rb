@@ -22,13 +22,24 @@ class BarclampNetwork::Barclamp < Barclamp
   BARCLAMP_NAME = "network"
 
 
+  def create_or_get_deployment(deployment_name=nil)
+    deployment = create_deployment(deployment_name)
+    deployment = deployments[0] if deployment.nil?
+    deployment
+  end
+
+
   def create_deployment(deployment_name=nil)
     deployment = super
 
-    json = BarclampNetwork::Barclamp.read_network_json()
-    attrs_config = json["attributes"]
+    # super will only return a deployment if it creates a new one
+    if !deployment.nil?
+      json = BarclampNetwork::Barclamp.read_network_json()
+      attrs_config = json["attributes"]
 
-    populate_network_defaults( attrs_config["network"], deployment.proposed_snapshot )
+      populate_network_defaults( attrs_config["network"], deployment.proposed_snapshot )
+    end
+
     deployment
   end
 

@@ -20,7 +20,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
   # Test creation
   test "network_create: success" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     create_a_network(barclamp, deployment, "public")
   end
@@ -29,7 +29,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
   # Test failed network creation due to missing router_pref
   test "network_create: missing router_pref" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     http_error, network = barclamp.network_create(
         deployment.id,
@@ -48,7 +48,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
   # Test failed network creation due to missing router_ip
   test "network_create: missing router_ip" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     http_error, network = barclamp.network_create(
         deployment.id,
@@ -67,7 +67,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
   # Test failed network creation due to missing ip range
   test "network_create: missing no ip range" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     http_error, network = barclamp.network_create(
         deployment.id,
@@ -86,7 +86,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
   # Test retrieval by name
   test "network_get: by name success" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     net_name="public"
     create_a_network(barclamp, deployment, net_name)
@@ -100,7 +100,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
   # Test retrieval by id
   test "network_get: by id success" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     net_name="public"
     network = create_a_network(barclamp, deployment, net_name)
@@ -115,7 +115,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
   # Test retrieval of non-existant object
   test "network_get: non-existant network" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     # Get by name
     http_error, network = barclamp.network_get(deployment.id, "zippityDoDa")
@@ -127,7 +127,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
   # Test adding an ip range
   test "network_update: add ip range" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     net_name="public"
     create_a_network(barclamp, deployment, net_name)
@@ -151,7 +151,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
   # Test removing an ip range
   test "network_update: remove ip range" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     net_name = "public"
     create_a_network(barclamp, deployment, net_name)
@@ -175,7 +175,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
   # Test removing all IP ranges from a network
   test "network_update: remove all ip ranges" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     net_name = "public"
     create_a_network(barclamp, deployment, net_name)
@@ -197,7 +197,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
   # Test updating to an IP range that has no start
   test "network_update: ip range with no start" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     net_name = "public"
     create_a_network(barclamp, deployment, net_name)
@@ -219,7 +219,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
   # Test updating to an IP range that has no end
   test "network_update: ip range with no end" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     net_name = "public"
     create_a_network(barclamp, deployment, net_name)
@@ -241,7 +241,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
   # Test failed network update due to missing router_pref
   test "network_update: missing router_pref" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     net_name = "public"
     create_a_network(barclamp, deployment, net_name)
@@ -263,7 +263,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
   # Test failed network update due to missing router_ip
   test "network_update: missing router_ip" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     net_name = "public"
     create_a_network(barclamp, deployment, net_name)
@@ -285,7 +285,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
   # Test deletion of non-existant network
   test "network_delete: non-existant network" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     delete_nonexistant_network( barclamp, deployment.id, "zippityDoDa")
   end
@@ -294,7 +294,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
   # Test deletion
   test "network_delete: success" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     net_name = "public"
     create_a_network(barclamp, deployment, net_name)
@@ -311,11 +311,11 @@ class NetworkBarclampTest < ActiveSupport::TestCase
   # Test population of network defaults
   test "network_defaults_populate" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
-    assert BarclampNetwork::Conduit.count > 0, "There are no Conduits"
-    assert BarclampNetwork::InterfaceMap.count == 1, "There is no InterfaceMap"
-    assert BarclampNetwork::Network.count > 0, "There are no Networks"
+    assert BarclampNetwork::Conduit.all.count > 0, "There are no Conduits"
+    assert BarclampNetwork::InterfaceMap.all.count == 1, "There are #{BarclampNetwork::InterfaceMap.all.count} InterfaceMaps"
+    assert BarclampNetwork::Network.all.count > 0, "There are no Networks"
   end
 
 
@@ -356,7 +356,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
   # Allocate IP success - perfect path
   test "network_allocate_ip: success" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     node = Node.new(:name => "fred.flintstone.org")
     node.save!
@@ -406,7 +406,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
   # Deallocate IP success - perfect path
   test "network_deallocate_ip: success" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     node = Node.new(:name => "fred.flintstone.org")
     node.save!
@@ -429,7 +429,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
   # Enable interface failure due to missing network_id
   test "network_enable_interface: failure due to missing network_id" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     http_error, message = barclamp.network_enable_interface(deployment.id,nil,"fred")
     assert_equal 400, http_error
@@ -439,7 +439,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
   # Enable interface failure due to missing node_id
   test "network_enable_interface: failure due to missing node_id" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     http_error, message = barclamp.network_enable_interface(deployment.id,"network1",nil)
     assert_equal 400, http_error
@@ -449,7 +449,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
   # Enable interface failure due to bad node_id
   test "network_enable_interface: failure due to bad node_id" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     http_error, message = barclamp.network_enable_interface(deployment.id,"network1","fred")
     assert_equal 404, http_error
@@ -469,7 +469,7 @@ class NetworkBarclampTest < ActiveSupport::TestCase
   # Enable interface success - perfect path
   test "network_enable_interface: success" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     node = Node.new(:name => "fred.flintstone.org")
     node.save!

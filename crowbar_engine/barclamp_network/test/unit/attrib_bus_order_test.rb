@@ -19,7 +19,7 @@ class AttribBusOrderTest < ActiveSupport::TestCase
   # Test retrieval of bus order
   test "BusOrder retrieval: success" do
     barclamp = NetworkTestHelper.create_a_barclamp()
-    deployment = barclamp.create_proposal()
+    deployment = barclamp.create_or_get_deployment()
 
     interface_map = NetworkTestHelper.create_an_interface_map(deployment)
     interface_map.save!
