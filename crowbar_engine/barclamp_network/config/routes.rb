@@ -30,14 +30,18 @@ BarclampNetwork::Engine.routes.draw do
     resources :vlans do as_routes end
   end
 
-  scope 'network' do
-    version = "2.0"
-    resources :networks, :conduits
-    get '/', :controller => 'networks', :action=>'switch', :as => :network
-    get 'switch(/:id)', :controller => 'networks', :action=>'switch', :constraints => { :id => /.*/ }, :as => :switch
-    get 'vlan(/:id)', :controller => 'networks', :action=>'vlan', :constraints => { :id => /.*/ }, :as => :vlan
-  end
-
+  # scope 'network' do
+  #version = "2.0"
+  resources :deployments do
+    scope :module => "barclamp_network" do
+      resources :networks, :conduits
+      get '/', :controller => 'networks', :action=>'switch', :as => :network
+      get 'switch(/:id)', :controller => 'networks', :action=>'switch', :constraints => { :id => /.*/ }, :as => :switch
+      get 'vlan(/:id)', :controller => 'networks', :action=>'vlan', :constraints => { :id => /.*/ }, :as => :vlan
+    end #module
+  end #deployments
+  # end
+  #"/network/v2/deployments/7/networks"
   scope :defaults => {:format=> 'json'} do
     constraints( :version => /v[1-9]/ ) do
       scope ':version' do
