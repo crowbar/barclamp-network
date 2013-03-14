@@ -1,67 +1,29 @@
-# Copyright 2013, Dell 
-# 
-# Licensed under the Apache License, Version 2.0 (the "License"); 
-# you may not use this file except in compliance with the License. 
-# You may obtain a copy of the License at 
-# 
-#  http://www.apache.org/licenses/LICENSE-2.0 
-# 
-# Unless required by applicable law or agreed to in writing, software 
-# distributed under the License is distributed on an "AS IS" BASIS, 
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
-# See the License for the specific language governing permissions and 
-# limitations under the License. 
-# 
-
+# Copyright 2013, Dell
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 class BarclampNetwork::NetworksController < BarclampsController
   respond_to :html, :json
 
-
   # Make a copy of the barclamp controller help
   self.help_contents = Array.new(superclass.help_contents)
- 
-
   def initialize
     @barclamp = Barclamp.find_key("network")
   end
 
-
-  add_help(:list,[:deployment_id],[:get])
-  def networks
-    deployment_id = params[:deployment_id]
-    deployment_id = nil if deployment_id == "-1"
-
-    network_refs = []
-
-    BarclampNetwork::Network.all.each { |network|
-      network_refs << network.id
-    }
-
-    respond_to do |format|
-      format.json { render :json => network_refs }
-      format.xml { render :xml => network_refs }
-    end
-  end
-
-
-  add_help(:network_show,[:deployment_id, :network_id],[:get])
-  def network_show
-    deployment_id = params[:deployment_id]
-    deployment_id = nil if deployment_id == "-1"
-    network_id = params[:id]
-
-    ret = @barclamp.network_get(deployment_id, network_id)
-
-    return render :text => ret[1], :status => ret[0] if ret[0] != 200
-
-    respond_to do |format|
-      format.json { render :json => ret[1].to_json( :include => {:subnet => {:only => :cidr}, :router => {:only => :pref, :include => {:ip => {:only => :cidr}}}, :ip_ranges => {:only => :name, :include => {:start_address => {:only => :cidr}, :end_address => {:only => :cidr}}}})}
-    end
-  end
-
-
   add_help(:create,[:deployment_id, :name, :conduit_id, :subnet, :dhcp_enabled, :ip_ranges, :router_pref, :router_ip],[:post])
-  def network_create
+  
+  def create
     deployment_id = params[:deployment_id]
     deployment_id = nil if deployment_id == "-1"
     name = params[:name]
@@ -83,9 +45,9 @@ class BarclampNetwork::NetworksController < BarclampsController
     end
   end
 
-
   add_help(:update,[:deployment_id, :network_id, :conduit_id, :subnet, :dhcp_enabled, :ip_ranges, :router_pref, :router_ip],[:put])
-  def network_update
+  
+  def update
     deployment_id = params[:deployment_id]
     deployment_id = nil if deployment_id == "-1"
     network_id = params[:id]
@@ -107,8 +69,8 @@ class BarclampNetwork::NetworksController < BarclampsController
     end
   end
 
-
   add_help(:destroy,[:deployment_id,:network_id],[:delete])
+
   def destroy
     deployment_id = params[:deployment_id]
     deployment_id = nil if deployment_id == "-1"
@@ -119,8 +81,8 @@ class BarclampNetwork::NetworksController < BarclampsController
     render :json => ret[1]
   end
 
-
   add_help(:allocate_ip,[:deployment_id,:network_id,:node_id,:range],[:put])
+
   def allocate_ip
     deployment_id = params[:deployment_id]
     deployment_id = nil if deployment_id == "-1"
@@ -134,8 +96,8 @@ class BarclampNetwork::NetworksController < BarclampsController
     render :json => ret[1]
   end
 
-
   add_help(:deallocate_ip,[:deployment_id,:network_id,:node_id],[:put])
+
   def deallocate_ip
     deployment_id = params[:deployment_id]
     deployment_id = nil if deployment_id == "-1"
@@ -146,9 +108,9 @@ class BarclampNetwork::NetworksController < BarclampsController
     return render :text => ret[1], :status => ret[0] if ret[0] != 200
     render :json => ret[1]
   end
-  
 
   add_help(:enable_interface,[:deployment_id,:network_id,:node_id],[:put])
+
   def enable_interface
     deployment_id = params[:deployment_id]
     deployment_id = nil if deployment_id == "-1"
@@ -159,7 +121,6 @@ class BarclampNetwork::NetworksController < BarclampsController
     return render :text => ret[1], :status => ret[0] if ret[0] != 200
     render :json => ret[1]
   end
-  
 
   def switch
     @vports = {}
@@ -183,7 +144,7 @@ class BarclampNetwork::NetworksController < BarclampsController
         if key
           @switches[key] = { :status=>{"ready"=>0, "failed"=>0, "unknown"=>0, "unready"=>0, "pending"=>0}, :nodes=>{}, :max_port=>(23+@port_start)} unless @switches.key? key
           port = if switch['switch_port'] == -1 or switch['switch_port'] == "-1"
-            @vports[key] = 1 + (@vports[key] || 0)
+          @vports[key] = 1 + (@vports[key] || 0)
           else
             switch[:port]
           end
@@ -208,95 +169,86 @@ class BarclampNetwork::NetworksController < BarclampsController
       @nodes[node.name] = { :alias=>node.alias, :description=>node.description(false, true), :vlans=>{} }
       @nodes[node.name][:vlans] = node_vlans(node)
     end
-    
+
   end
-  
+
   def nodes
 
     net_bc = RoleObject.find_role_by_name 'network-config-default'
     @modes = []
     @active_mode = @mode = net_bc.default_attributes['network']['mode']
     # first, we need a mode list
-    net_bc.default_attributes['network']['conduit_map'].each do |conduit| 
+    net_bc.default_attributes['network']['conduit_map'].each do |conduit|
       mode = conduit['pattern'].split('/')[0]
       @modes << mode unless @modes.include? mode
       @mode = params[:mode] if @modes.include? params[:mode]
     end
     # now we need to complete conduit list for the mode (we have to inspect all conduits!)
     @conduits = []
-    net_bc.default_attributes['network']['conduit_map'].each do |conduit| 
+    net_bc.default_attributes['network']['conduit_map'].each do |conduit|
       mode = conduit['pattern'].split('/')[0]
       conduit['conduit_list'].each { |c, details| @conduits << c unless @conduits.include? c } if mode == @mode
     end
-            
+
     @nodes = {}
     NodeObject.all.each do |node|
       @nodes[node.name] = {:alias=>node.alias, :description=>node.description, :model=>node.hardware, :bus=>node.get_bus_order, :conduits=>node.build_node_map }
     end
     @conduits = @conduits.sort
-    
+
   end
-  
-  #UI Methods
-  def show
-    Rails.logger.debug("NetworksController.show");
-    begin
-      @network = BarclampNetwork::Network.find(params[:id]) unless params[:id].nil?
-    rescue
-      @network = BarclampNetwork::Network.find_by_name(params[:id])
+
+ add_help(:show,[:deployment_id, :network_id],[:get])
+ 
+ def show
+      Rails.logger.debug("BarclampNetwork::NetworksController#show");
+      ret = fetch_network
+      respond_with(@network) do |format|
+        format.html do
+          render
+        end
+        format.json do
+          return render :text => ret[1], :status => ret[0] unless ret[0] == 200
+          render :json => @network.to_json( :include => {:subnet => {:only => :cidr}, :router => {:only => :pref, :include => {:ip => {:only => :cidr}}}, :ip_ranges => {:only => :name, :include => {:start_address => {:only => :cidr}, :end_address => {:only => :cidr}}}})
+        end
+      end
     end
-    Rails.logger.debug("NetworksController.show inpect found network: #{@network.inspect}");
-    respond_to do |format|
-      format.json {
-        Rails.logger.debug("NetworksController.show format JSON: #{@network.inspect}");
-        render :json => @network
-      }
-      format.html {
-        Rails.logger.debug("NetworksController.show format HTML: #{@network.inspect}");
-      }
-    end
-  end
+
+  add_help(:index,[:deployment_id],[:get])
   
   def index
     Rails.logger.debug("NetworksController.index");
-
-    respond_with(networks = BarclampNetwork::Network.all) do |format|
+    ret = fetch_networks
+    respond_with(@networks) do |format|
       format.html do
-        Rails.logger.debug("NetworksController.index Format HTML: #{@networks.inspect}"); 
+        Rails.logger.debug("NetworksController.index Format HTML: #{@networks.inspect}") unless @networks.nil?
         render
       end
       format.json do
         network_refs = {}
-        networks.each { |network|
+        @networks.each do |network|
           network_refs[network.id] = network.name
-        }
+        end unless @networks.nil? 
+        return render :text => ret[1], :status => ret[0] unless ret[0] == 200
         render :json => network_refs.to_json
       end
     end
   end
-  
+
   def edit
     Rails.logger.debug("NetworksController.edit");
-    @network = BarclampNetwork::Network.find(params[:id]) unless params[:id].nil? 
+    @network = BarclampNetwork::Network.find(params[:id]) unless params[:id].nil?
     @conduits = BarclampNetwork::Conduit.all
     respond_to do |format|
-      format.html { 
+      format.html {
         Rails.logger.debug("NetworksController.edit Format HTML: #{@network.inspect}");
       }
     end
   end
-  
-  def update
-    Rails.logger.debug("NetworksController.update!");
-    @network = BarclampNetwork::Network.find(params[:id])
-    if @network.update_attributes(params[:network])
-      redirect_to :action => :index
-    else
-      render 'edit'
-    end
-  end
+
 
   add_help(:conduit_list,[],[:get])
+
   def conduit
     Rails.logger.debug("Listing conduits");
 
@@ -315,14 +267,15 @@ class BarclampNetwork::NetworksController < BarclampsController
       }
     end
   end
-    
-  private 
+
+  private
+
   def to_bool(value)
     return true if value == true || value =~ /^true|t$/i
     return false if value == false || value =~ /^false|f$/i
     raise ArgumentError.new("Invalid boolean value")
-  end    
-  
+  end
+
   def node_vlans(node)
     nv = {}
     vlans = node["crowbar"]["network"].each do |vlan, vdetails|
@@ -330,11 +283,11 @@ class BarclampNetwork::NetworksController < BarclampsController
     end
     nv
   end
-  
+
   def node_nics(node)
     switches = []
     begin
-      # list the interfaces
+    # list the interfaces
       if_list = node.crowbar_ohai["detected"]["network"].keys
       # this is a virtual switch if ALL the interfaces are virtual
       physical = if_list.map{ |intf| node.crowbar_ohai["switch_config"][intf]['switch_name'] != '-1' }.include? false
@@ -347,7 +300,7 @@ class BarclampNetwork::NetworksController < BarclampsController
           s_name = I18n.t('network.controller.virtual') + ":" + intf.split('.')[0]
           s_unit = nil
         else
-          connected = true
+        connected = true
         end
         if connected
           s_name= "#{s_name}:#{s_unit}" unless s_unit.nil?
@@ -359,4 +312,25 @@ class BarclampNetwork::NetworksController < BarclampsController
     end
     switches
   end
+
+  def fetch_network
+    deployment_id = params[:deployment_id]
+    id = params[:id] # could be name
+
+    ret = BarclampNetwork::NetworkUtils.find_network(id, deployment_id)
+
+    @network = ret[1] if ret[0] == 200
+    Rails.logger.debug("BarclampNetwork::NetworksController#fetch_network, ret from NetworkUtil.find_network is: #{ret.inspect}")
+    ret
+  end
+
+ def fetch_networks
+    deployment_id = params[:deployment_id] 
+    
+    ret = BarclampNetwork::NetworkUtils.find_networks(deployment_id) 
+    @networks = ret[1] if ret[0] == 200
+    Rails.logger.debug("BarclampNetwork::NetworksController#fetch_networks, ret is: #{ret.inspect}")
+    ret
+  end
+  
 end

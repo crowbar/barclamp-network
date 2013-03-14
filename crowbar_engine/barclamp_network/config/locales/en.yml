@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+# 
 en:
   network_name: &network_name Network Name
   network_id: &network_id Network ID
@@ -109,57 +109,58 @@ en:
       team_4: Team Mode 4
       team_5: Team Mode 5
       team_6: Team Mode 6
-  networks:
-    index:
-      title: Networks
-      network_count: Network Count
-      id: *network_id
-      name: *network_name
-      dhcp_enabled: *dhcp_enabled
-      updated_at: *updated_at
-      conduit: *conduit
-      updated_at: *updated_at
-    show:
-      id: *network_id
-      name: *network_name
-      dhcp_enabled: *dhcp_enabled
-      subnet: Subnet
-      ip_ranges: IP Ranges
-      ip_range_name: Name
-      ip_range_start_address: Start Address
-      ip_range_end_address: End Address
-      router: Router
-      router_ip: IP
-      router_pref: Preference
-      conduit: *conduit
-      updated_at: *updated_at
-      allocated_ips: Allocated IPs
-      vlan_tag: VLAN Tag
-    form:
-      id: *network_id
-      name: *network_name
-      dhcp_enabled: *dhcp_enabled
-      subnet: Subnet
-      ip_ranges: IP Ranges
-      ip_range_name: Name
-      ip_range_start_address: Start Address
-      ip_range_end_address: End Address
-      router: Router
-      router_ip: IP
-      router_pref: Preference
-      conduit: *conduit
-      updated_at: *updated_at
-    switch:
-      title: Network Switches
-      switch_details: Switch Expanded Details
-      switch: Switch
-      port: Port
-      node: Node
-      nc: N/C
-      no_connection: No Connection
-      all: Show All
-    dense:
-      no_connection: No Connection
+  barclamp_network:
+    networks:
+      index:
+        title: Networks
+        network_count: Network Count
+        id: *network_id
+        name: *network_name
+        dhcp_enabled: *dhcp_enabled
+        updated_at: *updated_at
+        conduit: *conduit
+        updated_at: *updated_at
+      show:
+        id: *network_id
+        name: *network_name
+        dhcp_enabled: *dhcp_enabled
+        subnet: Subnet
+        ip_ranges: IP Ranges
+        ip_range_name: Name
+        ip_range_start_address: Start Address
+        ip_range_end_address: End Address
+        router: Router
+        router_ip: IP
+        router_pref: Preference
+        conduit: *conduit
+        updated_at: *updated_at
+        allocated_ips: Allocated IPs
+        vlan_tag: VLAN Tag
+      form:
+        id: *network_id
+        name: *network_name
+        dhcp_enabled: *dhcp_enabled
+        subnet: Subnet
+        ip_ranges: IP Ranges
+        ip_range_name: Name
+        ip_range_start_address: Start Address
+        ip_range_end_address: End Address
+        router: Router
+        router_ip: IP
+        router_pref: Preference
+        conduit: *conduit
+        updated_at: *updated_at
+      switch:
+        title: Network Switches
+        switch_details: Switch Expanded Details
+        switch: Switch
+        port: Port
+        node: Node
+        nc: N/C
+        no_connection: No Connection
+        all: Show All
+      dense:
+        no_connection: No Connection
     
   conduits:
     networks: &assoc_networks Associated Networks

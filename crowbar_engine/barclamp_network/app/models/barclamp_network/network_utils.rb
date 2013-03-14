@@ -15,7 +15,7 @@
 class BarclampNetwork::NetworkUtils
 
   ACTIVE_SNAPSHOT = 0
-  PROPOSED_SNAPSHOT = 1
+  PROPOSED_SNAPSHOT = 1 
 
 
   def self.find_network(
@@ -23,16 +23,7 @@ class BarclampNetwork::NetworkUtils
       deployment_id = BarclampNetwork::Barclamp::DEPLOYMENT_NAME,
       snapshot_type = PROPOSED_SNAPSHOT)
 
-    # If the passed deployment_id is a DB ID then...
-    if Deployment.db_id?(deployment_id)
-      # Do a straight lookup on the deployment
-      deployment = Deployment.find_key(deployment_id)
-    else
-      # The deployment_id must be a name, and deployment names are only unique
-      # within a given barclamp, so first get the barclamp
-      barclamp = BarclampNetwork::Barclamp.find_key(BarclampNetwork::Barclamp::BARCLAMP_NAME)
-      deployment = Deployment.where("barclamp_id = ? AND name = ?", barclamp.id, deployment_id).first
-    end
+    deployment = find_deployment deployment_id
 
     return [404, "There is no Deployment with id #{deployment_id}"] if deployment.nil?
 
@@ -62,6 +53,50 @@ class BarclampNetwork::NetworkUtils
     end
 
     [200, network]
+  end
+  
+ def self.find_networks(
+    deployment_id = BarclampNetwork::Barclamp::DEPLOYMENT_NAME,
+    snapshot_type = PROPOSED_SNAPSHOT)
+
+    networks = nil
+    net_bc_id = BarclampNetwork::Barclamp.find_key("network").id
+
+    deployment = find_deployment deployment_id
+    
+    return [404, "There is no Deployment with id #{deployment_id}"] if deployment.nil?
+
+    # If there is no proposed, then return the active one instead
+    snapshot_type = ACTIVE_SNAPSHOT if snapshot_type == PROPOSED_SNAPSHOT && deployment.proposed_snapshot.nil?
+    snapshot = (snapshot_type == ACTIVE_SNAPSHOT ? deployment.active :  deployment.proposed)
+
+    return [404, "There is no active snapshot"] if snapshot.nil?
+
+    begin
+      networks = BarclampNetwork::Network.find_all_by_snapshot_id(snapshot.id)
+    rescue ActiveRecord::RecordNotFound => ex
+      return [404, ex.message]
+    end
+
+    if networks.nil? || networks.size == 0
+      return [400, "Deployment/Instance #{log_name(deployment)} doesn't have any networks."]
+    end
+
+    [200, networks]
+  end
+  
+  def self.find_deployment (deployment_id)
+     # If the passed deployment_id is a DB ID then...
+    if Deployment.db_id?(deployment_id)
+      # Do a straight lookup on the deployment
+      deployment = Deployment.find_key(deployment_id)
+    else
+      # The deployment_id must be a name, and deployment names are only unique
+      # within a given barclamp, so first get the barclamp
+      barclamp = BarclampNetwork::Barclamp.find_key(BarclampNetwork::Barclamp::BARCLAMP_NAME)
+      deployment = Deployment.where("barclamp_id = ? AND name = ?", barclamp.id, deployment_id).first     
+    end
+    deployment
   end
 
 
