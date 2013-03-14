@@ -22,7 +22,6 @@ class BarclampNetwork::Network < ActiveRecord::Base
   has_one :router, :inverse_of => :network, :dependent => :destroy, :class_name => "BarclampNetwork::Router"
   has_many :ip_ranges, :dependent => :destroy, :class_name => "BarclampNetwork::IpRange"
   belongs_to :snapshot
-  has_one :vlan, :inverse_of => :network, :dependent => :destroy, :class_name => "BarclampNetwork::Vlan"
   has_and_belongs_to_many :interfaces, :join_table => "#{BarclampNetwork::TABLE_PREFIX}interfaces_networks", :class_name => "BarclampNetwork::Interface"
   has_many :network_actions, :dependent => :destroy, :class_name => "BarclampNetwork::ConfigAction"
 
