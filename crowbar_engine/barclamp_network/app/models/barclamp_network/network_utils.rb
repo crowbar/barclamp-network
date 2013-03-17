@@ -93,7 +93,7 @@ class BarclampNetwork::NetworkUtils
     else
       # The deployment_id must be a name, and deployment names are only unique
       # within a given barclamp, so first get the barclamp
-      barclamp = BarclampNetwork::Barclamp.find_key(BarclampNetwork::Barclamp::BARCLAMP_NAME)
+      barclamp = BarclampNetwork::Barclamp.first
       deployment = Deployment.where("barclamp_id = ? AND name = ?", barclamp.id, deployment_id).first     
     end
     deployment
