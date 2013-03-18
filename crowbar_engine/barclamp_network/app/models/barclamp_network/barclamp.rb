@@ -18,9 +18,7 @@ class BarclampNetwork::Barclamp < Barclamp
     allow_multiple_proposals = false
   end
 
-
-  BARCLAMP_NAME = "network"
-  DEPLOYMENT_NAME = "default"
+  DEPLOYMENT_NAME = Barclamp::DEFAULT_DEPLOYMENT_NAME
 
 
   def create_deployment(deployment_name=nil)

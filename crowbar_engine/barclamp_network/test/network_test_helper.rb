@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and 
 # limitations under the License. 
 
+require 'rails/test_help'
+require 'test_helper'
+
 class NetworkTestHelper
   DEFAULT_NETWORK_NAME = "bedrock"
 
@@ -165,18 +168,8 @@ class NetworkTestHelper
 
 
   def self.create_a_barclamp()
-    barclamp = BarclampNetwork::Barclamp.find_key(BarclampNetwork::Barclamp::BARCLAMP_NAME)
-    if barclamp.nil?
-      barclamp = BarclampNetwork::Barclamp.new(:name => BarclampNetwork::Barclamp::BARCLAMP_NAME)
-      barclamp.save!
-
-      snapshot = Snapshot.new()
-      snapshot.barclamp = barclamp
-      snapshot.save!
-
-      barclamp.template = snapshot
-      barclamp.save!
-    end
+    barclamp = BarclampNetwork::Barclamp.first
+    raise "you must have the network barclamp!" unless barclamp
     barclamp
   end
 end
