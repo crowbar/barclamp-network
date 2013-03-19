@@ -87,4 +87,56 @@ class InterfaceMapModelTest < ActiveSupport::TestCase
     buses = BarclampNetwork::InterfaceMap.get_bus_order(node)
     assert_nil buses
   end
+
+
+  test "InterfaceMap: get_configured_interface_map success" do
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_or_get_deployment()
+
+    interface_map = NetworkTestHelper.create_an_interface_map(deployment)
+    interface_map.save!
+
+    configured_interface_map = interface_map.get_configured_interface_map()
+
+    assert !configured_interface_map.nil?
+    assert_equal 2, configured_interface_map.size
+
+    bus_map0 = configured_interface_map["0"]
+    bus_map1 = configured_interface_map["1"]
+
+    if bus_map0["pattern"] == "PowerEdge C6145"
+      pe_6145_bus_map = bus_map0
+      pe_710_bus_map = bus_map1
+    else
+      pe_6145_bus_map = bus_map1
+      pe_710_bus_map = bus_map0
+    end
+
+    assert_equal "PowerEdge C6145", pe_6145_bus_map["pattern"]
+    assert_equal "0000:00/0000:00:04", pe_6145_bus_map["bus_order"]["0"]
+    assert_equal "0000:00/0000:00:02", pe_6145_bus_map["bus_order"]["1"]
+
+    assert "PowerEdge R710", pe_710_bus_map["pattern"]
+    assert_equal "0000:00/0000:00:01", pe_710_bus_map["bus_order"]["0"]
+    assert_equal "0000:00/0000:00:03", pe_710_bus_map["bus_order"]["1"]
+  end
+
+
+  test "InterfaceMap: get_interface_map failure due to bad deployment_id" do
+    assert_raise RuntimeError do
+      BarclampNetwork::InterfaceMap.get_interface_map("fred")
+    end
+  end
+
+
+  test "InterfaceMap: get_interface_map success" do
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_or_get_deployment()
+
+    interface_map = NetworkTestHelper.create_an_interface_map(deployment)
+    interface_map.save!
+
+    interface_map = BarclampNetwork::InterfaceMap.get_interface_map(deployment.name)
+    assert !interface_map.nil?
+  end
 end

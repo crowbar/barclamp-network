@@ -116,9 +116,14 @@ class NetworkTestHelper
     interface_map
   end
   
+
+  DEFAULT_PATTERN = "PowerEdge C6145"
+  DEFAULT_PATH0 = "0000:00/0000:00:04"
+  DEFAULT_PATH1 = "0000:00/0000:00:02"
   
+
   # Create a bus map
-  def self.create_a_bus_map(pattern="PowerEdge C6145", bus_order={ "0" => "0000:00/0000:00:04", "1" => "0000:00/0000:00:02"})
+  def self.create_a_bus_map(pattern=DEFAULT_PATTERN, bus_order={ "0" => DEFAULT_PATH0, "1" => DEFAULT_PATH1})
     bus_map = BarclampNetwork::BusMap.new( :pattern => pattern)
     bus_map.buses << create_buses(bus_order)
     bus_map

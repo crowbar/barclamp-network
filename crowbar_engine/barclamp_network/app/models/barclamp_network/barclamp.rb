@@ -42,6 +42,26 @@ class BarclampNetwork::Barclamp < Barclamp
   end
 
 
+  def process_inbound_data(jig_run, node, data)
+    # Create a standard attrib for each blob of json
+    detected_network_blob = data[:crowbar_ohai][:detected][:network]
+
+    Rails.logger.debug("Discovered the following nics for node #{node.name}")
+    Rails.logger.debug("#{detected_network_blob}")
+
+    network = {}
+    network[:network] = detected_network_blob
+
+    detected = {}
+    detected[:detected] = network
+
+    blob_to_publish = {}
+    blob_to_publish[:crowbar_ohai] = detected
+
+    Attrib.create!(:name => "detected_networks", :value => blob_to_publish)
+  end
+
+
   def network_allocate_ip(deployment_id, network_id, range, node_id, suggestion = nil)
     Rails.logger.debug("Entering allocate_ip(deployment_id: #{deployment_id}, network_id: #{network_id}, range: #{range}, node_id: #{node_id}, suggestion: #{suggestion})")
 
