@@ -33,4 +33,26 @@ class BarclampNetwork::InterfaceMap < ActiveRecord::Base
     buses.sort! {|bus1,bus2| bus1.order.to_i <=> bus2.order.to_i} if !buses.nil?
     buses
   end
+
+
+  # This method converts the InterfaceMap into raw json
+  def self.get_interface_map(deployment_id=BarclampNetwork::Barclamp::DEPLOYMENT_NAME)
+    deployment = BarclampNetwork::NetworkUtils.find_deployment(deployment_id)
+    raise "There is no deployment with a deployment_id of #{deployment_id}" if deployment.nil?
+
+    BarclampNetwork::InterfaceMap.joins(:snapshot).where("snapshots" => {:deployment_id => deployment.id})[0]
+  end
+
+
+  def get_configured_interface_map()
+    interface_map_hash = {}
+
+    index = 0
+    bus_maps.each { |bus_map|
+      interface_map_hash[index.to_s] = bus_map.get_configured_bus_map()
+      index += 1
+    }
+
+    interface_map_hash
+  end
 end

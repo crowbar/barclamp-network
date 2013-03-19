@@ -20,4 +20,18 @@ class BarclampNetwork::BusMap < ActiveRecord::Base
 
   validates :pattern, :presence => true
   validates :buses, :presence => true
+
+
+  def get_configured_bus_map()
+    bus_map = {}
+    bus_map["pattern"] = self.pattern
+
+    bus_order = {}
+    buses.each { |bus|
+      bus_order[bus.order.to_s] = bus.path
+    }
+
+    bus_map["bus_order"] = bus_order
+    bus_map
+  end
 end

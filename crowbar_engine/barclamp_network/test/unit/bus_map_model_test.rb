@@ -53,4 +53,20 @@ class BusMapModelTest < ActiveSupport::TestCase
       BarclampNetwork::Bus.find(bus_id)
     end
   end
+
+
+  test "BusMap get_configured_bus_map" do
+    bus_map = NetworkTestHelper.create_a_bus_map()
+    bus_map.save!
+
+    configured_bus_map = bus_map.get_configured_bus_map()
+    assert_equal NetworkTestHelper::DEFAULT_PATTERN, configured_bus_map["pattern"]
+
+    configured_bus_order = configured_bus_map["bus_order"]
+    assert !configured_bus_order.nil?
+    assert_equal 2, configured_bus_order.size
+
+    assert_equal NetworkTestHelper::DEFAULT_PATH0, configured_bus_order["0"]
+    assert_equal NetworkTestHelper::DEFAULT_PATH1, configured_bus_order["1"]
+  end
 end
