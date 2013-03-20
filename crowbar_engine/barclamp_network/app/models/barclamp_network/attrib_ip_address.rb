@@ -44,7 +44,7 @@ class BarclampNetwork::AttribIpAddress < Attrib
 
     network = result
 
-    results = BarclampNetwork::AllocatedIpAddress.joins(:interface).where("#{BarclampNetwork::TABLE_PREFIX}interfaces" => {:node_id => node.id}).where(:network_id => network.id)
+    results = BarclampNetwork::AllocatedIpAddress.where(:node_id => self.node.id).where(:network_id => network.id)
     if results.length == 0
       raise "Node #{BarclampNetwork::NetworkUtils.log_name(node)} does not have an address allocated on Deployment/Snapshot #{BarclampNetwork::NetworkUtils.log_name(network.snapshot.deployment)}/#{BarclampNetwork::NetworkUtils.log_name(network.snapshot)} network #{BarclampNetwork::NetworkUtils.log_name(self)}"
     end

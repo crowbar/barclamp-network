@@ -50,8 +50,12 @@ class AllocatedIpAddressModelTest < ActiveSupport::TestCase
     network = NetworkTestHelper.create_a_network(deployment)
     network.save!
 
+    node = NetworkTestHelper.create_node()
+    node.save!
+
     aip = BarclampNetwork::AllocatedIpAddress.new(:ip => "0.0.0.0")
     aip.network = network
+    aip.node = node
     aip.save!
   end
 
@@ -64,8 +68,12 @@ class AllocatedIpAddressModelTest < ActiveSupport::TestCase
     network = NetworkTestHelper.create_a_network(deployment)
     network.save!
 
+    node = NetworkTestHelper.create_node()
+    node.save!
+
     aip = BarclampNetwork::AllocatedIpAddress.new(:ip => "255.255.255.255")
     aip.network = network
+    aip.node = node
     aip.save!
   end
 
@@ -78,8 +86,12 @@ class AllocatedIpAddressModelTest < ActiveSupport::TestCase
     network = NetworkTestHelper.create_a_network(deployment)
     network.save!
 
+    node = NetworkTestHelper.create_node()
+    node.save!
+
     aip = BarclampNetwork::AllocatedIpAddress.new(:ip => "192.168.132.124")
     aip.network = network
+    aip.node = node
     aip.save!
   end
 
@@ -162,6 +174,23 @@ class AllocatedIpAddressModelTest < ActiveSupport::TestCase
     aip = BarclampNetwork::AllocatedIpAddress.new(:ip => "192.168.132.256")
     aip.network = network
     
+    assert_raise( ActiveRecord::RecordInvalid ) do
+      aip.save!
+    end
+  end
+
+
+  # Failure due to missing node
+  test "AllocatedIpAddress creation: Failure due to missing node" do
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_or_get_deployment()
+
+    network = NetworkTestHelper.create_a_network(deployment)
+    network.save!
+
+    aip = BarclampNetwork::AllocatedIpAddress.new(:ip => "1.2.3.4")
+    aip.network = network
+
     assert_raise( ActiveRecord::RecordInvalid ) do
       aip.save!
     end

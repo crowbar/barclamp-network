@@ -414,13 +414,9 @@ class NetworkBarclampTest < ActiveSupport::TestCase
     network = create_a_network(barclamp, deployment, "public")
     network.save!
 
-    intf = BarclampNetwork::PhysicalInterface.new(:name => "eth0")
-    intf.node = node
-    ip = BarclampNetwork::AllocatedIpAddress.new(:ip => "192.168.122.2")
-    ip.network = network
-    intf.allocated_ip_addresses << ip
-    intf.save!
-
+    http_error, message = barclamp.network_allocate_ip(deployment.id, network.id, "host", "fred.flintstone.org")
+    assert_equal 200, http_error
+    
     http_error, message = barclamp.network_deallocate_ip(deployment.id,network.id,"fred.flintstone.org")
     assert_equal 200, http_error
   end

@@ -40,8 +40,12 @@ class InterfaceModelTest < ActiveSupport::TestCase
     network = NetworkTestHelper.create_a_network(deployment)
     network.save!
 
+    node = NetworkTestHelper.create_node()
+    node.save!
+
     allocated_ip = BarclampNetwork::AllocatedIpAddress.new(:ip => "192.168.130.24")
     allocated_ip.network = network
+    allocated_ip.node = node
 
     interface = BarclampNetwork::Interface.new(:name => "fred")
     interface.allocated_ip_addresses << allocated_ip

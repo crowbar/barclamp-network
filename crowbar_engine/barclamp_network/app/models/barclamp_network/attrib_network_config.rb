@@ -12,17 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class CreateAllocatedIpAddresses < ActiveRecord::Migration
-  def change
-    create_table "#{BarclampNetwork::TABLE_PREFIX}allocated_ip_addresses" do |t|
-      t.string :ip
-      t.references :interface
-      t.references :network
-      t.references :node
+class BarclampNetwork::AttribNetworkConfig < Attrib
+  def state 
+    Attrib.calc_state(value_actual , value_request, jig_run_id)
+  end
+  
 
-      t.timestamps
-    end
+  def request=(value)
+    # Discard since this attribute is a facade over AR objects
+    raise "Not implemented"
+  end
+  
 
-    add_index("#{BarclampNetwork::TABLE_PREFIX}allocated_ip_addresses", [:ip, :network_id], :unique => true, :name => "by_ip_network")
+  def request
+    raise "Not implemented"
+  end
+  
+
+  def actual=(value)
+    # Discard since this attribute is a facade over AR objects
+  end
+  
+
+  def actual()
+    BarclampNetwork::Network.get_networks_hash(node)
   end
 end

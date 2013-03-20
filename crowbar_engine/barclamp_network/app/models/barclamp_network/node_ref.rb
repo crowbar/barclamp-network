@@ -12,17 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class CreateAllocatedIpAddresses < ActiveRecord::Migration
-  def change
-    create_table "#{BarclampNetwork::TABLE_PREFIX}allocated_ip_addresses" do |t|
-      t.string :ip
-      t.references :interface
-      t.references :network
-      t.references :node
+class BarclampNetwork::NodeRef < ActiveRecord::Base
+  belongs_to :network, :inverse_of => :node_refs, :class_name => "BarclampNetwork::Network"
+  belongs_to :node
 
-      t.timestamps
-    end
-
-    add_index("#{BarclampNetwork::TABLE_PREFIX}allocated_ip_addresses", [:ip, :network_id], :unique => true, :name => "by_ip_network")
-  end
+  validates :network, :presence => true
+  validates :node, :presence => true
 end

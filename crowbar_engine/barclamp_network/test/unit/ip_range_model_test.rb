@@ -80,4 +80,14 @@ class IpRangeModelTest < ActiveSupport::TestCase
     ip_ranges = BarclampNetwork::IpAddress.where( :end_ip_range_id => ip_range_id )
     assert_equal 0, ip_ranges.size
   end
+
+
+  test "IpRange to_hash: " do
+    ip_range = NetworkTestHelper.create_an_ip_range()
+    ip_range.save!
+
+    range_hash = ip_range.to_hash()
+    assert_equal NetworkTestHelper::IP_RANGE_START, range_hash["start"] 
+    assert_equal NetworkTestHelper::IP_RANGE_END, range_hash["end"] 
+  end
 end
