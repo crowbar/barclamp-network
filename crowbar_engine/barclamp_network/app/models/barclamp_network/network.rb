@@ -15,13 +15,14 @@
 class BarclampNetwork::Network < ActiveRecord::Base
   attr_protected :id
 
-  has_many :allocated_ips, :dependent => :nullify, :class_name => "BarclampNetwork::AllocatedIpAddress"
+  has_many :allocated_ips, :dependent => :destroy, :class_name => "BarclampNetwork::AllocatedIpAddress"
 
   has_one :subnet, :foreign_key => "subnet_id", :dependent => :destroy, :class_name => "BarclampNetwork::IpAddress"
   belongs_to :conduit, :inverse_of => :networks, :class_name => "BarclampNetwork::Conduit"
   has_one :router, :inverse_of => :network, :dependent => :destroy, :class_name => "BarclampNetwork::Router"
   has_many :ip_ranges, :dependent => :destroy, :class_name => "BarclampNetwork::IpRange"
   belongs_to :snapshot
+  has_many :node_refs, :dependent => :destroy
   has_and_belongs_to_many :interfaces, :join_table => "#{BarclampNetwork::TABLE_PREFIX}interfaces_networks", :class_name => "BarclampNetwork::Interface"
   has_many :network_actions, :dependent => :destroy, :class_name => "BarclampNetwork::ConfigAction"
 
@@ -43,7 +44,7 @@ class BarclampNetwork::Network < ActiveRecord::Base
     return [400, "No node specified"] if node.nil?
 
     # If the node already has an IP on this network then just return success
-    results = BarclampNetwork::AllocatedIpAddress.joins(:interface).where("#{BarclampNetwork::TABLE_PREFIX}interfaces" => {:node_id => node.id}).where(:network_id => id)
+    results = BarclampNetwork::AllocatedIpAddress.where(:node_id => node.id).where(:network_id => id)
     if results.length > 0
       allocated_ip = results.first.ip
       logger.info("Network.allocate_ip: node #{BarclampNetwork::NetworkUtils.log_name(node)} already has address #{allocated_ip} on network #{BarclampNetwork::NetworkUtils.log_name(self)}, range #{range}")
@@ -104,25 +105,16 @@ class BarclampNetwork::Network < ActiveRecord::Base
         begin
           BarclampNetwork::AllocatedIpAddress.transaction do
             ip_addr = BarclampNetwork::AllocatedIpAddress.new( :ip => address.to_s )
+            ip_addr.node = node
             ip_addr.network = self
+            ip_addr.save!
+
+            node_ref = BarclampNetwork::NodeRef.new()
+            node_ref.node = node
+            node_ref.network = self
+            node_ref.save!
 
             node.set_attrib("ip_address", nil, 0, BarclampNetwork::AttribIpAddress)
-
-            # TODO - Interfaces should be discovered, not created on the fly
-            interfaces = BarclampNetwork::Interface.where( "node_id = ?", node.id )
-            logger.debug("Found #{interfaces.size} interfaces")
-            interface = nil
-            if interfaces.size == 0
-              interface = BarclampNetwork::PhysicalInterface.new(:name => "eth0")
-              interface.node = node
-              interface.networks << self
-              interface.save!
-              logger.debug("Created interface #{interface.id}")
-            else
-              interface = interfaces[0]
-            end
-            ip_addr.interface = interface
-            ip_addr.save!
           end
 
           allocation_successful = true
@@ -153,8 +145,11 @@ class BarclampNetwork::Network < ActiveRecord::Base
     # Validate inputs
     return [400, "No node specified"] if node.nil?
 
+    node_ref = BarclampNetwork::NodeRef.where(:node_id => node.id).where(:network_id => self.id)[0]
+    node_ref.destroy if !node_ref.nil?
+
     # If we don't have one allocated, return success
-    results = BarclampNetwork::AllocatedIpAddress.joins(:interface).where("#{BarclampNetwork::TABLE_PREFIX}interfaces" => {:node_id => node.id}).where(:network_id => id)
+    results = BarclampNetwork::AllocatedIpAddress.where(:node_id => node.id).where(:network_id => id)
     if results.length == 0
       logger.warn("Network.deallocate_ip: node #{BarclampNetwork::NetworkUtils.log_name(node)} does not have an address allocated on network #{BarclampNetwork::NetworkUtils.log_name(self)}")
       return [200, nil]
@@ -172,21 +167,77 @@ class BarclampNetwork::Network < ActiveRecord::Base
   def enable_interface(node)
     net_info = build_net_info(node)
 
-    # If we already have an enabled inteface then return success
-    intf = BarclampNetwork::Interface.where(:node_id => node.id).first
-    if !intf.nil? and intf.networks.where( :id => id).exists?
+    # If we already have an enabled interface then return success
+    node_ref = BarclampNetwork::NodeRef.where(:node_id => node.id).where(:network_id => self.id)
+    if !node_ref.nil?
       logger.info("Network.enable_interface: node #{BarclampNetwork::NetworkUtils.log_name(node)} already has an enabled interface on network #{BarclampNetwork::NetworkUtils.log_name(self)}")
       return [200, net_info]
     end
 
-    # TODO: Remove this hack when interfaces are discovered
-    interface = BarclampNetwork::PhysicalInterface.new(:name => "eth0")
-    interface.node = node
-    interface.networks << self
-    interface.save!
+    node_ref = BarclampNetwork::NodeRef.new()
+    node_ref.node = node
+    node_ref.network = self
+    node_ref.save!
 
     logger.info("Network.enable_interface: Enabled interface: node #{node.id}, network #{id}")
     [200, net_info]
+  end
+
+
+  def self.get_networks_hash(node)
+    networks = BarclampNetwork::Network.joins(:node_ref).where(:node_id => node.id)
+
+    networks_hash = {}
+    networks.each { |network|
+      networks_hash[network.name] = network.to_hash()
+    }
+
+    networks_hash
+  end
+
+
+  def to_hash()
+    network_hash = {}
+
+    add_bridge = "false"
+    create_vlan = nil
+    self.network_actions.each { |network_action|
+      if network_action.instance_of? BarclampNetwork::CreateBridge
+        add_bridge = "true"
+      elsif network_action.instance_of? BarclampNetwork::CreateVlan
+        create_vlan = network_action
+      end
+    }
+
+    network_hash["add_bridge"] = add_bridge
+
+    if create_vlan.nil?
+      network_hash["use_vlan"] = "false"
+      network_hash["vlan"] = "100"
+    else
+      network_hash["use_vlan"] = "true"
+      network_hash["vlan"] = create_vlan.tag.to_s
+    end
+
+    network_hash["conduit"] = self.conduit.name
+
+    router = self.router
+    if !router.nil?
+      network_hash["router"] = router.ip.get_ip()
+      network_hash["router_pref"] = router.router_pref
+    end
+
+    network_hash["subnet"] = subnet.get_ip()
+    network_hash["netmask"] = subnet.get_netmask().to_s
+    network_hash["broadcast"] = subnet.get_broadcast().to_s
+
+    ip_ranges_hash = {}
+    self.ip_ranges.each { |ip_range|
+      ip_ranges_hash[ip_range.name] = ip_range.to_hash()
+    }
+
+    network_hash["ranges"] = ip_ranges_hash
+    network_hash
   end
 
 

@@ -18,6 +18,7 @@ class CreateAllocatedIpAddresses < ActiveRecord::Migration
       t.string :ip
       t.references :interface
       t.references :network
+      t.references :node
 
       t.timestamps
     end

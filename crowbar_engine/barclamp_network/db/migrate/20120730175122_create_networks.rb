@@ -19,6 +19,7 @@ class CreateNetworks < ActiveRecord::Migration
       t.boolean :dhcp_enabled
       t.references :conduit
       t.references :snapshot
+      t.references :node
 
       t.timestamps
     end
