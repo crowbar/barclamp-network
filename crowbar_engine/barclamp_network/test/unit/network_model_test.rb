@@ -39,7 +39,15 @@ class NetworkModelTest < ActiveSupport::TestCase
     conduit_id = network.conduit.id
     router_id = network.router.id
     ip_range_ids = network.ip_ranges.collect { |ip_range| ip_range.id }
+
+    node = Node.new(:name => "fred.flintstone.org")
+    node.save!
+
+    http_error, message = network.allocate_ip("host",node,"192.168.122.3")
+    assert_equal 200, http_error
+    
     allocated_ip_ids = network.allocated_ips.collect { |allocated_ip| allocated_ip.id }
+    node_ref_ids = network.node_refs.collect { |node_ref| node_ref.id }
 
     network.destroy
 
@@ -67,11 +75,46 @@ class NetworkModelTest < ActiveSupport::TestCase
     # Verify allocated_ips destroyed on network destroy
     allocated_ip_ids.each { |allocated_ip_id|
       assert_raise ActiveRecord::RecordNotFound do
-        BarclampNetwork::IpAddress.find( allocated_ip_id )
+        BarclampNetwork::AllocatedIpAddress.find( allocated_ip_id )
+      end
+    }
+
+    # Verify node_refs destroyed on network destroy
+    node_ref_ids.each { |node_ref_id|
+      assert_raise ActiveRecord::RecordNotFound do
+        BarclampNetwork::NodeRef.find( node_ref_id )
       end
     }
   end
 
+
+  # Successful delete
+  test "Node deletion: network model cleanup" do
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_or_get_deployment()
+
+    network = NetworkTestHelper.create_a_network(deployment)
+    network.save!
+
+    subnet_id = network.subnet.id
+    conduit_id = network.conduit.id
+    router_id = network.router.id
+    ip_range_ids = network.ip_ranges.collect { |ip_range| ip_range.id }
+
+    node = Node.new(:name => "fred.flintstone.org")
+    node.save!
+
+    http_error, message = network.allocate_ip("host",node,"192.168.122.3")
+    assert_equal 200, http_error
+    assert_equal 1, network.node_refs.size
+    assert_equal 1, network.allocated_ips.size
+    
+    node.destroy
+
+    assert_equal 0, network.node_refs.size
+    assert_equal 0, network.allocated_ips.size
+  end
+  
 
   # name does not exist
   test "Network creation: failure due to missing name" do
@@ -179,6 +222,7 @@ class NetworkModelTest < ActiveSupport::TestCase
 
     ip = BarclampNetwork::AllocatedIpAddress.new(:ip => "192.168.122.4")
     ip.network = network
+    ip.node = node
     ip.save!
 
     intf = BarclampNetwork::PhysicalInterface.new(:name => "eth0")
@@ -229,11 +273,17 @@ class NetworkModelTest < ActiveSupport::TestCase
 
     na = node.get_attrib("ip_address")
     assert_equal ip_address, na.value(NetworkTestHelper::DEFAULT_NETWORK_NAME, deployment.id, BarclampNetwork::NetworkUtils::PROPOSED_SNAPSHOT)
+
+    node_refs = network.node_refs
+    assert_equal 1, node_refs.size
+
+    node_ref = node_refs[0]
+    assert_equal node.id, node_ref.node.id
   end
 
 
   # Test ip alloc success when suggested ip already allocated
-  test "Network allocate_ip: success due to suggested IP unavailable" do
+  test "Network allocate_ip: success when suggested IP unavailable" do
     barclamp = NetworkTestHelper.create_a_barclamp()
     deployment = barclamp.create_or_get_deployment()
 
@@ -253,6 +303,13 @@ class NetworkModelTest < ActiveSupport::TestCase
     # Try to allocate it again
     http_error, message = network.allocate_ip("host",node2,"192.168.122.3")
     assert_equal 200, http_error
+    
+    assert_equal 2, network.node_refs.size
+    node_ref1 = network.node_refs[0]
+    assert node_ref1.node.id == node1.id || node_ref1.node.id == node2.id
+
+    node_ref2 = network.node_refs[1]
+    assert node_ref2.node.id == node1.id || node_ref2.node.id == node2.id
   end
 
 
@@ -322,17 +379,13 @@ class NetworkModelTest < ActiveSupport::TestCase
     network = NetworkTestHelper.create_a_network(deployment)
     network.save!
 
-    ip = BarclampNetwork::AllocatedIpAddress.new(:ip => "192.168.122.2")
-    ip.network = network
-    ip.save!
-
-    intf = BarclampNetwork::PhysicalInterface.new(:name => "eth0")
-    intf.node = node
-    intf.allocated_ip_addresses << ip
-    intf.save!
+    http_error, message = network.allocate_ip("host",node)
+    assert_equal 200, http_error
+    assert_equal 1, network.node_refs.size
 
     http_error, message = network.deallocate_ip(node)
     assert_equal 200, http_error
+    assert_equal 0, network.node_refs.size
   end
 
 
@@ -370,6 +423,35 @@ class NetworkModelTest < ActiveSupport::TestCase
 
     http_error, net_info = network.enable_interface(node)
     assert_equal 200, http_error
+  end
+
+
+  test "Network to_hash: " do
+    barclamp = NetworkTestHelper.create_a_barclamp()
+    deployment = barclamp.create_or_get_deployment()
+
+    http_error, network = BarclampNetwork::NetworkUtils.find_network("bmc_vlan")
+    assert_equal 200, http_error
+    network_hash = network.to_hash()
+
+    assert_equal "false", network_hash["add_bridge"]
+    assert_equal "192.168.124.255", network_hash["broadcast"]
+    assert_equal "intf2", network_hash["conduit"]
+    assert_equal "255.255.255.0", network_hash["netmask"]
+    assert network_hash["router"].nil?
+    assert network_hash["router_pref"].nil?
+    assert_equal "192.168.124.0", network_hash["subnet"]
+    assert_equal "true", network_hash["use_vlan"]
+    assert_equal "100", network_hash["vlan"]
+
+    ranges = network_hash["ranges"]
+    assert !ranges.nil?
+    assert_equal 1, ranges.size
+    host_range = ranges["host"]
+    assert !host_range.nil?
+
+    assert_equal "192.168.124.161", host_range["start"]
+    assert_equal "192.168.124.161", host_range["end"]
   end
 
 

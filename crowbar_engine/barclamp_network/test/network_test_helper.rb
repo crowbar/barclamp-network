@@ -93,13 +93,16 @@ class NetworkTestHelper
     create_bond
   end
   
+
+  IP_RANGE_START = "192.168.122.2"
+  IP_RANGE_END = "192.168.122.5"
   
   # Create an IpRange
   def self.create_an_ip_range
     ip_range = BarclampNetwork::IpRange.new( :name => "host" )
-    ip = BarclampNetwork::IpAddress.new( :cidr => "192.168.122.2" )
+    ip = BarclampNetwork::IpAddress.new( :cidr => IP_RANGE_START )
     ip_range.start_address = ip
-    ip = BarclampNetwork::IpAddress.new( :cidr => "192.168.122.5" )
+    ip = BarclampNetwork::IpAddress.new( :cidr => IP_RANGE_END )
     ip_range.end_address = ip
     ip_range
   end

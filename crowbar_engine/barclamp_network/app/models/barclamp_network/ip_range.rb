@@ -25,4 +25,12 @@ class BarclampNetwork::IpRange < ActiveRecord::Base
   validates :name, :presence => true
   validates :start_address, :presence => true
   validates :end_address, :presence => true
+
+
+  def to_hash()
+    range_hash = {}
+    range_hash["start"] = start_address.get_ip()
+    range_hash["end"] = end_address.get_ip()
+    range_hash
+  end
 end
