@@ -149,9 +149,7 @@ class NetworkTestHelper
 
 
   def self.add_role(snapshot, node, role_name)
-    role_type = RoleType.create!(:name=>role_name)
-
-    role = Role.create!(:role_type_id => role_type.id, :snapshot_id => snapshot.id)
+    role = Role.create!(:name => role_name, :snapshot_id => snapshot.id)
     role.add_node(node)
   end
 
