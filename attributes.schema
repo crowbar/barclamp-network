@@ -1,0 +1,141 @@
+{
+    "type": "map",
+    "required": true,
+    "mapping": {
+        "network": {
+            "type": "map",
+            "required": true,
+            "mapping": {
+                "start_up_delay": { "type": "int", "required": true },
+                "mode": { "type": "str", "required": true, "pattern": "/^single$|^dual$|^team$/" },
+                "teaming": {
+                    "type": "map",
+                    "required": true,
+                    "mapping": {
+                        "mode": { "type": "int", "required": true }
+                    }
+                },
+                "interface_map": {
+                    "type": "seq",
+                    "required": true,
+                    "sequence": [ { 
+                        "type": "map",
+                        "required": true,
+                        "mapping": {
+                            "pattern": { "type": "str", "required": true },
+                            "bus_order": {
+                                "type": "seq",
+                                "required": true,
+                                "sequence": [ { "type": "str" } ]
+                            }
+                        }
+                    } ]
+                },
+                "conduit_map": {
+                    "type": "seq",
+                    "required": true,
+                    "sequence": [ {
+                        "type": "map",
+                        "required": true,
+                        "mapping": {
+                            "conduit_name" : { "type": "str", "required": true },
+                            "conduit_rules": {
+                                "type": "seq",
+                                "required": true,
+                                "sequence": [ {
+                                    "type": "map",
+                                    "required": true,
+                                    "mapping": {
+                                        "conduit_filters": {
+                                            "type": "map",
+                                            "required": true,
+                                            "mapping": {
+                                                    = : {
+                                                        "type": "map",
+                                                        "required": false,
+                                                        "mapping": {
+                                                                = : { "type": "str", "required": true }
+                                                        }
+                                                    }
+                                            }
+                                        },
+                                        "interface_selectors": {
+                                            "type": "seq",
+                                            "required": true,
+                                            "sequence": [ {
+                                                "type": "map",
+                                                "required": true,
+                                                "mapping": {
+                                                        = : {
+                                                            "type": "map",
+                                                            "required": false,
+                                                            "mapping": {
+                                                                    = : { "type": "str", "required": true }
+                                                            }
+                                                        }
+                                                }
+                                            } ]
+                                        },
+                                        "conduit_actions": {
+                                            "type": "seq",
+                                            "required": true,
+                                            "sequence": [ {
+                                                "type": "map",
+                                                "required": false,
+                                                "mapping": {
+                                                        = : { "type": "str", "required": true }
+                                                }
+                                            } ]
+                                        }
+                                    }
+                                } ]
+                            }
+                        }
+                    } ]
+                },
+                "networks": {
+                    "type": "map",
+                    "required": true,
+                    "mapping": {
+                            = : {
+                                "type": "map",
+                                "required": true,
+                                "mapping": {
+                                    "conduit": { "type": "str", "required": false },
+                                    "subnet": { "type": "str", "required": true, "name": "CidrIpAddress" },
+                                    "dhcp_enabled": { "type": "bool", "required": true },
+                                    "router": { "type": "str", "name": "IpAddress" },
+                                    "router_pref": { "type": "int", "required": false },
+                                    "ranges": {
+                                        "type": "map",
+                                        "required": true,
+                                        "mapping": {
+                                                = : {
+                                                    "type": "map",
+                                                    "required": true,
+                                                    "mapping": {
+                                                        "start": { "type": "str", "required": true, "name": "IpAddress" },
+                                                        "end": { "type": "str", "required": true, "name": "IpAddress" }
+                                                    }
+                                                }
+                                        }
+                                    },
+                                    "network_actions": {
+                                        "type": "seq",
+                                        "required": true,
+                                        "sequence": [ {
+                                            "type": "map",
+                                            "required": false,
+                                            "mapping": {
+                                                    = : { "type": "str", "required": true }
+                                            }
+                                        } ]
+                                    }
+                                }
+                            }
+                    }
+                }
+            }
+        }
+    }
+}
