@@ -369,6 +369,10 @@
       }
     }
   },
+  "roles": {
+      "network": { "implicit": true, "admin_implicit": true, "jig": "chef" },
+      "switch_config": { "jig": "chef" }
+  },
   "deployment": {
     "network": {
       "crowbar-revision": 0,
