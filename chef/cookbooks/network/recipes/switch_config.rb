@@ -47,7 +47,7 @@ def setup_interface(switch_config, a_node, conduit, switch_name, interface_id )
     end
 end
 
-admin_ip = Chef::Recipe::Barclamp::Inventory.get_network_by_type(node, "admin").address
+admin_ip = node.address.addr
 
 switch_config={}
 
