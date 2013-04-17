@@ -240,6 +240,12 @@ Nic.nics.each do |nic|
       if_mapping.each { |k,v|
         v << master.name if v.last == nic.name
       }
+    elsif !old_ifs[master.name]
+      # We have been enslaved to an interface not managed by Crowbar.
+      # Skip any further configuration of this nic.
+      Chef::Log.info("#{nic.name} is enslaved to #{master.name}, which was not created by Crowbar")
+      Chef::Log.info("Refusing to change #{nic} configuration.")
+      next
     else
       # We no longer want to be a slave.
       Chef::Log.info("#{nic.name} no longer wants to be a slave of #{master.name}")
