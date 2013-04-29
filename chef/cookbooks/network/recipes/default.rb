@@ -130,7 +130,7 @@ node["crowbar"]["network"].keys.sort{|a,b|
   # interface and/or bond that we already have
   if network["use_vlan"]
     vlan = "#{our_iface.name}.#{network["vlan"]}"
-    if Nic.exists?(vlan)
+    if Nic.exists?(vlan) && Nic.vlan?(vlan)
       Chef::Log.info("Using vlan #{vlan} for network #{name}")
       our_iface = Nic.new vlan
     else
@@ -159,7 +159,7 @@ node["crowbar"]["network"].keys.sort{|a,b|
              else
                "br-#{name}"
              end
-    br = if Nic.exists?(bridge)
+    br = if Nic.exists?(bridge) && Nic.bridge?(bridge)
            Chef::Log.info("Using bridge #{bridge} for network #{name}")
            Nic.new bridge
          else
