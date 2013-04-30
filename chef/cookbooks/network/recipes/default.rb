@@ -105,11 +105,7 @@ node["crowbar"]["network"].keys.sort{|a,b|
       (network["teaming"] && network["teaming"]["mode"]) || 5
     # See if a bond that matches our specifications has already been created,
     # or if there is an empty bond lying around.
-    bond = Nic.nics.detect do |i|
-      i.kind_of?(Nic::Bond) &&
-        (i.slaves.empty? ||
-         (i.slaves.sort == base_ifs))
-    end
+    bond = Nic::Bond.find(base_ifs)
     if bond
       Chef::Log.info("Using bond #{bond.name} for network #{name}")
     else
