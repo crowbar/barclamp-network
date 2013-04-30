@@ -80,7 +80,12 @@ node["crowbar"]["network"].keys.sort{|a,b|
            nil
          end
   conduit = network["conduit"]
-  base_ifs = conduit_map[conduit]["if_list"].map{|i| Nic.new(i)}.sort
+  base_ifs = conduit_map[conduit]["if_list"]
+  # Freak out in an appropriate fashion if we were handed a bogus conduit mapping.
+  unless base_ifs.all?{|i|i.is_a?(String) && ::Nic.exists?(i)}
+    raise ::ArgumentError.new("Conduit mapping #{conduit} for #{network} is not sane: #{base_ifs.inspect}")
+  end
+  base_ifs = base_ifs.map{|i| ::Nic.new(i)}
   Chef::Log.info("Using base interfaces #{base_ifs.map{|i|i.name}.inspect} for network #{name}")
   base_ifs.each do |i|
     ifs[i.name] ||= Hash.new
@@ -100,7 +105,7 @@ node["crowbar"]["network"].keys.sort{|a,b|
       (network["teaming"] && network["teaming"]["mode"]) || 5
     # See if a bond that matches our specifications has already been created,
     # or if there is an empty bond lying around.
-    bond = Nic.nics.detect do|i|
+    bond = Nic.nics.detect do |i|
       i.kind_of?(Nic::Bond) &&
         (i.slaves.empty? ||
          (i.slaves.sort == base_ifs))
