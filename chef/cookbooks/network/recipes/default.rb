@@ -87,6 +87,7 @@ node["crowbar"]["network"].keys.sort{|a,b|
     ifs[i.name]["addresses"] ||= Array.new
     ifs[i.name]["type"] = "physical"
   end
+  our_iface = nil
   case base_ifs.length
   when 0
     Chef::Log.fatal("Conduit #{conduit} does not have any nics. Your config is invalid.")
@@ -148,7 +149,7 @@ node["crowbar"]["network"].keys.sort{|a,b|
     ifs[our_iface.name] ||= Hash.new
     ifs[our_iface.name]["addresses"] ||= Array.new
     ifs[our_iface.name]["type"] = "vlan"
-    ifs[our_iface.name]["vlan"] = our_iface.vlan
+    ifs[our_iface.name]["vlan"] = network["vlan"].to_i
     ifs[our_iface.name]["parent"] = our_iface.parents[0].name
     net_ifs << our_iface.name
   end
