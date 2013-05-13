@@ -32,6 +32,8 @@ when "centos","redhat"
   end
 end
 
+require 'fileutils'
+
 if ::File.exists?("/etc/init/network-interface.conf")
   # Make upstart stop trying to dynamically manage interfaces.
   ::File.unlink("/etc/init/network-interface.conf")
@@ -193,11 +195,13 @@ node["crowbar"]["network"].keys.sort{|a,b|
   end
 end
 
-# Kill any nics that we don't want hanging around anymore.
-old_ifs.each do |name,params|
-  next if ifs[name]
-  Chef::Log.info("#{name} is no longer being used, deconfiguring it.")
-  Nic.new(name).destroy if Nic.exists?(name)
+def kill_nic(name)
+  raise "Cannot kill #{name} because it does not exist!" unless Nic.exists?(name)
+  iface = Nic.new(name)
+  # Ignore loopback interfaces for now.
+  return if iface.loopback?
+  Chef::Log.info("Interface #{name} is no longer being used, deconfiguring it.")
+  iface.destroy
   case node["platform"]
   when "centos","redhat"
     # Redhat and Centos have lots of small files definining interfaces.
@@ -213,6 +217,18 @@ old_ifs.each do |name,params|
     if ::File.exists?("/etc/sysconfig/network/ifroute-#{name}")
       ::File.delete("/etc/sysconfig/network/ifroute-#{name}")
     end
+  end
+end
+
+Nic.refresh_all
+
+# Kill any nics that we don't want hanging around anymore.
+Nic.nics.each do |nic|
+  next if ifs[nic.name]
+  # If we are bringing this node under management, kill any nics we did not
+  # configure, except for loopback interfaces.
+  if old_ifs[nic.name] || !::File.exist?("/var/cache/crowbar/network/managed")
+    kill_nic(nic.name)
   end
 end
 
@@ -311,6 +327,11 @@ node.set["crowbar_wall"]["network"]["interfaces"] = saved_ifs
 node.set["crowbar_wall"]["network"]["nets"] = if_mapping
 node.set["crowbar_wall"]["network"]["addrs"] = addr_mapping
 node.save
+
+# Flag to let us know that networking on this node
+# is now managed by the netowrk barclamp.
+FileUtils.mkdir_p("/var/cache/crowbar/network")
+FileUtils.touch("/var/cache/crowbar/network/managed")
 
 case node["platform"]
 when "debian","ubuntu"
