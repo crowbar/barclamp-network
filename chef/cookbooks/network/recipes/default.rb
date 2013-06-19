@@ -365,12 +365,19 @@ when "suse"
                   :nic => nic
                 })
     end
-    template "/etc/sysconfig/network/ifroute-#{nic.name}" do
-      source "suse-route.erb"
-      variables({
-                  :interfaces => ifs,
-                  :nic => nic
-                })
-    end if ifs[nic.name]["gateway"]
+    if ifs[nic.name]["gateway"]
+      template "/etc/sysconfig/network/ifroute-#{nic.name}" do
+        source "suse-route.erb"
+        variables({
+                    :interfaces => ifs,
+                    :nic => nic
+                  })
+      end
+    else
+      file "/etc/sysconfig/network/ifroute-#{nic.name}" do
+        action :delete
+      end
+    end
+
   end
 end
