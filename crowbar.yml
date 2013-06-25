@@ -19,7 +19,7 @@ barclamp:
   name: network
   display: Network
   version: 0
-  online_help: 'https://github.com/dellcloudedge/crowbar/wiki/Network--barclamp'
+  online_help: 'https://github.com/crowbar/crowbar/wiki/Network--barclamp'
   member:
     - crowbar
 
