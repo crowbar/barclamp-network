@@ -1,17 +1,17 @@
-%h1= t('.title')
-
-%table.data.vlan.box
+%h2.page-header= t('.title')
+.page-header-bottom
+%table.data.vlan.table.table-bordered
   %thead
     %tr
-      %th{ :style=>'width:10px' }
+
       %th= t '.nodes'
       - @vlans.sort.each do |vlan, vdetails|
         %th{:title=>vdetails['vlan']}= t vlan, :scope=>"network.vlan_names", :default=>vlan.titlecase
-      %th{ :style=>'width:10px' }
+
   %tbody
     - @nodes.sort.each do |node, ndetails|
       %tr
-        %td{:colspan=>2, :title=>ndetails[:description]}
+        %td{:title=>ndetails[:description]}
           %a{:href => node_path(node)}
             = ndetails[:alias]
           - @vlans.sort.each do |vlan, vdetails|
@@ -23,4 +23,3 @@
                   = t('.not_inuse')
             -else
               %td= '-'
-        %td{ :style=>'width:10px' }
