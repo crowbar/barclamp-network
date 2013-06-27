@@ -6,7 +6,7 @@
       "start_up_delay": 30,
       "mode": "single",
       "teaming": {
-        "mode": 6
+        "mode": 5
       },
       "interface_map": [
         {
@@ -60,16 +60,13 @@
           "pattern": "team/.*/.*",
           "conduit_list": { 
             "intf0": {
-              "if_list": [ "1g1", "1g2" ],
-              "team_mode": 6
+              "if_list": [ "1g1", "1g2" ]
             },
             "intf1": {
-              "if_list": [ "1g1", "1g2" ],
-              "team_mode": 6
+              "if_list": [ "1g1", "1g2" ]
             },
             "intf2": {
-              "if_list": [ "1g1", "1g2" ],
-              "team_mode": 6
+              "if_list": [ "1g1", "1g2" ]
             }
           }
         },
