@@ -15,7 +15,7 @@
         = mac
   - else
     %div.port_nc
-      %div.port_number= port
-      %div.led{ :style=>'float:right', :class =>"unknown"}
-      %br
-      %div.node{ :title=>t('.no_connection') }= t('.nc')
+      %small.port_number= port
+      %div.led{:class =>"unknown"}
+
+      %small.node{ :title=>t('.no_connection') }= t('.nc')
