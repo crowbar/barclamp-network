@@ -14,53 +14,10 @@
 # 
 
 class BarclampNetwork::Barclamp < Barclamp
+
   def after_initialize
-    allow_multiple_proposals = false
+    allow_multiple_proposals = true
   end
-
-  DEPLOYMENT_NAME = Barclamp::DEFAULT_DEPLOYMENT_NAME
-
-
-  def create_deployment(deployment_name=nil)
-    deployment = super
-
-    # super will only return a deployment if it creates a new one
-    if !deployment.nil?
-      json = BarclampNetwork::Barclamp.read_network_json()
-      attrs_config = json["attributes"]
-
-      populate_network_defaults( attrs_config["network"], deployment.proposed_snapshot )
-    end
-
-    deployment
-  end
-
-
-  def self.read_network_json()
-    fp = File.join(Rails.root,"..","barclamps","network","bc-template-network.json")
-    JSON.load File.open(fp, "r")
-  end
-
-
-  def process_inbound_data(jig_run, node, data)
-    # Create a standard attrib for each blob of json
-    detected_network_blob = data[:crowbar_ohai][:detected][:network]
-
-    Rails.logger.debug("Discovered the following nics for node #{node.name}")
-    Rails.logger.debug("#{detected_network_blob}")
-
-    network = {}
-    network[:network] = detected_network_blob
-
-    detected = {}
-    detected[:detected] = network
-
-    blob_to_publish = {}
-    blob_to_publish[:crowbar_ohai] = detected
-
-    Attrib.create!(:name => "detected_networks", :value => blob_to_publish)
-  end
-
 
   def network_allocate_ip(deployment_id, network_id, range, node_id, suggestion = nil)
     Rails.logger.debug("Entering allocate_ip(deployment_id: #{deployment_id}, network_id: #{network_id}, range: #{range}, node_id: #{node_id}, suggestion: #{suggestion})")
