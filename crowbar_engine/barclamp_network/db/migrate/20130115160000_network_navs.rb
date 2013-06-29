@@ -15,9 +15,9 @@
 #
 class NetworkNavs < ActiveRecord::Migration
   def self.up
-    Nav.find_or_create_by_item :item=>'network', :parent_item=>'root', :name=>'nav.network', :description=>'nav.network_description', :path=>"networks_path", :order=>2000, :development=>true
-    Nav.find_or_create_by_item :item=>'networks', :parent_item=>'network', :name=>'nav.networks', :description=>'nav.networks_description', :path=>"networks_path", :order=>100
-    Nav.find_or_create_by_item :item=>'switches', :parent_item=>'network', :name=>'nav.switch', :description=>'nav.switch_description', :path=>"switch_path", :order=>200
+    #Nav.find_or_create_by_item :item=>'network', :parent_item=>'root', :name=>'nav.network', :description=>'nav.network_description', :path=>"networks_path", :order=>2000, :development=>true
+    #Nav.find_or_create_by_item :item=>'networks', :parent_item=>'network', :name=>'nav.networks', :description=>'nav.networks_description', :path=>"networks_path", :order=>100
+    #Nav.find_or_create_by_item :item=>'switches', :parent_item=>'network', :name=>'nav.switch', :description=>'nav.switch_description', :path=>"switch_path", :order=>200
     # No VLAN until back-end fixed
     # Nav.find_or_create_by_item :item=>'vlan', :parent_item=>'network', :name=>'nav.vlan', :description=>'nav.vlan_description', :path=>"vlan_path", :order=>300
 
