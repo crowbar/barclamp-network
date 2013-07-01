@@ -309,7 +309,7 @@ end
 # Wait for the administrative network to come back up.
 Chef::Log.info("Waiting up to 60 seconds for the net to come back")
 60.times do
-  break if ::Kernel.system("ping -c 1 -w 1 -q #{provisioner.address.addr}")
+  break if ::Kernel.system("ping -c 1 -w 1 -q #{provisioner.address.addr} > /dev/null")
   sleep 1
 end if provisioner
 
