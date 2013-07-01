@@ -147,13 +147,6 @@ class NetworkTestHelper
     buses
   end
 
-
-  def self.add_role(snapshot, node, role_name)
-    role = Role.create!(:name => role_name, :snapshot_id => snapshot.id)
-    role.add_node(node)
-  end
-
-
   def self.create_node()
     node = Node.create!(:name => "fred.flintstone.org")
 
@@ -168,13 +161,14 @@ class NetworkTestHelper
     eth1_parms["speeds"] = [ "1g", "10g" ]
     nics["eth1"] = eth1_parms
 
-    node.set_attrib("nics", nics)
+    #node.set_attrib("nics", nics)
     node
   end
 
 
   def self.create_a_barclamp()
     barclamp = BarclampNetwork::Barclamp.first
+    barclamp ||= Barclamp.import 'network' 
     raise "you must have the network barclamp!" unless barclamp
     barclamp
   end
