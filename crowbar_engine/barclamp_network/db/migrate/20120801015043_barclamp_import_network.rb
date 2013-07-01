@@ -14,7 +14,7 @@
 #
 class BarclampImportNetwork < ActiveRecord::Migration
   def up
-    Barclamp.import_1x 'network'
+    Barclamp.import 'network'
   end
 
   def down
