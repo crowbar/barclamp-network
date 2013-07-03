@@ -40,4 +40,14 @@ begin
     action :nothing
     subscribes :run, resources(:template=> "sysctl-10gbe"), :delayed
   end
+
+  # Hack for systems that don't support sysctl settings in /etc/sysctl.d
+  # Try to load the settings if they weren't loaded already (e.g. after a
+  # reboot).
+  unless ::File.exists?("/etc/sysctl.d") and ::File.directory?("/etc/sysctl.d")
+    bash "reload sysctl if needed" do
+      code "if [ $(sysctl -n net.core.netdev_max_backlog) -ne 300000 ]; then /sbin/sysctl -e -p #{tuning_location}; fi"
+      action :run
+    end
+  end
 end if tune
