@@ -16,17 +16,16 @@
 # check if there are any 1g/10g interfaces detected.
 detected = Barclamp::Inventory.get_detected_intfs(node)
 log "detected interfaces: #{detected.inspect}"
-tuning_location='/etc/sysctl.d/20-10gbe.conf'
+if ::File.exists?("/etc/sysctl.d") and ::File.directory?("/etc/sysctl.d")
+    tuning_location='/etc/sysctl.d/20-10gbe.conf'
+else
+    tuning_location='/etc/sysctl.10gbe.conf'
+end
 tune = detected.any?{ |intf_name, intf| intf[:speeds].join.index('g') }
 
 begin
   log "Applying 10gbe system tuning values" do
     level    :info
-  end
-
-  # Make sure we have an /etc/sysctl.d path on Redhat 6.2
-  directory "/etc/sysctl.d" do
-    mode "755"
   end
 
   template "sysctl-10gbe" do
@@ -40,5 +39,15 @@ begin
     code "/sbin/sysctl -e -p #{tuning_location}"
     action :nothing
     subscribes :run, resources(:template=> "sysctl-10gbe"), :delayed
+  end
+
+  # Hack for systems that don't support sysctl settings in /etc/sysctl.d
+  # Try to load the settings if they weren't loaded already (e.g. after a
+  # reboot).
+  unless ::File.exists?("/etc/sysctl.d") and ::File.directory?("/etc/sysctl.d")
+    bash "reload sysctl if needed" do
+      code "if [ $(sysctl -n net.core.netdev_max_backlog) -ne 300000 ]; then /sbin/sysctl -e -p #{tuning_location}; fi"
+      action :run
+    end
   end
 end if tune
