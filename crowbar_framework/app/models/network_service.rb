@@ -32,7 +32,7 @@ class NetworkService < ServiceObject
   #for name service should be used, for example "loadbalancer", "keepalive" or something
   #it will be uniq and only one address will be assigned to one service
   def allocate_virtual_ip(bc_instance, network, range, name, suggestion = nil)
-    @logger.debug("Network allocate_ip: entering #{name} #{network} #{range}")
+    @logger.debug("Network allocate_virtual_ip: entering #{name} #{network} #{range}")
 
     return [404, "No network specified"] if network.nil?
     return [404, "No range specified"] if range.nil?
@@ -40,7 +40,7 @@ class NetworkService < ServiceObject
 
     # Find an interface based upon config
     role = RoleObject.find_role_by_name "network-config-#{bc_instance}"
-    @logger.error("Network allocate_ip: No network data found: #{name} #{network} #{range}") if role.nil?
+    @logger.error("Network allocate_virtual_ip: No network data found: #{name} #{network} #{range}") if role.nil?
     return [404, "No network data found"] if role.nil?
 
 
@@ -104,10 +104,10 @@ class NetworkService < ServiceObject
       release_ip_lock(f)
     end
 
-    @logger.info("Network allocate_ip: no address available: #{name} #{network} #{range}") if !found
+    @logger.info("Network allocate_virtual_ip: no address available: #{name} #{network} #{range}") if !found
     return [404, "No Address Available"] if !found
 
-    @logger.info("Network allocate_ip: Assigned: #{name} #{network} #{range} #{net_info["address"]}")
+    @logger.info("Network allocate_virtual_ip: Assigned: #{name} #{network} #{range} #{net_info["address"]}")
     [200, net_info]
   end
 
