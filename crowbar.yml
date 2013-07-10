@@ -24,11 +24,6 @@ barclamp:
   api_version_accepts: "v2"
   online_help: 'https://github.com/dellcloudedge/crowbar/wiki/Network-barclamp'
 
-jigs:
-  chef:
-    - network-admin
-    - network-bmc
-
 crowbar:
   layout: 2.0
   order: 20
