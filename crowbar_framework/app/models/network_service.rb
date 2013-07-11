@@ -52,7 +52,7 @@ class NetworkService < ServiceObject
     begin
       f = acquire_ip_lock
       db = ProposalObject.find_data_bag_item "crowbar/#{network}_network"
-      net_info = build_net_info(network, service, db)
+      net_info = build_net_info(network, name, db)
 
       rangeH = db["network"]["ranges"][range]
       rangeH = db["network"]["ranges"]["host"] if rangeH.nil?
@@ -83,6 +83,20 @@ class NetworkService < ServiceObject
           address = db["allocated_by_name"][name]["address"]
         end
       end
+
+
+      # Let's search for an empty one.
+      while !found do
+        if db["allocated"][address.to_s].nil?
+          found = true
+          break
+        end
+        index = index + 1
+        address = IPAddr.new(net_info["subnet"]) | index
+        break if address == stop_address
+      end
+
+
       if found
         net_info["address"] = address.to_s
         db["allocated_by_name"][name] = { "machine" => name, "interface" => net_info["conduit"], "address" => address.to_s }
@@ -109,7 +123,7 @@ class NetworkService < ServiceObject
   end
 
   def allocate_virtual_ip(bc_instance, network, range, service, suggestion = nil)
-    allocate_ip_by_type(bc_instance, network, range, name, :service, suggestion)
+    allocate_ip_by_type(bc_instance, network, range, service, :service, suggestion)
   end
 
   def allocate_ip(bc_instance, network, range, name, suggestion = nil)
