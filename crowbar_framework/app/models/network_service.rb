@@ -28,25 +28,28 @@ class NetworkService < ServiceObject
     release_lock f
   end
 
-  #with this feature we able to allocate ip to an unexisted node, for example if we have an virtual ip for HA shared by 2 real nodes
-  #for name service should be used, for example "loadbalancer", "keepalive" or something
-  #it will be uniq and only one address will be assigned to one service
-  def allocate_virtual_ip(bc_instance, network, range, service, suggestion = nil)
-    @logger.debug("Network allocate_virtual_ip: entering #{service} #{network} #{range}")
 
+  def allocate_ip_by_type(bc_instance, network, range, object, type, suggestion = nil)
+    @logger.debug("Network allocate ip for #{type}: entering #{object} #{network} #{range}")
     return [404, "No network specified"] if network.nil?
     return [404, "No range specified"] if range.nil?
-    return [404, "No service specified"] if service.nil?
+    return [404, "No #{type} specified"] if object.nil?
+    return [404, "No type specified"] if type.nil?
 
-    # Find an interface based upon config
+    if type == :node
+      node = NodeObject.find_node_by_name object
+      name = node.name.to_s
+    else
+      name = object.to_s
+    end
+
     role = RoleObject.find_role_by_name "network-config-#{bc_instance}"
-    @logger.error("Network allocate_virtual_ip: No network data found: #{service} #{network} #{range}") if role.nil?
+    @logger.error("Network allocate ip by type: No network data found: #{object} #{network} #{range}") if role.nil?
     return [404, "No network data found"] if role.nil?
 
-
-    net_info={}
+    net_info = {}
     found = false
-    begin # Rescue block
+    begin
       f = acquire_ip_lock
       db = ProposalObject.find_data_bag_item "crowbar/#{network}_network"
       net_info = build_net_info(network, service, db)
@@ -66,7 +69,7 @@ class NetworkService < ServiceObject
         subnet = IPAddr.new(net_info["subnet"]) & IPAddr.new(net_info["netmask"])
         if subnet == subsug
           if db["allocated"][suggestion].nil?
-            @logger.error("Using suggestion: #{service} #{network} #{suggestion}")
+            @logger.error("Using suggestion for #{type}: #{name} #{network} #{suggestion}")
             address = suggestion
             found = true
           end
@@ -75,27 +78,15 @@ class NetworkService < ServiceObject
 
       unless found
         # Did we already allocate this, but the node lose it?
-        unless db["allocated_by_name"][service].nil?
+        unless db["allocated_by_name"][name].nil?
           found = true
-          address = db["allocated_by_name"][service]["address"]
+          address = db["allocated_by_name"][name]["address"]
         end
       end
-
-      # Let's search for an empty one.
-      while !found do
-        if db["allocated"][address.to_s].nil?
-          found = true
-          break
-        end
-        index = index + 1
-        address = IPAddr.new(net_info["subnet"]) | index
-        break if address == stop_address
-      end
-
       if found
         net_info["address"] = address.to_s
-        db["allocated_by_name"][service] = { "machine" => service, "interface" => net_info["conduit"], "address" => address.to_s }
-        db["allocated"][address.to_s] = { "machine" => service, "interface" => net_info["conduit"], "address" => address.to_s }
+        db["allocated_by_name"][name] = { "machine" => name, "interface" => net_info["conduit"], "address" => address.to_s }
+        db["allocated"][address.to_s] = { "machine" => name, "interface" => net_info["conduit"], "address" => address.to_s }
         db.save
       end
     rescue Exception => e
@@ -104,107 +95,25 @@ class NetworkService < ServiceObject
       release_ip_lock(f)
     end
 
-    @logger.info("Network allocate_virtual_ip: no address available: #{service} #{network} #{range}") if !found
+    @logger.info("Network allocate ip for #{type}: no address available: #{name} #{network} #{range}") if !found
     return [404, "No Address Available"] if !found
 
-    @logger.info("Network allocate_virtual_ip: Assigned: #{service} #{network} #{range} #{net_info["address"]}")
+    if type == :node
+      # Save the information.
+      node.crowbar["crowbar"]["network"][network] = net_info
+      node.save
+    end
+
+    @logger.info("Network allocate ip for #{type}: Assigned: #{name} #{network} #{range} #{net_info["address"]}")
     [200, net_info]
   end
 
+  def allocate_virtual_ip(bc_instance, network, range, service, suggestion = nil)
+    allocate_ip_by_type(bc_instance, network, range, name, :service, suggestion)
+  end
 
   def allocate_ip(bc_instance, network, range, name, suggestion = nil)
-    @logger.debug("Network allocate_ip: entering #{name} #{network} #{range}")
-
-    return [404, "No network specified"] if network.nil?
-    return [404, "No range specified"] if range.nil?
-    return [404, "No name specified"] if name.nil?
-
-    # Find the node
-    node = NodeObject.find_node_by_name name
-    @logger.error("Network allocate_ip: return node not found: #{name} #{network} #{range}") if node.nil?
-    return [404, "No node found"] if node.nil?
-
-    # Find an interface based upon config
-    role = RoleObject.find_role_by_name "network-config-#{bc_instance}"
-    @logger.error("Network allocate_ip: No network data found: #{name} #{network} #{range}") if role.nil?
-    return [404, "No network data found"] if role.nil?
-
-    # If we already have on allocated, return success
-    net_info = node.get_network_by_type(network)
-    unless net_info.nil? or net_info["address"].nil?
-      @logger.error("Network allocate_ip: node already has address: #{name} #{network} #{range}")
-      return [200, net_info]
-    end
-
-    net_info={}
-    found = false
-    begin # Rescue block
-      f = acquire_ip_lock
-      db = ProposalObject.find_data_bag_item "crowbar/#{network}_network"
-      net_info = build_net_info(network, name, db)
-
-      rangeH = db["network"]["ranges"][range]
-      rangeH = db["network"]["ranges"]["host"] if rangeH.nil?
-
-      index = IPAddr.new(rangeH["start"]) & ~IPAddr.new(net_info["netmask"])
-      index = index.to_i
-      stop_address = IPAddr.new(rangeH["end"]) & ~IPAddr.new(net_info["netmask"])
-      stop_address = IPAddr.new(net_info["subnet"]) | (stop_address.to_i + 1)
-      address = IPAddr.new(net_info["subnet"]) | index
-
-      if suggestion
-        @logger.error("Allocating with suggestion: #{suggestion}")
-        subsug = IPAddr.new(suggestion) & IPAddr.new(net_info["netmask"])
-        subnet = IPAddr.new(net_info["subnet"]) & IPAddr.new(net_info["netmask"])
-        if subnet == subsug
-          if db["allocated"][suggestion].nil?
-            @logger.error("Using suggestion: #{name} #{network} #{suggestion}")
-            address = suggestion
-            found = true
-          end
-        end
-      end
-
-      unless found
-        # Did we already allocate this, but the node lose it?
-        unless db["allocated_by_name"][node.name].nil?
-          found = true
-          address = db["allocated_by_name"][node.name]["address"]
-        end
-      end
-
-      # Let's search for an empty one.
-      while !found do
-        if db["allocated"][address.to_s].nil?
-          found = true
-          break
-        end
-        index = index + 1
-        address = IPAddr.new(net_info["subnet"]) | index
-        break if address == stop_address
-      end
-
-      if found
-        net_info["address"] = address.to_s
-        db["allocated_by_name"][node.name] = { "machine" => node.name, "interface" => net_info["conduit"], "address" => address.to_s }
-        db["allocated"][address.to_s] = { "machine" => node.name, "interface" => net_info["conduit"], "address" => address.to_s }
-        db.save
-      end
-    rescue Exception => e
-      @logger.error("Error finding address: #{e.message}")
-    ensure
-      release_ip_lock(f)
-    end
-
-    @logger.info("Network allocate_ip: no address available: #{name} #{network} #{range}") if !found
-    return [404, "No Address Available"] if !found
-
-    # Save the information.
-    node.crowbar["crowbar"]["network"][network] = net_info
-    node.save
-
-    @logger.info("Network allocate_ip: Assigned: #{name} #{network} #{range} #{net_info["address"]}")
-    [200, net_info]
+    allocate_ip_by_type(bc_instance, network, range, name, :node, suggestion)
   end
 
   def deallocate_ip(bc_instance, network, name)
