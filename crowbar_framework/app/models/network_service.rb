@@ -1,7 +1,7 @@
-# Copyright 2011, Dell 
-# 
-# Licensed under the Apache License, Version 2.0 (the "License"); 
-# you may not use this file except in compliance with the License. 
+# Copyright 2011, Dell
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at 
 # 
 #  http://www.apache.org/licenses/LICENSE-2.0 
@@ -19,7 +19,7 @@ class NetworkService < ServiceObject
     @bc_name = "network"
     @logger = thelogger
   end
-  
+
   def acquire_ip_lock
     acquire_lock "ip"
   end
@@ -38,6 +38,8 @@ class NetworkService < ServiceObject
 
     if type == :node
       node = NodeObject.find_node_by_name object
+      @logger.error("Network deallocate ip from node: return node not found: #{object} #{network}") if node.nil?
+      return [404, "No node found"] if node.nil?
       name = node.name.to_s
     else
       name = object.to_s
@@ -123,50 +125,66 @@ class NetworkService < ServiceObject
   end
 
   def allocate_virtual_ip(bc_instance, network, range, service, suggestion = nil)
-    allocate_ip_by_type(bc_instance, network, range, service, :service, suggestion)
+    allocate_ip_by_type(bc_instance, network, range, service, :virtual, suggestion)
   end
 
   def allocate_ip(bc_instance, network, range, name, suggestion = nil)
     allocate_ip_by_type(bc_instance, network, range, name, :node, suggestion)
   end
 
-  def deallocate_ip(bc_instance, network, name)
-    @logger.debug("Network deallocate_ip: entering #{name} #{network}")
+  def deallocate_ip_by_type(bc_instance, network, object, type)
+    @logger.debug("Network deallocate ip from #{type}: entering #{object} #{network}")
 
     return [404, "No network specified"] if network.nil?
-    return [404, "No name specified"] if name.nil?
+    return [404, "No type specified"] if type.nil?
+    return [404, "No #{type} specified"] if object.nil?
 
-    # Find the node
-    node = NodeObject.find_node_by_name name
-    @logger.error("Network deallocate_ip: return node not found: #{name} #{network}") if node.nil?
-    return [404, "No node found"] if node.nil?
+    if type == :node
+      # Find the node
+      node = NodeObject.find_node_by_name object
+      @logger.error("Network deallocate ip from node: return node not found: #{object} #{network}") if node.nil?
+      return [404, "No node found"] if node.nil?
+    end
 
     # Find an interface based upon config
     role = RoleObject.find_role_by_name "network-config-#{bc_instance}"
-    @logger.error("Network allocate_ip: No network data found: #{name} #{network}") if role.nil?
+    @logger.error("Network deallocate ip from #{type}: No network data found: #{object} #{network}") if role.nil?
     return [404, "No network data found"] if role.nil?
 
-    # If we already have on allocated, return success
-    net_info = node.get_network_by_type(network)
-    if net_info.nil? or net_info["address"].nil?
-      @logger.error("Network deallocate_ip: node does not have address: #{name} #{network}")
-      return [200, nil]
+    db = ProposalObject.find_data_bag_item "crowbar/#{network}_network"
+
+    if type == :node
+      # If we already have on allocated, return success
+      net_info = node.get_network_by_type(network)
+      if net_info.nil? or net_info["address"].nil?
+        @logger.error("Network deallocate ip from #{type}: node does not have address: #{object} #{network}")
+        return [200, nil]
+      end
+      name = node.name
+    else
+      if db.nil?
+        return [404, "Network deallocate ip from #{type}: network does not exists: #{object} #{network}"]
+      end
+      name = object
     end
 
     save = false
     begin # Rescue block
       f = acquire_ip_lock
-      db = ProposalObject.find_data_bag_item "crowbar/#{network}_network"
 
-      address = net_info["address"]
- 
+      address = type == :node ? net_info["address"] : nil
+
       # Did we already allocate this, but the node lose it?
-      unless db["allocated_by_name"][node.name].nil?
+      unless db["allocated_by_name"][name].nil?
         save = true
 
         newhash = {}
         db["allocated_by_name"].each do |k,v|
-          newhash[k] = v unless k == node.name
+          unless k == name
+            newhash[k] = v
+          else
+            address = v["address"]
+          end
         end
         db["allocated_by_name"] = newhash
       end
@@ -189,16 +207,25 @@ class NetworkService < ServiceObject
       release_ip_lock(f)
     end
 
-    # Save the information.
-    newhash = {} 
-    node.crowbar["crowbar"]["network"].each do |k, v|
-      newhash[k] = v unless k == network
+    if type == :node
+      # Save the information.
+      newhash = {}
+      node.crowbar["crowbar"]["network"].each do |k, v|
+        newhash[k] = v unless k == network
+      end
+      node.crowbar["crowbar"]["network"] = newhash
+      node.save
     end
-    node.crowbar["crowbar"]["network"] = newhash
-    node.save
-
     @logger.info("Network deallocate_ip: removed: #{name} #{network}")
     [200, nil]
+  end
+
+  def deallocate_virtual_ip(bc_instance, network, name)
+    deallocate_ip_by_type(bc_instance, network, name, :virtual)
+  end
+
+  def deallocate_ip(bc_instance, network, name)
+    deallocate_ip_by_type(bc_instance, network, name, :node)
   end
 
   def create_proposal
