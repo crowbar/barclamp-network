@@ -112,10 +112,10 @@ class NetworkController < BarclampController
         if key
           @switches[key] = { :status=>{"ready"=>0, "failed"=>0, "unknown"=>0, "unready"=>0, "pending"=>0}, :nodes=>{}, :max_port=>(23+@port_start)} unless @switches.key? key
           port = if switch['switch_port'] == -1 or switch['switch_port'] == "-1"
-                   @vports[key] = 1 + (@vports[key] || 0)
-                 else
-                   switch[:port]
-                 end
+          @vports[key] = 1 + (@vports[key] || 0)
+        else
+          switch[:port]
+        end
           @port_start = 0 if port == 0
           @switches[key][:max_port] = port if port>@switches[key][:max_port]
           @switches[key][:nodes][port] = { :handle=>node.handle, :intf=>switch[:intf], :mac=>switch[:mac] }
