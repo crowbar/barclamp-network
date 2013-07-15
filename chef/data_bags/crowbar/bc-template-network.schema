@@ -29,6 +29,7 @@
                 "required": true,
                 "mapping": {
                   "pattern": { "type": "str", "required": true },
+                  "serial_number": { "type": "str", "required": false },
                   "bus_order": {
                     "type": "seq",
                     "required": true,
