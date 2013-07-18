@@ -76,6 +76,7 @@ node["crowbar"]["network"].keys.sort{|a,b|
   next if name == "bmc"
   net_ifs = Array.new
   network = node["crowbar"]["network"][name]
+  next if network.empty?
   addr = if network["address"]
            IP.coerce("#{network["address"]}/#{network["netmask"]}")
          else
