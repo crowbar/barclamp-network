@@ -33,12 +33,12 @@ class NetworkService < ServiceObject
     @logger.debug("Network allocate ip for #{type}: entering #{object} #{network} #{range}")
     return [404, "No network specified"] if network.nil?
     return [404, "No range specified"] if range.nil?
-    return [404, "No #{type} specified"] if object.nil?
+    return [404, "No object specified"] if object.nil?
     return [404, "No type specified"] if type.nil?
 
     if type == :node
       node = NodeObject.find_node_by_name object
-      @logger.error("Network deallocate ip from node: return node not found: #{object} #{network}") if node.nil?
+      @logger.error("Network allocate ip from node: return node not found: #{object} #{network}") if node.nil?
       return [404, "No node found"] if node.nil?
       name = node.name.to_s
     else
@@ -137,7 +137,7 @@ class NetworkService < ServiceObject
 
     return [404, "No network specified"] if network.nil?
     return [404, "No type specified"] if type.nil?
-    return [404, "No #{type} specified"] if object.nil?
+    return [404, "No object specified"] if object.nil?
 
     if type == :node
       # Find the node
@@ -162,10 +162,10 @@ class NetworkService < ServiceObject
       end
       name = node.name
     else
-      if db.nil?
-        return [404, "Network deallocate ip from #{type}: network does not exists: #{object} #{network}"]
-      end
       name = object
+    end
+    if db.nil?
+      return [404, "Network deallocate ip from #{type}: network does not exists: #{object} #{network}"]
     end
 
     save = false
