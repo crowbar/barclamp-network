@@ -18,8 +18,10 @@
 require File.join(File.expand_path(File.dirname(__FILE__)), "barclamp_lib")
 @barclamp = "network"
 
-@commands["deallocate_ip"] = [ "deallocate_ip(ARGV.shift,ARGV.shift,ARGV.shift)", "deallocate_ip <name> <node> <network> - Deallocate an ip from a node on a network" ]
-@commands["allocate_ip"] = [ "allocate_ip(ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift)", "allocate_ip <name> <node> <network> <range> [<suggestion>] - Allocate an ip for a node on a network from a range" ]
+@commands["deallocate_virtual_ip"] = [ "deallocate_ip(ARGV.shift,ARGV.shift,ARGV.shift,:service)", "deallocate_virtual_ip <name> <service> <network> - Deallocate an ip from a service on a network" ]
+@commands["allocate_virtual_ip"] = [ "allocate_ip(ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,:service)", "allocate_virtual_ip <name> <service> <network> <range> [<suggestion>] - Allocate an ip for a service on a network from a range" ]
+@commands["deallocate_ip"] = [ "deallocate_ip(ARGV.shift,ARGV.shift,ARGV.shift,:node)", "deallocate_ip <name> <node> <network> - Deallocate an ip from a node on a network" ]
+@commands["allocate_ip"] = [ "allocate_ip(ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,ARGV.shift,:node)", "allocate_ip <name> <node> <network> <range> [<suggestion>] - Allocate an ip for a node on a network from a range" ]
 @commands["enable_interface"] = [ "enable_interface(ARGV.shift,ARGV.shift,ARGV.shift)", "enable_interface <name> <node> <network> - Ensure that an interface is present for the specified network" ]
 @commands["disable_interface"] = [ "disable_interface(ARGV.shift,ARGV.shift,ARGV.shift)", "disable_interface <name> <node> <network> - Ensure that an interface is not enabled for the specified network" ]
 
@@ -42,16 +44,20 @@ def enable_interface(name, node, network)
   end
 end
 
-def allocate_ip(name, node, network, range, suggestion)
+def allocate_ip(name, object, network, range, suggestion, type)
   usage -1 if name.nil? or name == ""
   usage -1 if network.nil? or network == ""
-  usage -1 if node.nil? or node == ""
+  usage -1 if object.nil? or object == ""
   usage -1 if range.nil? or range == ""
 
-  @data = { "name" => node, "network" => network, "range" => range }
+  @data = { "name" => object, "network" => network, "range" => range }
   @data["suggestion"] = suggestion if suggestion
   @data = @data.to_json
-  struct = post_json("/allocate_ip/#{name}", @data)
+  if type == :node
+    struct = post_json("/allocate_ip/#{name}", @data)
+  else
+    struct = post_json("/allocate_virtual_ip/#{name}", @data)
+  end
 
   if struct[1] == 200
     [ "Allocate ip #{name} #{struct[0].inspect}", 0 ]
@@ -64,16 +70,20 @@ def allocate_ip(name, node, network, range, suggestion)
   end
 end
 
-def deallocate_ip(name, node, network)
+def deallocate_ip(name, object, network, type)
   usage -1 if name.nil? or name == ""
   usage -1 if network.nil? or network == ""
-  usage -1 if node.nil? or node == ""
+  usage -1 if object.nil? or object == ""
 
-  @data = { "name" => node, "network" => network }.to_json
-  struct = post_json("/deallocate_ip/#{name}", @data)
+  @data = { "name" => object, "network" => network }.to_json
+  if type == :node
+    struct = post_json("/deallocate_ip/#{name}", @data)
+  else
+    struct = post_json("/deallocate_virtual_ip/#{name}", @data)
+  end
 
   if struct[1] == 200
-    [ "Deallocate address #{network} #{node}", 0 ]
+    [ "Deallocate address #{network} #{object}", 0 ]
   elsif struct[1] == 404
     [ "Failed to deallocate ip: #{name} : Not Found", 1 ]
   elsif struct[1] == 400

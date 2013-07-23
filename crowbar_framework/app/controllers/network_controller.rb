@@ -33,6 +33,30 @@ class NetworkController < BarclampController
     render :json => ret[1]
   end
 
+  add_help(:allocate_virtual_ip,[:id,:network,:range,:name],[:post])
+  def allocate_virtual_ip
+    id = params[:id]       # Network id
+    network = params[:network]
+    range = params[:range]
+    name = params[:name]
+    suggestion = params[:suggestion]
+
+    ret = @service_object.allocate_virtual_ip(id, network, range, name, suggestion)
+    return render :text => ret[1], :status => ret[0] if ret[0] != 200
+    render :json => ret[1]
+  end
+
+  add_help(:deallocate_virtual_ip,[:id,:network,:name],[:post])
+  def deallocate_virtual_ip
+    id = params[:id]       # Network id
+    network = params[:network]
+    name = params[:name]
+
+    ret = @service_object.deallocate_virtual_ip(id, network, name)
+    return render :text => ret[1], :status => ret[0] if ret[0] != 200
+    render :json => ret[1]
+  end
+
   add_help(:deallocate_ip,[:id,:network,:name],[:post])
   def deallocate_ip
     id = params[:id]       # Network id
@@ -88,10 +112,10 @@ class NetworkController < BarclampController
         if key
           @switches[key] = { :status=>{"ready"=>0, "failed"=>0, "unknown"=>0, "unready"=>0, "pending"=>0}, :nodes=>{}, :max_port=>(23+@port_start)} unless @switches.key? key
           port = if switch['switch_port'] == -1 or switch['switch_port'] == "-1"
-            @vports[key] = 1 + (@vports[key] || 0)
-          else
-            switch[:port]
-          end
+          @vports[key] = 1 + (@vports[key] || 0)
+        else
+          switch[:port]
+        end
           @port_start = 0 if port == 0
           @switches[key][:max_port] = port if port>@switches[key][:max_port]
           @switches[key][:nodes][port] = { :handle=>node.handle, :intf=>switch[:intf], :mac=>switch[:mac] }
@@ -113,37 +137,37 @@ class NetworkController < BarclampController
       @nodes[node.handle] = { :alias=>node.alias, :description=>node.description(false, true), :vlans=>{} }
       @nodes[node.handle][:vlans] = node_vlans(node)
     end
-    
+
   end
-  
+
   def nodes
 
     net_bc = RoleObject.find_role_by_name 'network-config-default'
     @modes = []
     @active_mode = @mode = net_bc.default_attributes['network']['mode']
     # first, we need a mode list
-    net_bc.default_attributes['network']['conduit_map'].each do |conduit| 
+    net_bc.default_attributes['network']['conduit_map'].each do |conduit|
       mode = conduit['pattern'].split('/')[0]
       @modes << mode unless @modes.include? mode
       @mode = params[:mode] if @modes.include? params[:mode]
     end
     # now we need to complete conduit list for the mode (we have to inspect all conduits!)
     @conduits = []
-    net_bc.default_attributes['network']['conduit_map'].each do |conduit| 
+    net_bc.default_attributes['network']['conduit_map'].each do |conduit|
       mode = conduit['pattern'].split('/')[0]
       conduit['conduit_list'].each { |c, details| @conduits << c unless @conduits.include? c } if mode == @mode
     end
-            
+
     @nodes = {}
     NodeObject.all.each do |node|
       @nodes[node.handle] = {:alias=>node.alias, :description=>node.description, :model=>node.hardware, :bus=>node.get_bus_order, :conduits=>node.build_node_map }
     end
     @conduits = @conduits.sort
-    
+
   end
-    
-  private 
-  
+
+  private
+
   def node_vlans(node)
     nv = {}
     vlans = node["crowbar"]["network"].each do |vlan, vdetails|
@@ -151,7 +175,7 @@ class NetworkController < BarclampController
     end
     nv
   end
-  
+
   def node_nics(node)
     switches = []
     begin
@@ -180,6 +204,5 @@ class NetworkController < BarclampController
     end
     switches
   end
-  
-end
 
+end
