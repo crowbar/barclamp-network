@@ -232,20 +232,29 @@ class NetworkService < ServiceObject
     @logger.debug("Network create_proposal: entering")
     base = super
 
-    base["attributes"]["network"]["networks"].each do |k,net|
-      @logger.debug("Network: creating #{k} in the network")
-      bc = Chef::DataBagItem.new
-      bc.data_bag "crowbar"
-      bc["id"] = "#{k}_network"
-      bc["network"] = net
-      bc["allocated"] = {}
-      bc["allocated_by_name"] = {}
-      db = ProposalObject.new bc
-      db.save
-    end
-
     @logger.debug("Network create_proposal: exiting")
     base
+  end
+
+  def apply_role_pre_chef_call(old_role, role, all_nodes)
+    @logger.debug("Network apply_role_pre_chef_call: entering #{all_nodes.inspect}")
+
+    role.default_attributes["network"]["networks"].each do |k,net|
+      db = ProposalObject.find_data_bag_item "crowbar/#{k}_network"
+      if db.nil? || db.empty?
+        @logger.debug("Network: creating #{k} in the network")
+        bc = Chef::DataBagItem.new
+        bc.data_bag "crowbar"
+        bc["id"] = "#{k}_network"
+        bc["network"] = net
+        bc["allocated"] = {}
+        bc["allocated_by_name"] = {}
+        db = ProposalObject.new bc
+        db.save
+      end
+    end
+
+    @logger.debug("Network apply_role_pre_chef_call: leaving")
   end
 
   def transition(inst, name, state)
