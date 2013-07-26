@@ -147,7 +147,7 @@ node["crowbar"]["network"].keys.sort{|a,b|
       next unless n.kind_of?(Nic::Vlan)
       next if have_vlan_iface && n == our_iface
       next unless n.vlan == network["vlan"].to_i
-      n.destroy
+      kill_nic(n.name)
     end
     unless have_vlan_iface
       Chef::Log.info("Creating vlan #{vlan} for network #{name}")
