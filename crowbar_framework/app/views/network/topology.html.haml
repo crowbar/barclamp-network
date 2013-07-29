@@ -1,0 +1,26 @@
+- form_for :node, :'data-remote' => true, :url => '/network/topology', :html => { :'data-type' => 'html',  :id => 'update_topology', :class => "formtastic" } do |f|
+  %table.data.box
+    %thead
+      %tr
+        %th= t('.node')
+        %th= t('.switch_ip')
+        %th= t('.switch_port')
+    %tbody
+      -if @nodes
+        -@nodes.sort_by{ |handle, node| node.name}.each do |handle, node|
+          %tr
+            %td{:title=>node[:description]}= link_to node.alias, node_path(:name=>handle)
+            %td{:title=>t('.switch_ip')}= text_field_tag "node:#{node.name}:switch_ip".to_sym,  node.cisco_switch_ip, :size => 15
+            %td{:title=>t('.switch_port')}= text_field_tag "node:#{node.name}:switch_port".to_sym, node.cisco_switch_port, :size => 15
+      -else
+        %tr
+          %td{:colspan=>(3)}
+            = t('no_items')
+    %tfoot
+      %tr
+        - if @nodes.count > 0
+          %td.action{:colspan => 3}
+          %input.button{:type => "submit", :name => "submit", :value => 'Save'}
+
+        - else
+          %td{:colspan=>(3)}

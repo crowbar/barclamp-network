@@ -33,6 +33,7 @@ nav:
   network:
     switch: switch_path
     vlan: vlan_path
+    topology: topology_path
     
 locale_additions:
   en:
@@ -45,6 +46,7 @@ locale_additions:
     nav:
       switch: Switches
       vlan: VLANs
+      topology: Cisco Plugin Topology
     network:
       vlan_names:
         admin: Admin
@@ -66,6 +68,10 @@ locale_additions:
         nc: N/C
         no_connection: No Connection
         all: Show All
+      topology:
+        node: Node
+        switch_ip: Cisco Switch IP
+        switch_port: Cisco Switch Port
       dense:
         no_connection: No Connection
       vlan:

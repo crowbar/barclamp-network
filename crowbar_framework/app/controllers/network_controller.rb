@@ -127,6 +127,44 @@ class NetworkController < BarclampController
     flash[:notice] = "<b>#{I18n.t :warning, :scope => :error}:</b> #{I18n.t :no_nodes_found, :scope => :error}" if @nodes.empty? #.html_safe if @nodes.empty?
   end
 
+  def topology
+    if request.post?
+      nodes_req = {}
+      params.each do |k, v|
+        if k.starts_with? "node:"
+          parts = k.split ':'
+          node = parts[1]
+          area = parts[2]
+          nodes_req[node] = {} if nodes_req[node].nil?
+          nodes_req[node][area] = (v.empty? ? nil : v)
+        end
+      end
+      nodes_req.each do |node_name, values|
+        begin
+          dirty = false
+          node = NodeObject.find_node_by_name node_name
+          if !(node.cisco_switch_ip == values['switch_ip'])
+            node.cisco_switch_ip = values['switch_ip']
+            dirty = true
+          end
+          if !(node.cisco_switch_port == values['switch_port'])
+            node.cisco_switch_port = values['switch_port']
+            dirty = true
+          end
+          if dirty
+            node.save
+          end
+        rescue Exception=>e
+          failed << node_name
+        end 
+      end
+    end
+    @nodes = {}
+    NodeObject.find("roles:nova-multi-compute-*").each do |node|
+      @nodes[node.handle] = node
+    end
+  end
+
   def vlan
     net_bc = RoleObject.find_role_by_name 'network-config-default'
     if net_bc.barclamp == 'network'
