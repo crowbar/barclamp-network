@@ -28,6 +28,7 @@ crowbar:
   order: 20
   run_order: 20
   chef_order: 20
+  proposal_schema_version: 2
 
 nav:
   network:
