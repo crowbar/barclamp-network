@@ -128,6 +128,8 @@ node["crowbar"]["network"].keys.sort{|a,b|
     ifs[bond.name]["mode"] = team_mode
     ifs[bond.name]["type"] = "bond"
     our_iface = bond
+    node.set["crowbar"]["bond_list"] = {} if node["crowbar"]["bond_list"].nil?
+    node.set["crowbar"]["bond_list"][bond.name] = ifs[bond.name]["slaves"]
   end
   net_ifs << our_iface.name
   # If we want a vlan interface, create one on top of the base physical
