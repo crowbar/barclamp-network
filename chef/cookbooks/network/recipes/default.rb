@@ -148,6 +148,7 @@ node["crowbar"]["network"].keys.sort{|a,b|
     Nic.nics.each do |n|
       next unless n.kind_of?(Nic::Vlan)
       next if have_vlan_iface && n == our_iface
+      next unless n.parent == our_iface.name
       next unless n.vlan == network["vlan"].to_i
       kill_nic(n.name)
     end
