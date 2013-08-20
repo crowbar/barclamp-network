@@ -241,7 +241,7 @@ class NetworkService < ServiceObject
 
     role.default_attributes["network"]["networks"].each do |k,net|
       db = ProposalObject.find_data_bag_item "crowbar/#{k}_network"
-      if db.nil? || db.empty?
+      if db.nil?
         @logger.debug("Network: creating #{k} in the network")
         bc = Chef::DataBagItem.new
         bc.data_bag "crowbar"
