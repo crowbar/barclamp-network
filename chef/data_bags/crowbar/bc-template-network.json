@@ -158,7 +158,7 @@
         "nova_fixed": {
           "conduit": "intf1",
           "vlan": 500,
-          "use_vlan": true,
+          "use_vlan": false,
           "add_bridge": false,
           "subnet": "192.168.123.0",
           "netmask": "255.255.255.0",
