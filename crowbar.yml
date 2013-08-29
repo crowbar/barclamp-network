@@ -28,6 +28,14 @@ crowbar:
   layout: 2.0
   order: 20
 
+roles:
+  - name: network
+    jig: chef
+    flags:
+      - bootstrap
+    requires:
+      - deployer-client 
+
 rpms:
   redhat-6.2:
     pkgs:
