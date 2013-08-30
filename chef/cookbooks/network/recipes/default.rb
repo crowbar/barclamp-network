@@ -14,6 +14,76 @@
 # limitations under the License.
 #
 
+# Calculate the "right" NIC ordering.
+# First, find all the nics that register as PCI devices.
+
+def split_pci(n)
+  n.split(/[\.\/:]/).map{|i|i.to_i(16)}
+end
+
+net_re = /\/pci(.+)\/net\/(.+)$/
+
+net_sysfs = "/sys/class/net"
+raise "This recipe only works on Linux" unless File.directory?(net_sysfs)
+
+# Get all of the network devices that are real physical devices.
+#  We consider a real physical device to be anything that lives on a PCI bus.
+nics = Hash[]
+Dir.foreach(net_sysfs) do |ent|
+  ent = File.join(net_sysfs,ent)
+  next unless File.symlink?(ent)
+  # We know this is a symlink to a real device.  Extract what we need.
+  symlink = File.readlink(ent)
+  matches = net_re.match(symlink)
+  next unless matches && matches.length == 3
+  nics[split_pci(matches[1])] = matches[2]
+end
+
+# If we need to force ordering away from the way the PCI addresses would
+# normally fall out on the system, here is where we do it.
+forcing_ents = Array.new
+node["crowbar"]["interface_map"].each do |ent|
+  next unless node[:dmi][:system][:product_name] =~ /#{ent["pattern"]}/
+  ent["bus_order"].each do |i|
+    forcing_ents << split_pci(i)
+  end
+  break
+end if (node["crowbar"]["interface_map"] rescue nil)
+
+bus_ents = nics.keys.sort
+
+# Bucketize the nics we found. This sorts the nics into at most
+# forcing_ents.length + 1 buckets.
+sorted_keys = Array.new()
+nics.keys.each do |nic|
+  found = false
+  forcing_ents.each_index do |fi|
+    # Check to see if the PCI address of this nic is one that
+    # is covered by one of our interface maps.
+    f = forcing_ents[i]
+    next unless nic[0,f.length] == f
+    # It is.  Put it in the right bucket.
+    sorted_keys[fi] ||= Array.new
+    sorted_keys[fi] << nic
+    found = true
+    break
+  end
+  next if found
+  # The PCI address of this nic was not matched by any interface maps.
+  # Put it into the everything else bucket.
+  sorted_keys[forcing_ents.length] ||= Array.new
+  sorted_keys[forcing_ents.length] << nic
+end
+
+# Now, save our final sorted list by sorting each bucket by PCI address,
+# then mapping the address back to a nic name, then flattening the whole list.
+node.set["crowbar"] ||= Mash.new
+node.set["crowbar"]["sorted_ifs"] = sorted_keys.compact.map{|e|
+  e.sort.map{|e|
+    nics[e]
+  }
+}.flatten
+
 # Make sure packages we need will be present
 case node[:platform]
 when "ubuntu","debian","suse"
@@ -46,17 +116,12 @@ end
 end
 
 provisioner = search(:node, "roles:provisioner-server")[0]
-conduit_map = Barclamp::Inventory.build_node_map(node)
-Chef::Log.debug("Conduit mapping for this node:  #{conduit_map.inspect}")
 route_pref = 10000
 ifs = Mash.new
 old_ifs = node["crowbar_wall"]["network"]["interfaces"] || Mash.new rescue Mash.new
 if_mapping = Mash.new
 addr_mapping = Mash.new
 default_route = {}
-
-# dhclient running?  Not for long.
-::Kernel.system("killall -w -q -r '^dhclient'")
 
 # Silly little helper for sorting Crowbar networks.
 # Netowrks that use vlans and bridges will be handled later
@@ -67,6 +132,69 @@ def net_weight(net)
   res
 end
 
+# given a conduit definition, resolve it down to a set of physical interfaces.
+# The supported reference format is <sign><speed><#> where
+#  * sign is optional, and determines behavior if exact match is not found.
+#    + allows speed upgrade,
+#    - allows downgrade, and 
+#    ? allows either. If no sign is specified, an exact match must be found.
+#  * speed designates the interface speed. 10m, 100m, 1g and 10g are supported
+#  * The final number designates the zero-based offset into the set of physical
+#    interfaces that have the requested speed we want.
+def resolve_conduit(conduit)
+  known_ifs = node["crowbar"]["sorted_ifs"]
+  speeds = %w{10m 100m 1g 10g}
+  intf_re = /^([-+?]?)(\d{1,3}[mg])(\d+)$/
+  raise "#{conduit} is not defined!" unless node["crowbar"]["conduits"][conduit]
+  finders = node["crowbar"]["conduits"][conduit]["interfaces"]
+  raise "#{conduit} does not want any interfaces!" if finders.nil? || finders.empty?
+  finders = finders.map{|i|intf_re.match(i)}
+  malformed = finders.find_all{|i|i.length != 4}
+  raise "Malformed interface selectors: #{malformed}" unless malformed.empty?
+  # At this point, the selectors are at least well-formed. Verify that they are sane.
+  tmpl = finders[0]
+  if ! finders.all? do |i|
+      (i[1] == tmpl[1]) && (i[2] == tmpl[2])
+    end
+    raise "Interface selectors do not have the same speed and flags: #{conduit}"
+  end
+  # The conduit looks sane, but is it requesting a speed we know about?
+  # Check and see.
+  speed_idx = speeds.index(tmpl[2])
+  raise "Unknown requested speed #{template[2]}" unless speed_idx
+  # At this point, the conduit definition is sane.
+  wanted_speeds = case tmpl[1]
+                  when '+' then speeds[speed_idx..-1]
+                  when "-" then speeds[0..speed_idx].reverse
+                  when "?" then (speeds[speed_idx..-1] + (speeds[0..speed_idx].reverse)).uniq
+                  else [tmpl[2]]
+                  end
+  # Now, loop over all the wanted speeds until we find the interfaces with the desired
+  # offsets.
+  wanted_speeds.each do |speed|
+    candidates = known_ifs.select do |i|
+      # Fastest speed is at the end, and that is all we care about comparing right now.
+      node.automatic_attrs["crowbar_ohai"]["detected"]["network"][i]["speeds"][-1] == speed
+    end
+    res = finders.map{|f|candidates[f[3].to_i]}.compact
+    if res.length == finders.length
+      node.set["crowbar"]["conduits"][conduit]["resolved_interfaces"] = res
+      return res
+    end
+  end
+  raise "Cannot resolve conduit #{conduit} with known interfaces #{known_ifs}"
+end
+
+# If we do not have an admin address allocated yet, do nothing.
+if (node["crowbar"]["network"]["admin"]["addresses"] rescue []).empty?
+  Chef::Log.info("Network: #{node.fqdn} has not been allocated an address on the admin network.")
+  Chef::Log.info("Network: Leaving the configuration alone.")
+  return
+end
+
+# dhclient running?  Not for long.
+::Kernel.system("killall -w -q -r '^dhclient'")
+
 # Dynamically create our new local interfaces.
 node["crowbar"]["network"].keys.sort{|a,b|
   net_weight(a) <=> net_weight(b)
@@ -74,13 +202,8 @@ node["crowbar"]["network"].keys.sort{|a,b|
   next if name == "bmc"
   net_ifs = Array.new
   network = node["crowbar"]["network"][name]
-  addr = if network["address"]
-           IP.coerce("#{network["address"]}/#{network["netmask"]}")
-         else
-           nil
-         end
-  conduit = network["conduit"]
-  base_ifs = conduit_map[conduit]["if_list"].map{|i| Nic.new(i)}.sort
+  addrs = (network["addresses"] || []).map{|addr|IP.coerce(addr)}
+  base_ifs = resolve_conduit(network["conduit"]).map{|i| Nic.new(i)}.sort
   Chef::Log.info("Using base interfaces #{base_ifs.map{|i|i.name}.inspect} for network #{name}")
   base_ifs.each do |i|
     ifs[i.name] ||= Hash.new
@@ -88,16 +211,12 @@ node["crowbar"]["network"].keys.sort{|a,b|
     ifs[i.name]["type"] = "physical"
   end
   case base_ifs.length
-  when 0
-    Chef::Log.fatal("Conduit #{conduit} does not have any nics. Your config is invalid.")
-    raise ::RangeError.new("Invalid conduit mapping #{conduit_map.inspect}")
   when 1
     Chef::Log.info("Using interface #{base_ifs[0]} for network #{name}")
     our_iface = base_ifs[0]
   else
     # We want a bond.  Figure out what mode it should be.  Default to 5
-    team_mode = conduit_map[conduit]["team_mode"] ||
-      (network["teaming"] && network["teaming"]["mode"]) || 5
+    team_mode = network["teaming"]["mode"] || 5
     # See if a bond that matches our specifications has already been created,
     # or if there is an empty bond lying around.
     bond = Nic.nics.detect do|i|
@@ -179,16 +298,14 @@ node["crowbar"]["network"].keys.sort{|a,b|
   # Make sure our addresses are correct
   if_mapping[name] = net_ifs
   ifs[our_iface.name]["addresses"] ||= Array.new
-  if addr
-    ifs[our_iface.name]["addresses"] << addr
-    addr_mapping[name] ||= Array.new
-    addr_mapping[name] << addr.to_s
-    # Ditto for our default route
-    if network["router_pref"] && (network["router_pref"].to_i < route_pref)
-      Chef::Log.info("#{name}: Will use #{network["router"]} as our default route")
-      route_pref = network["router_pref"].to_i
-      default_route = {:nic => our_iface.name, :gateway => network["router"]}
-    end
+  ifs[our_iface.name]["addresses"] += addrs
+  addr_mapping[name] ||= Array.new
+  addr_mapping[name] += addrs.map{|addr|addr.to_s}
+  # Ditto for our default route
+  if network["router_pref"] && (network["router_pref"].to_i < route_pref)
+    Chef::Log.info("#{name}: Will use #{network["router"]} as our default route")
+    route_pref = network["router_pref"].to_i
+    default_route = {:nic => our_iface.name, :gateway => network["router"]}
   end
 end
 

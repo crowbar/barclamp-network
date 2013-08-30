@@ -34,7 +34,13 @@ roles:
     flags:
       - bootstrap
     requires:
-      - deployer-client 
+      - deployer-client
+  - name: network-admin
+    jig: chef
+    flags:
+      - discovery
+    requires:
+      - network
 
 rpms:
   redhat-6.2:
