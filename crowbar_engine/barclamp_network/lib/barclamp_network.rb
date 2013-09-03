@@ -9,6 +9,8 @@ module BarclampNetwork
     TABLE_PREFIX
   end
 
+  # Leave this in place for now until we decide on a better way to
+  # dynamically create a role per network.
   module Role
     module NetworkAdmin
       def on_todo(nr)
