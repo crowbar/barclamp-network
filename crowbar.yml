@@ -28,8 +28,9 @@ crowbar:
   layout: 2.0
   order: 20
 
+# We will need to create a role for the network server at some point.
 roles:
-  - name: network
+  - name: network-server
     jig: chef
     flags:
       - bootstrap
@@ -39,8 +40,9 @@ roles:
     jig: chef
     flags:
       - discovery
+      - bootstrap
     requires:
-      - network
+      - network-server
 
 rpms:
   redhat-6.2:
