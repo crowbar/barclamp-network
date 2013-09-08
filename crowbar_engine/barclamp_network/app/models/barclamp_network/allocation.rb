@@ -12,17 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class CreateAllocatedIpAddresses < ActiveRecord::Migration
-  def change
-    create_table "#{BarclampNetwork::TABLE_PREFIX}allocated_ip_addresses" do |t|
-      t.string :ip
-      t.references :interface
-      t.references :network
-      t.references :node
+class BarclampNetwork::Allocation < ActiveRecord::Base
 
-      t.timestamps
-    end
+  validate :sanity_check_address
+  
+  attr_protected :id
+  belongs_to :range, :class_name => "BarclampNetwork::Range"
+  belongs_to :node, :dependent => :destroy
 
-    add_index("#{BarclampNetwork::TABLE_PREFIX}allocated_ip_addresses", [:ip, :network_id], :unique => true, :name => "by_ip_network")
+  def address
+    IP.coerce(read_attribute("address"))
   end
+
+  def address=(addr)
+    write_attribute("address",IP.coerce(addr).to_s)
+  end
+
+  def network
+    range.network
+  end
+
+  private
+
+  def sanity_check_address
+    unless range === address
+      errors.add("Allocation #{network.name}.#{range.name}.{address.to_s} not in parent range!")
+    end
+  end
+  
 end

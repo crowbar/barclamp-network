@@ -13,248 +13,183 @@
 # limitations under the License.
 
 class BarclampNetwork::Network < ActiveRecord::Base
+
+  validate :check_network_sanity
+
   attr_protected :id
+  has_many :ranges, :dependent => :destroy, :class_name => "BarclampNetwork::Range"
+  has_one  :router, :dependent => :destroy, :class_name => "BarclampNetwork::Router"
+  belongs_to :deployment
 
-  has_many :allocated_ips, :dependent => :destroy, :class_name => "BarclampNetwork::AllocatedIpAddress"
+  # We need a wrapper around create! that also creates the proper role
+  # for the specific network we are creating.
+  def self.make_network(args)
+    allowed_keys = { :name => true, :deployment_id => true,
+      :vlan => true, :use_vlan => true, :team_mode => true,
+      :use_team => true, :conduit => true }
+    c_ranges = args.delete(:ranges)
+    c_ranges = JSON.parse(c_ranges) if c_ranges.kind_of?(String)
+    c_router = args.delete(:router)
+    c_router = JSON.parse(c_router) if c_router.kind_of?(String)
+    res = create!(args.delete_if{|k,v|!allowed_keys[k]})
+    begin
+      if c_ranges.nil? || c_ranges.empty?
+        raise ArgumentError.new("A network must have at least one range!")
+      end
+      c_ranges.each do |range|
+        r = BarclampNetwork::Range.new(:network_id => res.id,
+                                       :name => range["name"])
+        r.first = range["first"]
+        r.last = range["last"]
+        r.save!
+      end
+      if c_router
+        BarclampNetwork::Router.create!(:network_id => res.id,
+                                        :pref => c_router["pref"],
+                                        :address => c_router["address"])
+      end
 
-  has_one :subnet, :foreign_key => "subnet_id", :dependent => :destroy, :class_name => "BarclampNetwork::IpAddress"
-  belongs_to :conduit, :inverse_of => :networks, :class_name => "BarclampNetwork::Conduit"
-  has_one :router, :inverse_of => :network, :dependent => :destroy, :class_name => "BarclampNetwork::Router"
-  has_many :ip_ranges, :dependent => :destroy, :class_name => "BarclampNetwork::IpRange"
-  has_many :node_refs, :dependent => :destroy
-  has_and_belongs_to_many :interfaces, :join_table => "#{BarclampNetwork::TABLE_PREFIX}interfaces_networks", :class_name => "BarclampNetwork::Interface"
-  has_many :network_actions, :dependent => :destroy, :class_name => "BarclampNetwork::ConfigAction"
+      bc = Barclamp.where(:name => "network").first
+      Role.transaction do
+        r = Role.find_or_create_by_name(:name => "network-#{args[:name]}",
+                                        :jig_name => Rails.env == "production" ? "chef" : "test",
+                                        :barclamp_id => bc.id)
+        r.update_attributes(:description => "Automatically created by network barclamp",
+                            :template => '{}',
+                            :library => false,
+                            :implicit => false,
+                            :bootstrap => (res.name == "admin"),
+                            :discovery => (res.name == "admin")
+                          )
+        r.save!
+        RoleRequire.create!(:role_id => r.id, :requires => "network-server")
+        if Rails.env == "production"
+          RoleRequire.create!(:role_id => r.id, :requires => "deployer-client")
+        end
+      end
+    rescue Exception => e
+      res.destroy rescue nil
+      raise e
+    end
+    res
+  end
 
-  # attr_accessible :name, :dhcp_enabled
+  def template_cleaner(a)
+    a.reject do |k,v|
+      k.to_s == "id" || k.to_s.match(/_id$/)
+    end
+  end
+  
+  def to_template
+    res = template_cleaner(attributes)
+    res[:ranges] = ranges.map{|r|template_cleaner(r.attributes)}
+    if router
+      res[:router] = template_cleaner(n.router.attributes)
+    end
+    res.to_json
+  end
 
-  validates :name, :presence => true
-  validates_uniqueness_of :name, :scope => :snapshot_id
-  validates_inclusion_of :dhcp_enabled, :in => [true, false]
-  validates :subnet, :presence => true
-  validates :ip_ranges, :presence => true
-  #validates :snapshot, :presence => true
+  def role
+    bc = Barclamp.where(:name => "network").first
+    Role.where(:name => "network-#{name}", :barclamp_id => bc.id).first
+  end
 
+  def allocations
+    ranges.map{|range| range.allocations}.flatten
+  end
 
-  def allocate_ip(range, node, suggestion = nil)
-    logger.debug("Entering Network#{BarclampNetwork::NetworkUtils.log_name(self)}.allocate_ip(range: #{range}, node: #{BarclampNetwork::NetworkUtils.log_name(node)}, suggestion: #{suggestion}")
+  def node_allocations(node)
+    ranges.order("name").map do |range|
+      range.allocations.where(:node_id => node.id).map do |a|
+        a.address.to_s
+      end.sort
+    end.flatten
+  end
 
-    # Validate inputs
-    return [400, "No range specified"] if range.nil?
-    return [400, "No node specified"] if node.nil?
+  def make_node_role(node)
+    nr = nil
+    NodeRole.transaction do
+      nr = NodeRole.where(:node_id => node.id, :role_id => role.id).first ||
+        role.add_to_node_in_snapshot(node,snap)
+      sysdata = Hash.new
+      sysdata["crowbar"] = Hash.new
+      sysdata["crowbar"]["network"] = Hash.new
+      sysdata["crowbar"]["network"][name] = Hash.new
+      sysdata["crowbar"]["network"][name]["addresses"] = node_allocations(node)
+      nr.sysdata = sysdata
+      nr.save!
+    end
+    nr
+  end
 
-    # If the node already has an IP on this network then just return success
-    results = BarclampNetwork::AllocatedIpAddress.where(:node_id => node.id).where(:network_id => id)
-    if results.length > 0
-      allocated_ip = results.first.ip
-      logger.info("Network.allocate_ip: node #{BarclampNetwork::NetworkUtils.log_name(node)} already has address #{allocated_ip} on network #{BarclampNetwork::NetworkUtils.log_name(self)}, range #{range}")
-      net_info = build_net_info(node)
-      net_info["address"] = allocated_ip
-      return [200, net_info]
+  private
+
+  def check_network_sanity
+
+    # First, check the conduit to be sure it is sane.
+    intf_re =  /^([-+?]?)(\d{1,3}[mg])(\d+)$/
+    if conduit.nil? || conduit.empty?
+      errors.add("Network #{name}: Conduit definition cannot be empty")
+    end
+    intfs = conduit.split(",").map{|intf|intf.strip}
+    ok_intfs, failed_intfs = intfs.partition{|intf|intf_re.match(intf)}
+    unless failed_intfs.empty?
+      errors.add("Network #{name}: Invalid abstract interface names in conduit: #{failed_intfs.join(", ")}")
+    end
+    matches = intfs.map{|intf|intf_re.match(intf)}
+    tmpl = matches[0]
+    if ! matches.all?{|i|(i[1] == tmpl[1]) && (i[2] == tmpl[2])}
+      errors.add("Network #{name}: Not all abstract interface names have the same speed and flags: #{conduit}")
     end
 
-    subnet_addr = IPAddr.new(subnet.cidr)
-    netmask_addr = subnet.get_netmask()
+    # Conduit is sane, check to see that it satisfies the overlap constraints for interacting
+    # with other networks.
+    # Either all the interfaces in a conduit must overlap perfectly, or none of them can.
+    ifhash = Hash.new
+    intfs.each do |i| ifhash[i] = true end
 
-    # Find the ip range
-    ip_range = ip_ranges.where(:name => range).first
-    return [404, "IP range not found"] if ip_range.nil?
-
-    index = IPAddr.new(ip_range.start_address.get_ip) & ~netmask_addr
-    index = index.to_i
-    stop_address = IPAddr.new(ip_range.end_address.get_ip) & ~netmask_addr
-    stop_address = subnet_addr | (stop_address.to_i + 1)
-    address = subnet_addr | index
-
-    logger.debug("Starting address: #{address.to_s}")
-
-    if suggestion
-      logger.info("Allocating with suggestion: #{suggestion}")
-      subsug = IPAddr.new(suggestion) & netmask_addr
-      if subnet_addr == subsug
-        if allocated_ips.where(:ip => suggestion).length == 0
-          logger.info("Using suggestion: node #{BarclampNetwork::NetworkUtils.log_name(node)}, network #{BarclampNetwork::NetworkUtils.log_name(self)} #{suggestion}")
-          address = suggestion
-          found = true
-        end
+    BarclampNetwork::Network.all.each do |net|
+      # A conduit definition can overlap with another conduit definition either perfectly or not at all.
+      nethash = Hash.new
+      net.conduit.split(",").map{|i|i.strip}.each do |i|
+        nethash[i] = true
+      end
+      next if nethash == ifhash
+      nethash.keys.each do |k|
+        next unless ifhash[k]
+        errors.add("Network #{name}: Conduit mapping overlaps with #{net.name} at abstract interface #{k}}")
       end
     end
 
-    allocation_successful = false
-    tries=5
-    while !allocation_successful and tries>0
-      if !found
-        # Snag all the allocated IPs for this network and convert to a hash
-        ips={}
-        for allocated_ip in allocated_ips(true) do
-          ips[allocated_ip.ip] = true
-        end
+    # Check to see that requested VLAN information makes sense.
+    if use_vlan && !(1..4095).member?(vlan)
+      errors.add("Network #{name}: VLAN #{vlan} not sane")
+    end
 
-        while !found do
-          unless ips.key?(address.to_s)
-            found = true
-            break
-          end
-          index = index + 1
-          address = subnet_addr | index
-          break if address == stop_address
-        end
+    # Check to see if our requested teaming makes sense.
+    if use_team
+      if intfs.length < 2
+        errors.add("Network #{name}: Want bonding, but requested conduit #{conduit} has one member")
+      elsif intfs.length > 8
+        errors.add("Network #{name}: Want bonding, but requested conduit #{conduit} has too many members")
       end
-
-      if found
-        begin
-          BarclampNetwork::AllocatedIpAddress.transaction do
-            ip_addr = BarclampNetwork::AllocatedIpAddress.new( :ip => address.to_s )
-            ip_addr.node = node
-            ip_addr.network = self
-            ip_addr.save!
-
-            node_ref = BarclampNetwork::NodeRef.new()
-            node_ref.node = node
-            node_ref.network = self
-            node_ref.save!
-
-            node.set_attrib("ip_address", nil, 0, BarclampNetwork::AttribIpAddress)
-          end
-
-          allocation_successful = true
-          net_info = build_net_info(node)
-          net_info["address"] = address.to_s
-        rescue ActiveRecord::RecordNotUnique => ex
-          found = false
-          tries -= 1
-          logger.warn("#{address.to_s} has already been allocated.  Retrying...")
-        end
-      else
-        logger.info("Network.allocate_ip: no addresses available: node #{node.id}, network #{id}, range #{range}")
-        return [404, "No addresses available"]
-      end
-    end
-
-    if !found and tries == 0
-      logger.error("Network.allocate_ip: retries exceeded while allocating IP address for node #{BarclampNetwork::NetworkUtils.log_name(node)} network #{BarclampNetwork::NetworkUtils.log_name(self)} range #{range}")
-      return [404, "Unable to allocate IP address due to retries exceeded"]
-    end
-
-    logger.info("Network.allocate_ip: Assigned: node #{node.id}, network #{id}, range #{range}, ip #{address}")
-    [200, net_info]
-  end
-    
-
-  def deallocate_ip(node)
-    # Validate inputs
-    return [400, "No node specified"] if node.nil?
-
-    node_ref = BarclampNetwork::NodeRef.where(:node_id => node.id).where(:network_id => self.id)[0]
-    node_ref.destroy if !node_ref.nil?
-
-    # If we don't have one allocated, return success
-    results = BarclampNetwork::AllocatedIpAddress.where(:node_id => node.id).where(:network_id => id)
-    if results.length == 0
-      logger.warn("Network.deallocate_ip: node #{BarclampNetwork::NetworkUtils.log_name(node)} does not have an address allocated on network #{BarclampNetwork::NetworkUtils.log_name(self)}")
-      return [200, nil]
-    end
-
-    allocated_ip = results.first
-    allocated_ip.destroy
-
-    logger.info("Network.deallocate_ip: deallocated ip #{allocated_ip.ip} for node #{BarclampNetwork::NetworkUtils.log_name(node)} on network #{BarclampNetwork::NetworkUtils.log_name(self)}")
-    
-    [200, nil]
-  end
-
-
-  def enable_interface(node)
-    net_info = build_net_info(node)
-
-    # If we already have an enabled interface then return success
-    node_ref = BarclampNetwork::NodeRef.where(:node_id => node.id).where(:network_id => self.id)
-    if !node_ref.nil?
-      logger.info("Network.enable_interface: node #{BarclampNetwork::NetworkUtils.log_name(node)} already has an enabled interface on network #{BarclampNetwork::NetworkUtils.log_name(self)}")
-      return [200, net_info]
-    end
-
-    node_ref = BarclampNetwork::NodeRef.new()
-    node_ref.node = node
-    node_ref.network = self
-    node_ref.save!
-
-    logger.info("Network.enable_interface: Enabled interface: node #{node.id}, network #{id}")
-    [200, net_info]
-  end
-
-
-  def self.get_networks_hash(node)
-    networks = BarclampNetwork::Network.joins(:node_ref).where(:node_id => node.id)
-
-    networks_hash = {}
-    networks.each { |network|
-      networks_hash[network.name] = network.to_hash()
-    }
-
-    networks_hash
-  end
-
-
-  def to_hash()
-    network_hash = {}
-
-    add_bridge = "false"
-    create_vlan = nil
-    self.network_actions.each { |network_action|
-      if network_action.instance_of? BarclampNetwork::CreateBridge
-        add_bridge = "true"
-      elsif network_action.instance_of? BarclampNetwork::CreateVlan
-        create_vlan = network_action
-      end
-    }
-
-    network_hash["add_bridge"] = add_bridge
-
-    if create_vlan.nil?
-      network_hash["use_vlan"] = "false"
-      network_hash["vlan"] = "100"
+      errors.add("Network #{name}: Invalid bonding mode") unless (0..6).member?(team_mode)
     else
-      network_hash["use_vlan"] = "true"
-      network_hash["vlan"] = create_vlan.tag.to_s
+      # Conduit can only contain one abstract interface if we don't want bonding.
+      unless intfs.length == 1
+        errors.add("Network #{name}: Do not want bonding, but requested conduit #{conduit} has multiple members")
+      end
     end
 
-    network_hash["conduit"] = self.conduit.name
-
-    router = self.router
-    if !router.nil?
-      network_hash["router"] = router.ip.get_ip()
-      network_hash["router_pref"] = router.router_pref
+    # Should be obvious, but...
+    unless name && !name.empty?
+      errors.add("Cannot create a network without a name")
     end
 
-    network_hash["subnet"] = subnet.get_ip()
-    network_hash["netmask"] = subnet.get_netmask().to_s
-    network_hash["broadcast"] = subnet.get_broadcast().to_s
-
-    ip_ranges_hash = {}
-    self.ip_ranges.each { |ip_range|
-      ip_ranges_hash[ip_range.name] = ip_range.to_hash()
-    }
-
-    network_hash["ranges"] = ip_ranges_hash
-    network_hash
-  end
-
-
-  def build_net_info(node)
-    unless router.nil?
-      router_addr = router.ip.get_ip
-      router_pref = router.pref
+    # We also must have a deployment
+    unless deployment
+      errors.add("Cannot create a network without binding it to a deployment")
     end
 
-    net_info = { 
-      "conduit" => conduit.name,
-      "netmask" => subnet.get_netmask().to_s,
-      "node" => node.name,
-      "router" => router_addr,
-      "subnet" => subnet.get_ip,
-      "broadcast" => subnet.get_broadcast().to_s,
-      "usage" => name }
-    net_info["router_pref"] = "#{router_pref}" unless router_pref.nil?
-    net_info
   end
 end
