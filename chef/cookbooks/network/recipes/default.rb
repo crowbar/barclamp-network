@@ -253,7 +253,7 @@ Nic.nics.each do |nic|
   # If we are a member of a bond or a bridge, then the bond or bridge
   # gets our config instead of us. The order in which Nic.nics returns
   # interfaces ensures that this will always function properly.
-  if (master = nic.bond_master || nic.bridge_master)
+  if (master = nic.master)
     if iface["slave"]
       # We should continue to be a slave.
       Chef::Log.info("#{master.name}: usurping #{nic.name}")
