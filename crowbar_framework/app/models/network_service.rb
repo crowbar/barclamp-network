@@ -66,12 +66,12 @@ class NetworkService < ServiceObject
       address = IPAddr.new(net_info["subnet"]) | index
 
       if suggestion
-        @logger.error("Allocating with suggestion: #{suggestion}")
+        @logger.info("Allocating with suggestion: #{suggestion}")
         subsug = IPAddr.new(suggestion) & IPAddr.new(net_info["netmask"])
         subnet = IPAddr.new(net_info["subnet"]) & IPAddr.new(net_info["netmask"])
         if subnet == subsug
           if db["allocated"][suggestion].nil?
-            @logger.error("Using suggestion for #{type}: #{name} #{network} #{suggestion}")
+            @logger.info("Using suggestion for #{type}: #{name} #{network} #{suggestion}")
             address = suggestion
             found = true
           end
@@ -265,7 +265,7 @@ class NetworkService < ServiceObject
       db = ProposalObject.find_proposal "network", inst
       role = RoleObject.find_role_by_name "network-config-#{inst}"
       if NodeObject.find_node_by_name(name).try(:[], 'crowbar').try(:[], 'admin_node')
-        @logger.error("Admin node transitioning to discovered state.  Adding switch_config role.")
+        @logger.info("Admin node transitioning to discovered state.  Adding switch_config role.")
         result = add_role_to_instance_and_node("network", inst, name, db, role, "switch_config")
       end
 
