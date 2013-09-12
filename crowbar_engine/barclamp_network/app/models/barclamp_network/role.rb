@@ -11,6 +11,15 @@ class BarclampNetwork::Role < Role
     "{\"crowbar\": {\"network\": {\"#{network.name}\": #{network.to_template} } } }"
   end
 
+  def jig_role(name)
+    chef_role = Chef::Role.new
+    chef_role.name(name)
+    chef_role.description("#{name}: Automatically created by Crowbar")
+    chef_role.run_list(Chef::RunList.new("recipe[network]"))
+    chef_role.save
+    true
+  end
+
   def on_todo(nr)
     NodeRole.transaction do
       d = nr.sysdata
