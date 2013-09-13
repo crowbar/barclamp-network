@@ -146,7 +146,7 @@ class BarclampNetwork::Network < ActiveRecord::Base
     # with other networks.
     # Either all the interfaces in a conduit must overlap perfectly, or none of them can.
     ifhash = Hash.new
-    intfs.each do |i| ifhash[i] = true end
+    intfs.each{ |i| ifhash[i] = true }
 
     BarclampNetwork::Network.all.each do |net|
       # A conduit definition can overlap with another conduit definition either perfectly or not at all.
