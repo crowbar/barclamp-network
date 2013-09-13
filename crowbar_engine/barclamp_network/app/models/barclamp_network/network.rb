@@ -111,13 +111,7 @@ class BarclampNetwork::Network < ActiveRecord::Base
     NodeRole.transaction do
       nr = NodeRole.where(:node_id => node.id, :role_id => role.id).first ||
         role.add_to_node_in_snapshot(node,snap)
-      sysdata = Hash.new
-      sysdata["crowbar"] = Hash.new
-      sysdata["crowbar"]["network"] = Hash.new
-      sysdata["crowbar"]["network"][name] = Hash.new
-      sysdata["crowbar"]["network"][name]["addresses"] = node_allocations(node)
-      nr.sysdata = sysdata
-      nr.save!
+      nr.sysdata = { "crowbar" => { "network" => { name => {"address" => node_allocations(node)}}}}
     end
     nr
   end
