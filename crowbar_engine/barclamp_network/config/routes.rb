@@ -5,9 +5,7 @@ BarclampNetwork::Engine.routes.draw do
       scope ':version' do
         resources :networks do
           member do
-            put 'allocate_ip'
-            put 'deallocate_ip'
-            put 'enable_interface'
+            post 'allocate_ip'
           end
         end
       end
