@@ -141,12 +141,11 @@ end
 #  * speed designates the interface speed. 10m, 100m, 1g and 10g are supported
 #  * The final number designates the zero-based offset into the set of physical
 #    interfaces that have the requested speed we want.
-def resolve_conduit(conduit)
+def resolve_conduit(net)
   known_ifs = node["crowbar"]["sorted_ifs"]
   speeds = %w{10m 100m 1g 10g}
   intf_re = /^([-+?]?)(\d{1,3}[mg])(\d+)$/
-  raise "#{conduit} is not defined!" unless node["crowbar"]["conduits"][conduit]
-  finders = node["crowbar"]["conduits"][conduit]["interfaces"]
+  finders = node["crowbar"]["network"][net]["conduit"].split(',').map{|f|f.strip}
   raise "#{conduit} does not want any interfaces!" if finders.nil? || finders.empty?
   finders = finders.map{|i|intf_re.match(i)}
   malformed = finders.find_all{|i|i.length != 4}
@@ -178,7 +177,7 @@ def resolve_conduit(conduit)
     end
     res = finders.map{|f|candidates[f[3].to_i]}.compact
     if res.length == finders.length
-      node.set["crowbar"]["conduits"][conduit]["resolved_interfaces"] = res
+      node.set["crowbar"]["network"][net]["resolved_interfaces"] = res
       return res
     end
   end
@@ -203,7 +202,7 @@ node["crowbar"]["network"].keys.sort{|a,b|
   net_ifs = Array.new
   network = node["crowbar"]["network"][name]
   addrs = (network["addresses"] || []).map{|addr|IP.coerce(addr)}
-  base_ifs = resolve_conduit(network["conduit"]).map{|i| Nic.new(i)}.sort
+  base_ifs = resolve_conduit(name).map{|i| Nic.new(i)}.sort
   Chef::Log.info("Using base interfaces #{base_ifs.map{|i|i.name}.inspect} for network #{name}")
   base_ifs.each do |i|
     ifs[i.name] ||= Hash.new

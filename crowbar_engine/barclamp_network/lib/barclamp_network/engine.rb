@@ -15,7 +15,6 @@
 
 module BarclampNetwork
   class Engine < ::Rails::Engine
-    #isolate_namespace BarclampNetwork
-    config.active_record.observers = :'barclamp_network/node_observer'
+    isolate_namespace BarclampNetwork
   end
 end

@@ -13,12 +13,30 @@
 # limitations under the License.
 
 class BarclampNetwork::Router < ActiveRecord::Base
-  attr_protected :id
-  belongs_to :network, :inverse_of => :router, :class_name => "BarclampNetwork::Network"
-  has_one :ip, :foreign_key => "router_id", :dependent => :destroy, :class_name => "BarclampNetwork::IpAddress"
 
-  #attr_accessible :pref
-  accepts_nested_attributes_for :ip
-  validates :pref, :presence => true, :numericality => { :only_integer => true }
-  validates :ip, :presence => true
+  validate  :router_is_sane
+  
+  attr_protected :id
+  belongs_to     :network
+
+  attr_accessible :pref
+
+  def address
+    IP.coerce(read_attribute("address"))
+  end
+
+  def address=(addr)
+    write_attribute("address",IP.coerce(addr).to_s)
+  end
+
+  private
+  
+  def router_is_sane
+    # A router is sane when its address is in a subnet covered by one of its ranges
+    unless network.ranges.any?{|r|r.start.subnet === address}
+      errors.add("Router #{address.to_s} is not any range for #{network.name}")
+    end
+  end
 end
+
+  
