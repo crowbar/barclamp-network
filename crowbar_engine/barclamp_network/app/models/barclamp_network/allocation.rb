@@ -12,14 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class BarclampNetwork::Router < ActiveRecord::Base
+class BarclampNetwork::Allocation < ActiveRecord::Base
 
-  validate  :router_is_sane
+  validate :sanity_check_address
   
   attr_protected :id
-  belongs_to     :network
-
-  attr_accessible :pref
+  belongs_to :range, :class_name => "BarclampNetwork::Range"
+  belongs_to :node, :dependent => :destroy
 
   def address
     IP.coerce(read_attribute("address"))
@@ -29,14 +28,16 @@ class BarclampNetwork::Router < ActiveRecord::Base
     write_attribute("address",IP.coerce(addr).to_s)
   end
 
+  def network
+    range.network
+  end
+
   private
-  
-  def router_is_sane
-    # A router is sane when its address is in a subnet covered by one of its ranges
-    unless network.ranges.any?{|r|r.start.subnet === address}
-      errors.add("Router #{address.to_s} is not any range for #{network.name}")
+
+  def sanity_check_address
+    unless range === address
+      errors.add("Allocation #{network.name}.#{range.name}.{address.to_s} not in parent range!")
     end
   end
-end
-
   
+end
