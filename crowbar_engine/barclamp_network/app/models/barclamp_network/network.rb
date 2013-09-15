@@ -54,7 +54,7 @@ class BarclampNetwork::Network < ActiveRecord::Base
         r = Role.find_or_create_by_name(:name => "network-#{args[:name]}",
                                         :jig_name => Rails.env == "production" ? "chef" : "test",
                                         :barclamp_id => bc.id)
-        r.update_attributes(:description => "Automatically created by network barclamp",
+        r.update_attributes(:description => I18n.t('automatic_by' :name=>bc.name),
                             :template => '{}',
                             :library => false,
                             :implicit => false,
