@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-class BarclampNetwork::NetworksController < BarclampsController
+class BarclampNetwork::NetworksController < ApplicationController
   respond_to :html, :json
 
   # Make a copy of the barclamp controller help
@@ -82,6 +82,14 @@ class BarclampNetwork::NetworksController < BarclampsController
 
   add_help(:allocate_ip,[:id,:node_id,:range,:suggestion],[:put])
 
+  def ip
+    if request.post?
+      allocate_ip
+    elsif request.delete?
+      deallocate_ip
+    end
+  end
+      
   def allocate_ip
     network = BarclampNetwork::Network.find_key(params[:id])
     node = Node.find_key(params[:node_id])
