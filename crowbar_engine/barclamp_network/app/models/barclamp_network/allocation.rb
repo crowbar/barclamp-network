@@ -20,6 +20,9 @@ class BarclampNetwork::Allocation < ActiveRecord::Base
   belongs_to :range, :class_name => "BarclampNetwork::Range"
   belongs_to :node, :dependent => :destroy
 
+  scope  :node,     ->(n)  { where(:node => n.id) }
+  scope  :network,  ->(net){ joins(:range).where('ranges.network_id' => net.id) }
+
   def address
     IP.coerce(read_attribute("address"))
   end

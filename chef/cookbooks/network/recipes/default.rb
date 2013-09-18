@@ -17,6 +17,8 @@
 # Calculate the "right" NIC ordering.
 # First, find all the nics that register as PCI devices.
 
+require 'digest/md5'
+
 def split_pci(n)
   n.split(/[\.\/:]/).map{|i|i.to_i(16)}
 end
@@ -83,24 +85,6 @@ node.set["crowbar"]["sorted_ifs"] = sorted_keys.compact.map{|e|
     nics[e]
   }
 }.flatten
-
-# Make sure packages we need will be present
-case node[:platform]
-when "ubuntu","debian","suse"
-  %w{bridge-utils vlan}.each do |pkg|
-    p = package pkg do
-      action :nothing
-    end
-    p.run_action :install
-  end
-when "centos","redhat"
-  %w{bridge-utils vconfig}.each do |pkg|
-    p = package pkg do
-      action :nothing
-    end
-    p.run_action :install
-  end
-end
 
 if ::File.exists?("/etc/init/network-interface.conf")
   # Make upstart stop trying to dynamically manage interfaces.
@@ -215,7 +199,7 @@ node["crowbar"]["network"].keys.sort{|a,b|
     our_iface = base_ifs[0]
   else
     # We want a bond.  Figure out what mode it should be.  Default to 5
-    team_mode = network["teaming"]["mode"] || 5
+    team_mode = network["team_mode"] || 5
     # See if a bond that matches our specifications has already been created,
     # or if there is an empty bond lying around.
     bond = Nic.nics.detect do|i|
@@ -247,6 +231,19 @@ node["crowbar"]["network"].keys.sort{|a,b|
   # If we want a vlan interface, create one on top of the base physical
   # interface and/or bond that we already have
   if network["use_vlan"]
+    unless system("which vconfig")
+      case node[:platform]
+      when "ubuntu","debian","suse"
+        p = package "vlan" do
+          action :nothing
+        end
+      when "centos","redhat"
+        p = package "vconfig" do
+          action :nothing
+        end
+      end
+      p.run_action :install
+    end
     vlan = "#{our_iface.name}.#{network["vlan"]}"
     if Nic.exists?(vlan)
       Chef::Log.info("Using vlan #{vlan} for network #{name}")
@@ -272,6 +269,13 @@ node["crowbar"]["network"].keys.sort{|a,b|
   end
   # Ditto for a bridge.
   if network["add_bridge"]
+    unless system("which brctl")
+      p = package "bridge-utils" do
+        action :nothing
+      end
+      p.run_action :install
+    end
+
     bridge = if our_iface.kind_of?(Nic::Vlan)
                "br#{our_iface.vlan}"
              else
@@ -402,7 +406,7 @@ end
 # Wait for the administrative network to come back up.
 Chef::Log.info("Waiting up to 60 seconds for the net to come back")
 60.times do
-  break if ::Kernel.system("ping -c 1 -w 1 -q #{provisioner.address.addr}")
+  break if provisioner.address.reachable?
   sleep 1
 end if provisioner
 

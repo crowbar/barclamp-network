@@ -46,26 +46,29 @@ class BarclampNetwork::Range < ActiveRecord::Base
 
   def allocate(node, suggestion = nil)
     res = BarclampNetwork::Allocation.where(:node_id => node.id, :range_id => self.id).first
-    unless res
-      BarclampNetwork::Allocation.transaction do
-        if suggestion
-          suggestion = IP.coerce(suggestion)
+    return res if res
+    if suggestion
+      begin
+        suggestion = IP.coerce(suggestion)
+        BarclampNetwork::Allocation.transaction do
           if (self === suggestion) &&
-              BarclampNetwork::Allocation.where(:address => suggestion.to_s).empty?
+              BarclampNetwork::Allocation.where(:address => suggestion.to_s).count == 0
             res = BarclampNetwork::Allocation.create!(:range_id => self.id, :node_id => node.id, :address => suggestion)
           end
         end
+      rescue
+        res = nil
       end
-      unless res
-        allocated = Hash.new
-        allocations.each do |addr|
-          allocated[IP.coerce(addr.address)] = true
-        end
-        (first..last).each do |addr|
-          next if allocated[addr]
+    end
+    unless res
+      (first..last).each do |addr|
+        next if BarclampNetwork::Allocation.where(:address => addr.to_s).count > 0
+        begin
           res = BarclampNetwork::Allocation.create!(:range_id => self.id, :node_id => node.id, :address => addr.to_s)
-          break
+        rescue
+          res = nil
         end
+        break if res
       end
     end
     network.make_node_role(node)
