@@ -12,14 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-class BarclampNetwork::NetworksController < ApplicationController
+class BarclampNetwork::NetworksController < ::ApplicationController
   respond_to :html, :json
-
-  # Make a copy of the barclamp controller help
-  self.help_contents = Array.new(superclass.help_contents)
-  
-
-  add_help(:create,[:deployment, :name, :vlan, :use_vlan, :use_bridge, :team_mode, :use_team, :conduit],[:post])
 
   # Create should be passed a JSON blob that looks like this:
   # {
@@ -64,8 +58,6 @@ class BarclampNetwork::NetworksController < ApplicationController
     end
   end
 
-  add_help(:update,[:id, :conduit,:team_mode, :use_team],[:put])
-
   def update
     @network = BarclampNetwork::Network.find_key(params[:id])
     # Only allow teaming and conduit stuff to be updated for now.
@@ -79,8 +71,6 @@ class BarclampNetwork::NetworksController < ApplicationController
   def destroy
     raise ArgumentError.new("Cannot destroy networks for now")
   end
-
-  add_help(:allocate_ip,[:id,:node_id,:range,:suggestion],[:put])
 
   def ip
     if request.post?
@@ -100,16 +90,12 @@ class BarclampNetwork::NetworksController < ApplicationController
     render :json => ret
   end
 
-  add_help(:deallocate_ip,[:node_id,:cidr],[:put])
-
   def deallocate_ip
     raise ArgumentError.new("Cannot deallocate addresses for now")
     node = Node.find_key(params[:node_id])
     allocation = BarclampNetwork::Allocation.where(:address => params[:cidr], :node_id => node.id)
     allocation.destroy
   end
-
-  add_help(:enable_interface,[:id],[:put])
 
   def enable_interface
     raise ArgumentError.new("Cannot enable interfaces without IP address allocation for now.")
@@ -124,8 +110,6 @@ class BarclampNetwork::NetworksController < ApplicationController
     render :json => ret[1]
   end
 
-  add_help(:show,[:deployment_id, :network_id],[:get])
- 
   def show
     @network = BarclampNetwork::Network.find_key(params[:id])
     respond_with(@network) do |format|
@@ -137,8 +121,6 @@ class BarclampNetwork::NetworksController < ApplicationController
       end
     end
   end
-
-  add_help(:index,[:deployment_id],[:get])
   
   def index
     Rails.logger.debug("NetworksController.index");

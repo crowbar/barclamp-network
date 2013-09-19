@@ -13,6 +13,6 @@
 # limitations under the License.
 #
 module BarclampNetwork
-  class ApplicationController < ActionController::Base
+  class ApplicationController < ::ApplicationController
   end
 end
