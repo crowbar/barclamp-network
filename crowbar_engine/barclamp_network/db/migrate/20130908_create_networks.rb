@@ -17,6 +17,8 @@ class CreateNetworks < ActiveRecord::Migration
     create_table "#{BarclampNetwork::TABLE_PREFIX}networks" do |t|
       t.references   :deployment
       t.string       :name,        :null => false, :index => true
+      t.string       :description, :null => true
+      t.integer      :order,       :null => false, :default => 1000
       t.integer      :vlan,        :null => false, :default => 0
       t.boolean      :use_vlan,    :null => false, :default => false
       t.boolean      :use_bridge,  :null => false, :default => false

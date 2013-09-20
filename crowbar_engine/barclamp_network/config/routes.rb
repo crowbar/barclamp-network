@@ -16,6 +16,9 @@ BarclampNetwork::Engine.routes.draw do
 
   # UI routes
   resources :networks
+  namespace :scaffolds do
+    resources :networks do as_routes end
+  end
 
   #/api/v2/networks
   scope :defaults => {:format=> 'json'} do

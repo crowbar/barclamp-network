@@ -11,17 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# 
-en:
-  nav:
-    networks: Networks
-    networks_description: Manage Networks
-    scaffold:
-      networks: Networks
-      networks_description: Manage Networks
+#
 
-  # UI 
-  barclamp_network:
-    networks:
-      index:
-        title: "Installed Networks"
+class BarclampNetwork::Scaffolds::NetworksController < ApplicationController
+  active_scaffold :barclamp_network_networks do |conf|
+  end
+end 
