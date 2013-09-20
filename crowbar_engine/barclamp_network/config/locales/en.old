@@ -1,0 +1,183 @@
+# Copyright 2013, Dell
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# 
+en:
+  network_name: &network_name Network Name
+  network_id: &network_id Network ID
+  dhcp_enabled: &dhcp_enabled DHCP Enabled
+  conduit: &conduit Conduit
+  updated_at: &updated_at Last Updated
+  nav:
+    networks: Networks
+    networks_description: Manage Networks
+    switch: Switches
+    switch_description: Visual Representation of Switch Connections
+    vlan: VLANs
+    vlan_description: VLAN to Node Mapping
+    conduits: Conduits
+    conduit_description: Manage Conduits
+    scaffold:
+      network:
+        top: Network
+        allocated_ip_addresses: Allocated IP Addresses
+        bmc_interfaces: BMC Interfaces
+        bonds: Bonds
+        bridges: Bridges
+        bus_maps: Bus Maps
+        buses: Buses
+        config_actions: Config Actions
+        conduit_filters: Conduit Filters
+        conduit_rules: Conduit Rules
+        conduits: Conduits
+        create_bonds: Create Bonds
+        create_vlans: Create VLANs
+        create_bridges: Create Bridges
+        interface_maps: Interface Maps
+        interface_selectors: Interface Selectors
+        interfaces: Interfaces
+        ip_addresses: IP Addresses
+        ip_ranges: IP Ranges
+        network_mode_filters: Network Node Filters
+        networks: Networks
+        node_attribute_filters: Node Attribute Filters
+        physical_interfaces: Physical Interfaces
+        routers: Routers
+        select_by_indices: Select By Indices
+        select_by_speeds: Select By Speeds
+        vlan_interfaces: VLAN Interfaces
+        vlans: VLANs
+
+  barclamp:
+    network:
+      edit_attributes: 
+        attributes: Attributes
+      edit_deployment: 
+        deployment: Deployment
+
+  network:
+    form:
+      save: Save
+    vlan_names:
+      admin: Admin
+      bmc: Mgmt (BMC)
+      bmc_vlan: Mgmt Connect
+      nova_fixed: Nova Fixed
+      nova_floating: Nova Floating
+      public: Public
+      private: Private
+      storage: Storage
+    controller:
+      virtual: Virtual
+    vlan:
+      title: Available Networks
+      name: Name
+      id: VLAN ID
+      conduit: Conduit
+      inuse: Active VLAN
+      not_inuse: Untagged
+      nodes: Nodes
+    nodes:
+      title: Interface and Conduit Maps
+      interface_map: Interface Map for Network Attributes
+      node: Node
+      model: Model
+      mode: Network Mapping Mode
+      default_bus_order: Using Default Interface (Bus) Ordering
+      bus_order: Interface (Bus) Order Map
+      conduit_mgmt: Management
+      conduit_bmc: 'BMC/IMPI'
+      conduit_prod: Production
+      conduit_public: 'Public/Guest'
+      conduit_intf0: Default
+      conduit_intf1: First Interface
+      conduit_intf2: Second Interface
+      conduit_intf3: Third Interface
+      team_1: Team Mode 1
+      team_2: Team Mode 2
+      team_3: Team Mode 3
+      team_4: Team Mode 4
+      team_5: Team Mode 5
+      team_6: Team Mode 6
+  barclamp_network:
+    networks:
+      index:
+        title: Networks
+        network_count: Network Count
+        id: *network_id
+        name: *network_name
+        dhcp_enabled: *dhcp_enabled
+        updated_at: *updated_at
+        conduit: *conduit
+        updated_at: *updated_at
+      show:
+        id: *network_id
+        name: *network_name
+        dhcp_enabled: *dhcp_enabled
+        subnet: Subnet
+        ip_ranges: IP Ranges
+        ip_range_name: Name
+        ip_range_start_address: Start Address
+        ip_range_end_address: End Address
+        router: Router
+        router_ip: IP
+        router_pref: Preference
+        conduit: *conduit
+        updated_at: *updated_at
+        allocated_ips: Allocated IPs
+        vlan_tag: VLAN Tag
+      form:
+        id: *network_id
+        name: *network_name
+        dhcp_enabled: *dhcp_enabled
+        subnet: Subnet
+        ip_ranges: IP Ranges
+        ip_range_name: Name
+        ip_range_start_address: Start Address
+        ip_range_end_address: End Address
+        router: Router
+        router_ip: IP
+        router_pref: Preference
+        conduit: *conduit
+        updated_at: *updated_at
+      switch:
+        title: Network Switches
+        switch_details: Switch Expanded Details
+        switch: Switch
+        port: Port
+        node: Node
+        nc: N/C
+        no_connection: No Connection
+        all: Show All
+      dense:
+        no_connection: No Connection
+    
+  conduits:
+    networks: &assoc_networks Associated Networks
+    name: &conduit_name Name
+    index:
+      title: Conduits
+      id: Conduit ID
+      name: *conduit_name
+      updated_at: Last Updated
+      networks: *assoc_networks
+      conduit_count: Counduit Count
+      rules:
+        top: Conduit Rules
+        filters: Filters
+        interface_selectors: Interface Selectors
+        actions: Actions
+    show:
+      networks: *assoc_networks
+      name: *conduit_name
+      conduit_rules: Conduit Rules

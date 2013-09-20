@@ -13,5 +13,5 @@
 # limitations under the License.
 
 bc = Barclamp.table_exists? ? Barclamp.find_by_name("network") : nil
-BarclampNetwork::API_VERSION=(bc && bc.api_version || "v1")
-BarclampNetwork::API_VERSION_ACCEPTS=(bc && bc.api_version_accepts || "v1")
+BarclampNetwork::API_VERSION=(bc && bc.api_version || "v2")
+BarclampNetwork::API_VERSION_ACCEPTS=(bc && bc.api_version_accepts || "v2")
