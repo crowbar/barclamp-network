@@ -18,6 +18,7 @@ class CreateNetworkNavs < ActiveRecord::Migration
     # networks
     Nav.find_or_create_by_item :item=>'networks', :parent_item=>'root', :name=>'nav.networks', :description=>'nav.networks_description', :path=>"barclamp_network.networks_path", :order=>1500
       Nav.find_or_create_by_item :item=>'networks_child', :parent_item=>'networks', :name=>'nav.networks', :description=>'nav.networks_description', :path=>"barclamp_network.networks_path", :order=>1000
+      Nav.find_or_create_by_item :item=>'interfaces', :parent_item=>'networks', :name=>'nav.interfaces', :description=>'nav.interfaces_description', :path=>"barclamp_network.networks_path", :order=>5000
 
     # scaffolds
     Nav.find_or_create_by_item :item=>'scaffold_networks',  :parent_item=>'scaffold', :name=>'nav.scaffold.networks',  :path=>"barclamp_network.scaffolds_networks_path", :order=>2000

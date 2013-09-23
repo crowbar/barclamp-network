@@ -15,12 +15,16 @@
 BarclampNetwork::Engine.routes.draw do
 
   # UI routes
+  resources :interfaces
   resources :networks
   namespace :scaffolds do
     resources :networks do as_routes end
+    resources :routers do as_routes end
+    resources :ranges do as_routes end
+    resources :allocations do as_routes end
   end
 
-  #/api/v2/networks
+  #//network/api/v2/...
   scope :defaults => {:format=> 'json'} do
     constraints( :id => /([a-zA-Z0-9\-\.\_]*)/, :version => /v[1-9]/ ) do
       scope 'api' do

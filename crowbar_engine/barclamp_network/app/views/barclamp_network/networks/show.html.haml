@@ -1,0 +1,66 @@
+%h1= @network.name
+
+= form_for :network, :'data-remote' => true, :url => network_path(@network.id), :html => { :method=>:put, :'data-type' => 'html',  :class => "formtastic" } do |f|
+  %dl
+    %dt= t '.name'
+    %dd= link_to @network.name, main_app.role_path(@network.role.id)
+    %dt= t '.description'
+    %dd= text_field_tag :description, @network.description, :size=>30
+    %dt= t '.deployment'
+    %dd= text_field_tag :deployment, @network.deployment.name
+    %dt= t '.conduit'
+    %dd= text_field_tag :conduit, @network.conduit, :size=>5
+    %dt= t '.vlan'
+    %dd= text_field_tag :conduit, @network.vlan, :size=>5
+    %dt= t '.team'
+    %dd= text_field_tag :conduit, @network.team_mode, :size=>5
+    %dt= t '.bridge'
+    %dd= text_field_tag :conduit, @network.use_bridge, :size=>5
+    %dt
+    %dd
+      %input.button{:type => "submit", :value => t('update')}
+
+%h2= t '.ranges'
+
+%table.data.box
+  %thead
+    %tr
+      %th= t '.name'
+      %th= t'.first'
+      %th= t '.last'
+      %th
+  %tbody
+    - @network.ranges.each do |range|
+      = form_for :range, :'data-remote' => true, :url => range_path(range.id, :version=>'v2'), :html => { :method=>:put, :'data-type' => 'html',  :class => "formtastic" } do |f|
+        %tr
+          %td= text_field_tag :name, range.name, :size => 15
+          %td= text_field_tag :first, range.first, :size => 15
+          %td= text_field_tag :last, range.last, :size => 15
+          %td
+            %input.button{:type => "submit", :value => t('update')} 
+    = form_for :network, :'data-remote' => true, :url => range_path(:version=>'v2'), :html => { :method=>:post, :'data-type' => 'html',  :class => "formtastic" } do |f|
+      %tr
+        %td
+          = hidden_field_tag :network_id, @network.id
+          = text_field_tag :name, t('default'), :size => 15
+        %td= text_field_tag :new_first, "10.10.10.1/24", :size => 15
+        %td= text_field_tag :new_last, "10.10.10.254/24", :size => 15
+        %td
+          %input.button{:type => "submit", :value => t('add')}
+
+%h2= t '.router'
+
+- begin
+  - router = @network.router
+  - if router
+    = form_for :router, :'data-remote' => true, :url => router_path(router.id, :version=>'v2'), :html => { :method=>:put, :'data-type' => 'html',  :class => "formtastic" } do |f|
+      %dl
+        %dt= t '.address'
+        %dd= text_field_tag :address, router.address, :size=>15
+        %dt= t '.pref'
+        %dd= text_field_tag :pref, router.pref, :size=>6
+        %dt
+        %dd
+          %input.button{:type => "submit", :value => t('update')}
+- rescue 
+  = t "error"
