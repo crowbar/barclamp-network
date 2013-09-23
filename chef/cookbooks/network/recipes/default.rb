@@ -69,6 +69,31 @@ def net_weight(net)
   res
 end
 
+def kill_nic(name)
+  raise "Cannot kill #{name} because it does not exist!" unless Nic.exists?(name)
+  iface = Nic.new(name)
+  # Ignore loopback interfaces for now.
+  return if iface.loopback?
+  Chef::Log.info("Interface #{name} is no longer being used, deconfiguring it.")
+  iface.destroy
+  case node["platform"]
+  when "centos","redhat"
+    # Redhat and Centos have lots of small files definining interfaces.
+    # Delete the ones we no longer care about here.
+    if ::File.exists?("/etc/sysconfig/network-scripts/ifcfg-#{name}")
+      ::File.delete("/etc/sysconfig/network-scripts/ifcfg-#{name}")
+    end
+  when "suse"
+    # SuSE also has lots of small files, but in slightly different locations.
+    if ::File.exists?("/etc/sysconfig/network/ifcfg-#{name}")
+      ::File.delete("/etc/sysconfig/network/ifcfg-#{name}")
+    end
+    if ::File.exists?("/etc/sysconfig/network/ifroute-#{name}")
+      ::File.delete("/etc/sysconfig/network/ifroute-#{name}")
+    end
+  end
+end
+
 # Dynamically create our new local interfaces.
 node["crowbar"]["network"].keys.sort{|a,b|
   net_weight(a) <=> net_weight(b)
@@ -199,31 +224,6 @@ node["crowbar"]["network"].keys.sort{|a,b|
       Chef::Log.info("#{name}: Will use #{network["router"]} as our default route")
       route_pref = network["router_pref"].to_i
       default_route = {:nic => our_iface.name, :gateway => network["router"]}
-    end
-  end
-end
-
-def kill_nic(name)
-  raise "Cannot kill #{name} because it does not exist!" unless Nic.exists?(name)
-  iface = Nic.new(name)
-  # Ignore loopback interfaces for now.
-  return if iface.loopback?
-  Chef::Log.info("Interface #{name} is no longer being used, deconfiguring it.")
-  iface.destroy
-  case node["platform"]
-  when "centos","redhat"
-    # Redhat and Centos have lots of small files definining interfaces.
-    # Delete the ones we no longer care about here.
-    if ::File.exists?("/etc/sysconfig/network-scripts/ifcfg-#{name}")
-      ::File.delete("/etc/sysconfig/network-scripts/ifcfg-#{name}")
-    end
-  when "suse"
-    # SuSE also has lots of small files, but in slightly different locations.
-    if ::File.exists?("/etc/sysconfig/network/ifcfg-#{name}")
-      ::File.delete("/etc/sysconfig/network/ifcfg-#{name}")
-    end
-    if ::File.exists?("/etc/sysconfig/network/ifroute-#{name}")
-      ::File.delete("/etc/sysconfig/network/ifroute-#{name}")
     end
   end
 end
