@@ -12,25 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-BarclampNetwork::Engine.routes.draw do
+class BarclampNetwork::Setting < ActiveRecord::Base
 
-  # UI routes
-  resources :networks
-
-  #/api/v2/networks
-  scope :defaults => {:format=> 'json'} do
-    constraints( :id => /([a-zA-Z0-9\-\.\_]*)/, :version => /v[1-9]/ ) do
-      scope 'api' do
-        scope ':version' do
-          resources :networks do
-            member do
-              match 'ip'
-              post 'allocate_ip'
-              get 'allocations'
-            end
-          end
-        end
-      end
-    end
+  def self.[](n)
+    res = where(:name => n).first
+    res &&= res.value
   end
+  
+  def self.[]=(n,v)
+    val = self[n] || new({:name => n}, :without_protection => true)
+    val.value = v
+    val.save!
+  end
+  
 end

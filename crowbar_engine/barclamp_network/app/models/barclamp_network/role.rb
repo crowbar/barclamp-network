@@ -20,7 +20,7 @@ class BarclampNetwork::Role < Role
     true
   end
 
-  def on_todo(nr)
+  def on_proposed(nr)
     NodeRole.transaction do
       d = nr.sysdata
       addresses = (d["crowbar"]["network"][network.name]["addresses"] rescue nil)
