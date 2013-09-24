@@ -12,14 +12,10 @@ iface lo inet loopback
   addr = addrs.shift
   -%>
 auto <%= name %>
-<% if addr.kind_of?(IP::IP4) -%>
-iface <%= name %> inet static
-<% elsif addr.kind_of?(IP::IP6) -%>
-iface <%= name %> inet6 static
-<% else -%>
+<% if addr.nil? -%>
 iface <%= name %> inet manual
-<% end -%>
-<% unless addr.nil? -%>
+<% else %>
+iface <%= name %> <%= addr.v4? ? "inet" : "inet6" %> static
     address <%= addr.to_s.split('/')[0] %>
     netmask <%= addr.to_s.split('/')[1] %>
 <% end -%>
