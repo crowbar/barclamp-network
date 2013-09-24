@@ -123,7 +123,7 @@ class BarclampNetwork::Network < ActiveRecord::Base
   end
 
   def node_allocations(node)
-    res = allocations.where(:node_id => node.id).map do |a|
+    res = allocations.node(node).map do |a|
       a.address
     end
     res << node.auto_v6_address(self) if v6prefix
