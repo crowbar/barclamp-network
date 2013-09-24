@@ -66,7 +66,7 @@ class BarclampNetwork::NetworksController < ::ApplicationController
     raise "Must include a node parameter" unless params.key?(:node)
     nodename = params[:node]
     if nodename.is_a?(String) && nodename == "admin"
-      node = Node.where(:admin => true, :available => true).first
+      node = Node.admin.where(:available => true).first
     else
       node = Node.find_key nodename
     end
