@@ -16,7 +16,8 @@ class BarclampNetwork::Network < ActiveRecord::Base
 
   validate :check_network_sanity
 
-  attr_protected :id
+  attr_protected :id, :name
+  attr_accessible :description, :order, :conduit
   has_many :ranges, :dependent => :destroy, :class_name => "BarclampNetwork::Range"
   has_one  :router, :dependent => :destroy, :class_name => "BarclampNetwork::Router"
   belongs_to :deployment

@@ -37,9 +37,17 @@ class BarclampNetwork::NetworksController < ::ApplicationController
 
     Rails.logger.debug("Creating network #{params[:name]}");
 
+    # provide reasonable defaults
+    params[:ranges] ||= [{:name=>t('all'), :first=>"10.10.10.1/24", :last=>"10.10.10.245/24" }]
+    params[:router] ||= { :pref => 255, :address => "10.10.10.1/24" }
+    params[:use_vlan] = true if params[:vlan].to_int > 0 rescue false 
+    params[:use_team] = true if params[:team].to_int > 0 rescue false
+    params[:use_bridge] = true if params[:use_bridge].to_int > 0 rescue false
+    params[:deployment_id] = Deployment.find_key(params[:deployment]).id if params.has_key? :deployment
+
     @network = BarclampNetwork::Network.make_network(
                                                      :name => params[:name],
-                                                     :deployment_id => Deployment.find_key(params[:deployment] || "system").id,
+                                                     :deployment_id => params[:deployment_id],
                                                      :vlan => params[:vlan] || 0,
                                                      :use_vlan => params[:use_vlan] || false,
                                                      :use_bridge => params[:use_bridge] || false,
@@ -49,12 +57,8 @@ class BarclampNetwork::NetworksController < ::ApplicationController
                                                      :ranges => params[:ranges],
                                                      :router => params[:router])
     respond_with(@network) do |format|
-      format.html do
-        render
-      end
-      format.json do
-        render :json => @network.to_template
-      end
+      format.html {} 
+      format.json { render :json => @network.to_template }
     end
   end
 
@@ -64,8 +68,14 @@ class BarclampNetwork::NetworksController < ::ApplicationController
     @network.team_mode = params[:team_mode] if params.has_key?(:team_mode)
     @network.conduit = params[:conduit] if params.has_key?(:conduit)
     @network.use_team = params[:use_team] if params.has_key?(:use_team)
-    @network.save!
-    format.json { render api_show :network, BarclampNetwork::Network, nil, nil, @network }
+    @network.description = params[:description] if params.has_key?(:description)
+    @network.order = params[:order] if params.has_key?(:order)
+    @network.conduit = params[:conduit] if params.has_key?(:conduit)
+    @network.save
+    respond_with(@network) do |format|
+      format.html { render :action=>:show } 
+      format.json { render api_show :network, BarclampNetwork::Network, nil, nil, @network }
+    end
   end
 
   def destroy
@@ -113,12 +123,8 @@ class BarclampNetwork::NetworksController < ::ApplicationController
   def show
     @network = BarclampNetwork::Network.find_key(params[:id])
     respond_with(@network) do |format|
-      format.html do
-        render
-      end
-      format.json do
-        render :json => @network.to_template
-      end
+      format.html { render }
+      format.json { render :json => @network.to_template }
     end
   end
   
