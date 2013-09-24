@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 
-class BarclampNetwork::Scaffolds::NetworksController < ApplicationController
-  active_scaffold :"barclamp_network/network" do |conf|
+class BarclampNetwork::Scaffolds::RoutersController < ApplicationController
+  active_scaffold :"barclamp_network/router" do |conf|
   end
 end 
