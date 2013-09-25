@@ -21,20 +21,45 @@ class BarclampNetwork::Network < ActiveRecord::Base
   attr_accessible :name, :description, :order, :conduit, :deployment_id, :vlan, :use_vlan, :team_mode, :use_team, :use_bridge
 
   has_many :ranges, :dependent => :destroy, :class_name => "BarclampNetwork::Range"
+  has_many :allocations, :through => :ranges, :class_name => "BarclampNetwork::Allocation"
   has_one  :router, :dependent => :destroy, :class_name => "BarclampNetwork::Router"
+  
   belongs_to :deployment
+
+  def self.make_global_v6prefix
+    prefix_array = []
+    raw_prefix_array = (["fc".hex] + IO.read("/dev/random",5).unpack("C5"))
+    3.times do |i|
+      a = raw_prefix_array.pop
+      a += (raw_prefix_array.pop << 8)
+      prefix_array << a
+    end
+    prefix_array.reverse.map{|a|sprintf('%04x',a)}.join(':')
+  end
 
   # We need a wrapper around create! that also creates the proper role
   # for the specific network we are creating.
   def self.make_network(args)
     allowed_keys = { :name => true, :deployment_id => true,
       :vlan => true, :use_vlan => true, :team_mode => true,
-      :use_team => true, :conduit => true }
+      :use_team => true, :conduit => true, :v6prefix => true }
     c_ranges = args.delete(:ranges)
     c_ranges = JSON.parse(c_ranges) if c_ranges.kind_of?(String)
     c_router = args.delete(:router)
     c_router = JSON.parse(c_router) if c_router.kind_of?(String)
-    res = create!(args.delete_if{|k,v|!allowed_keys[k]})
+    res = create!(args.delete_if{|k,v|!allowed_keys[k]},:without_protection => true)
+    if res.name == "admin" && res.v6prefix.nil?
+      BarclampNetwork::Setting.transaction do 
+        cluster_prefix = BarclampNetwork::Setting["v6prefix"]
+        if cluster_prefix.nil?
+          cluster_prefix = make_global_v6prefix
+          BarclampNetwork::Setting["v6prefix"] = cluster_prefix
+        end
+        res.v6prefix = sprintf("#{cluster_prefix}:%04x",res.id)
+        res.save!
+      end
+    end
+
     begin
       if c_ranges.nil? || c_ranges.empty?
         raise ArgumentError.new("A network must have at least one range!")
@@ -60,11 +85,14 @@ class BarclampNetwork::Network < ActiveRecord::Base
   end
 
   def template_cleaner(a)
-    a.reject do |k,v|
-      k.to_s == "id" || k.to_s.match(/_id$/)
+    res = {}
+    a.each do |k,v|
+      next if k.to_s == "id" || k.to_s.match(/_id$/)
+      res[k] = v.kind_of?(Hash) ? template_cleaner(v) : v
     end
+    res
   end
-  
+
   def to_template
     res = template_cleaner(attributes)
     res[:ranges] = ranges.map{|r|template_cleaner(r.attributes)}
@@ -79,16 +107,12 @@ class BarclampNetwork::Network < ActiveRecord::Base
     Role.where(:name => "network-#{name}", :barclamp_id => bc.id).first
   end
 
-  def allocations
-    ranges.map{|range| range.allocations}.flatten
-  end
-
   def node_allocations(node)
-    ranges.order("name").map do |range|
-      range.allocations.where(:node_id => node.id).map do |a|
-        a.address.to_s
-      end.sort
-    end.flatten
+    res = allocations.node(node).map do |a|
+      a.address
+    end
+    res << node.auto_v6_address(self) if v6prefix
+    res.sort
   end
 
   def make_node_role(node)
@@ -96,7 +120,13 @@ class BarclampNetwork::Network < ActiveRecord::Base
     NodeRole.transaction do
       nr = NodeRole.where(:node_id => node.id, :role_id => role.id).first ||
         role.add_to_node_in_snapshot(node,snap)
-      nr.sysdata = { "crowbar" => { "network" => { name => {"addresses" => node_allocations(node)}}}}
+      nr.sysdata = { "crowbar" => {
+          "network" => {
+            name => {"addresses" => node_allocations(node).map{|a|a.to_s}
+            }
+          }
+        }
+      }
     end
     nr
   end

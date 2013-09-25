@@ -55,12 +55,29 @@ class BarclampNetwork::NetworksController < ::ApplicationController
                                                      :use_team => params[:use_team] || false,
                                                      :conduit => params[:conduit],
                                                      :ranges => params[:ranges],
-                                                     :router => params[:router])
+                                                     :router => params[:router],
+                                                     :v6prefix => params[:v6prefix])
     respond_with(@network) do |format|
       format.html {} 
       format.json { render :json => @network.to_template }
     end
   end
+
+  # Allocations for a node in a network.
+  # Includes the automatic IPv6 address.
+  def allocations
+    network = BarclampNetwork::Network.find_key params[:id]
+    raise "Must include a node parameter" unless params.key?(:node)
+    nodename = params[:node]
+    if nodename.is_a?(String) && nodename == "admin"
+      node = Node.admin.where(:available => true).first
+    else
+      node = Node.find_key nodename
+    end
+    render :json => network.node_allocations(node).map{|a|a.to_s}
+  end
+  
+  add_help(:update,[:id, :conduit,:team_mode, :use_team],[:put])
 
   def update
     @network = BarclampNetwork::Network.find_key(params[:id])
@@ -120,6 +137,7 @@ class BarclampNetwork::NetworksController < ::ApplicationController
     render :json => ret[1]
   end
 
+  add_help(:show,[:deployment_id, :network_id],[:get])
   def show
     @network = BarclampNetwork::Network.find_key(params[:id])
     respond_with(@network) do |format|
