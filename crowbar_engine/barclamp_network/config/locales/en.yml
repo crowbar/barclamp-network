@@ -21,9 +21,13 @@ en:
     scaffold:
       networks: Networks
       networks_description: "Manage Networks"
-
   # UI 
   barclamp_network:
+    nets: &network_names
+      admin: "Admin"
+      public: "Public"
+      private: "Private"
+      storage: "Storage"
     common: &network_common
       name: "Name"
       description: "Description"
@@ -44,6 +48,9 @@ en:
         add: "Add Network"
         <<: *network_common
       show:
+        <<: *network_common
+    roles:
+      index:
         <<: *network_common
     interfaces:
       index:

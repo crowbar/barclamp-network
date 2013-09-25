@@ -15,9 +15,11 @@
 class BarclampNetwork::Network < ActiveRecord::Base
 
   validate :check_network_sanity
+  before_create :add_role
 
-  attr_protected :id, :name
-  attr_accessible :description, :order, :conduit
+  attr_protected :id
+  attr_accessible :name, :description, :order, :conduit, :deployment_id, :vlan, :use_vlan, :team_mode, :use_team, :use_bridge
+
   has_many :ranges, :dependent => :destroy, :class_name => "BarclampNetwork::Range"
   has_one  :router, :dependent => :destroy, :class_name => "BarclampNetwork::Router"
   belongs_to :deployment
@@ -50,24 +52,6 @@ class BarclampNetwork::Network < ActiveRecord::Base
                                         :address => c_router["address"])
       end
 
-      bc = Barclamp.where(:name => "network").first
-      Role.transaction do
-        r = Role.find_or_create_by_name(:name => "network-#{args[:name]}",
-                                        :jig_name => Rails.env == "production" ? "chef" : "test",
-                                        :barclamp_id => bc.id)
-        r.update_attributes(:description => I18n.t('automatic_by', :name=>bc.name),
-                            :template => '{}',
-                            :library => false,
-                            :implicit => false,
-                            :bootstrap => (res.name == "admin"),
-                            :discovery => (res.name == "admin")
-                          )
-        r.save!
-        RoleRequire.create!(:role_id => r.id, :requires => "network-server")
-        if Rails.env == "production"
-          RoleRequire.create!(:role_id => r.id, :requires => "deployer-client")
-        end
-      end
     rescue Exception => e
       res.destroy rescue nil
       raise e
@@ -118,6 +102,25 @@ class BarclampNetwork::Network < ActiveRecord::Base
   end
 
   private
+
+  # every network needs to have a matching role
+  def add_role
+      bc = Barclamp.find_key "network"
+      Role.transaction do
+        r = Role.find_or_create_by_name(:name => "network-#{name}",
+                                        :type => "BarclampNetwork::Role",   # force
+                                        :jig_name => Rails.env.production? ? "chef" : "test",
+                                        :barclamp_id => bc.id,
+                                        :description => I18n.t('automatic_by', :name=>name),
+                                        :template => '{}',    # this will be replaced by the role
+                                        :library => false,
+                                        :implicit => false,
+                                        :bootstrap => (self.name.eql? "admin"),
+                                        :discovery => (self.name.eql? "admin")  )
+        RoleRequire.create!(:role_id => r.id, :requires => "network-server")
+        RoleRequire.create!(:role_id => r.id, :requires => "deployer-client") if Rails.env == "production"
+      end
+  end
 
   def check_network_sanity
 
@@ -176,6 +179,7 @@ class BarclampNetwork::Network < ActiveRecord::Base
       end
     end
 
+puts "ZEHICLE #{name} ... #{!name.empty?}"
     # Should be obvious, but...
     unless name && !name.empty?
       errors.add("Cannot create a network without a name")
