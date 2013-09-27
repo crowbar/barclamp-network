@@ -270,6 +270,11 @@ Nic.nics.each do |nic|
       # Skip any further configuration of this nic.
       Chef::Log.info("#{nic.name} is enslaved to #{master.name}, which was not created by Crowbar")
       Chef::Log.info("Refusing to change #{nic} configuration.")
+      # But still update "gateway" to write the right default route to
+      # the config files, otherwise things might break after a reboot
+      if default_route[:nic] == nic.name
+        ifs[nic.name]["gateway"] = default_route[:gateway]
+      end
       next
     else
       # We no longer want to be a slave.
