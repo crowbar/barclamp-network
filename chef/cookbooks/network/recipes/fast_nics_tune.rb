@@ -13,6 +13,8 @@
 # limitations under the License.
 #
 
+return if  node[:platform] == "windows"
+
 # check if there are any 1g/10g interfaces detected.
 detected = Barclamp::Inventory.get_detected_intfs(node)
 log "detected interfaces: #{detected.inspect}"

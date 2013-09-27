@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+return if node[:platform] == "windows"
+
 # Make sure packages we need will be present
 case node[:platform]
 when "ubuntu","debian","suse"
