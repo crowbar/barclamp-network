@@ -17,6 +17,9 @@ BarclampNetwork::Engine.routes.draw do
   # UI routes
   resources :interfaces
   resources :networks
+    get :ranges
+    get :routers
+    get :allocations
   namespace :scaffolds do
     resources :networks do as_routes end
     resources :routers do as_routes end
@@ -30,6 +33,8 @@ BarclampNetwork::Engine.routes.draw do
       scope 'api' do
         scope ':version' do
           resources :networks do
+            resources :ranges
+            resources :routers
             member do
               match 'ip'
               post 'allocate_ip'

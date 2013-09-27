@@ -17,6 +17,8 @@ class BarclampNetwork::Range < ActiveRecord::Base
   validate :sanity_check_range
   
   attr_protected :id
+  attr_accessible :name, :first, :last, :network_id
+
   belongs_to :network,    :class_name => "BarclampNetwork::Network"
   has_many :allocations,  :class_name => "BarclampNetwork::Allocation"
   has_many :nodes,        :through=>:allocations

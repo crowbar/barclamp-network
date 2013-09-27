@@ -28,6 +28,7 @@ class CreateNetworks < ActiveRecord::Migration
       # This contains abstract interface names seperated by a comma.
       # It could be normalized, but why bother for now.
       t.string       :conduit,     :null => false
+      t.timestamps
     end
     add_index "#{BarclampNetwork::TABLE_PREFIX}networks", :name, :unique => true
 
@@ -35,6 +36,7 @@ class CreateNetworks < ActiveRecord::Migration
       t.references   :network
       t.string       :address,     :null => false
       t.integer      :pref,        :null => false, :default => 65536
+      t.timestamps
     end
 
     create_table "#{BarclampNetwork::TABLE_PREFIX}ranges" do |t|
@@ -43,6 +45,7 @@ class CreateNetworks < ActiveRecord::Migration
       # Both of these should also be CIDRs.
       t.string       :first,       :null => false
       t.string       :last,        :null => false
+      t.timestamps
     end
     add_index "#{BarclampNetwork::TABLE_PREFIX}ranges", [:name, :network_id], :unique => true
 
@@ -50,12 +53,14 @@ class CreateNetworks < ActiveRecord::Migration
       t.references   :node
       t.references   :range
       t.string       :address,     :null => false, :index => true, :unique => true
+      t.timestamps
     end
     add_index "#{BarclampNetwork::TABLE_PREFIX}allocations", :address, :unique => true
 
     create_table "#{BarclampNetwork::TABLE_PREFIX}settings" do |t|
       t.string       :name,        :null => false, :unique => true
       t.string       :value,       :null => false
+      t.timestamps
     end
   end
 end

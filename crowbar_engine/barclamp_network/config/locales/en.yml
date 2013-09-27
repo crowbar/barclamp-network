@@ -21,6 +21,8 @@ en:
     scaffold:
       networks: Networks
       networks_description: "Manage Networks"
+      allocations: "Allocated IPs"
+      allocations_description: "Track Network IP Assignments"
   # UI 
   barclamp_network:
     nets: &network_names
