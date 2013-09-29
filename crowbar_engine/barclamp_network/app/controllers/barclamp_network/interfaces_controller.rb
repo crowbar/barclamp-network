@@ -24,6 +24,7 @@ class BarclampNetwork::InterfacesController < ::ApplicationController
     @interfaces = r.interfaces
     respond_to do |format|
       format.html { render :action=>:index   } 
+      format.json { render api_index :interface, @interfaces }
     end
   end
 
@@ -36,6 +37,7 @@ class BarclampNetwork::InterfacesController < ::ApplicationController
     @interfaces = r.interfaces
     respond_to do |format|
       format.html { render :action=>:index } 
+      format.json { render api_index :interface, @interfaces }
     end
   end
 
@@ -50,6 +52,7 @@ class BarclampNetwork::InterfacesController < ::ApplicationController
     @interfaces = r.interfaces
     respond_to do |format|
       format.html { }
+      format.json { render api_index :interface, @interfaces }
     end
   end
 

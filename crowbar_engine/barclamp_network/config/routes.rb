@@ -32,6 +32,7 @@ BarclampNetwork::Engine.routes.draw do
     constraints( :id => /([a-zA-Z0-9\-\.\_]*)/, :version => /v[1-9]/ ) do
       scope 'api' do
         scope ':version' do
+          resources :interfaces
           resources :networks do
             resources :ranges
             resources :routers

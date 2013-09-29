@@ -18,17 +18,17 @@ class BarclampNetwork::NetworksController < ::ApplicationController
   add_help(:show,[:deployment_id, :network_id],[:get])
   def show
     @network = BarclampNetwork::Network.find_key params[:id]
-    respond_with(@network) do |format|
-      format.html { render }
+    respond_to do |format|
+      format.html { }
       format.json { render api_show :network, BarclampNetwork::Network, nil, nil, @network }
     end
   end
   
   def index
     @networks = BarclampNetwork::Network.all
-    respond_with(@networks) do |format|
+    respond_to do |format|
       format.html {}
-      format.json { render api_index :network, BarclampNetwork::Network, nil, nil, @networks }
+      format.json { render api_index :network, @networks }
     end
   end
 
@@ -67,6 +67,7 @@ class BarclampNetwork::NetworksController < ::ApplicationController
       # make it easier to batch create
       if params.key? :ranges
         params[:ranges].each do |range|
+puts "/n/nZEHICLE #{range.inspect}/n/n"
           range[:network_id] = @network.id
           BarclampNetwork::Range.create! range
         end

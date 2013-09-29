@@ -15,6 +15,21 @@
 class BarclampNetwork::RangesController < ::ApplicationController
   respond_to :json
 
+  def index
+    network =  BarclampNetwork::Network.find_key params[:network_id]
+    respond_to do |format|
+      format.json { render api_index :range, network.ranges }
+    end
+  end
+
+  def show
+    network =  BarclampNetwork::Network.find_key params[:network_id]
+    range = network.ranges.find_key(params[:id]) rescue nil
+    respond_to do |format|
+      format.json { render api_show :range, BarclampNetwork::Range, nil, nil, range }
+    end
+  end
+
   def create
     params[:network_id] = BarclampNetwork::Network.find_key(params[:network]).id if params.has_key? :network
     @range = BarclampNetwork::Range.new
@@ -30,8 +45,7 @@ class BarclampNetwork::RangesController < ::ApplicationController
   end
 
   def update
-    respond_with() do |format|
-      format.html { }
+    respond_to do |format|
       format.json { render api_update :range, BarclampNetwork::Range }
     end
   end
