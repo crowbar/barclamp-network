@@ -59,7 +59,6 @@ Feature: Networks
       And there should be no translation errors
 
   Scenario: Interface Add to List
-    Skip CODE BROKEN, PLEASE FIX ASAP
     Given I add an Interface "bdd_test" with map "foo | bar"
     When I go to the "network/interfaces" page
     Then I should see "bdd_test"
