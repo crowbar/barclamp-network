@@ -15,8 +15,48 @@
 en:
   nav:
     networks: Networks
-    networks_description: Manage Networks
+    networks_description: "Manage Networks"
+    interfaces: "Bus Interfaces"
+    interfaces_description: "Override default bus order for network interfaces"
+    scaffold:
+      networks: Networks
+      networks_description: "Manage Networks"
+      allocations: "Allocated IPs"
+      allocations_description: "Track Network IP Assignments"
+  # UI 
   barclamp_network:
+    nets: &network_names
+      admin: "Admin"
+      public: "Public"
+      private: "Private"
+      storage: "Storage"
+    common: &network_common
+      name: "Name"
+      description: "Description"
+      deployment: "Deployment"
+      router: "Router"
+      vlan: "VLAN"
+      bridge: "Bridge"
+      team: "Team"
+      conduit: "Conduit"
+      ranges: "Range(s)"
+      first: "First IP"
+      last: "Last IP"
+      role: role
+      save: "Save"
     networks:
       index:
         title: "Installed Networks"
+        add: "Add Network"
+        <<: *network_common
+      show:
+        <<: *network_common
+    roles:
+      index:
+        <<: *network_common
+    interfaces:
+      index:
+        title: "Bus Interface Maps"
+        pattern: "Pattern to Match"
+        bus_order: "Bus Order"
+

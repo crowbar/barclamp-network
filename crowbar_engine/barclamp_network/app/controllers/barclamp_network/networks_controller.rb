@@ -15,48 +15,61 @@
 class BarclampNetwork::NetworksController < ::ApplicationController
   respond_to :html, :json
 
-  # Create should be passed a JSON blob that looks like this:
-  # {
-  #    "name":       "networkname",
-  #    "deployment": "deploymentname",
-  #    "vlan":       your_vlan,
-  #    "use_vlan":   true or false,
-  #    "team_mode":  teaming mode,
-  #    "use_team":   true or false,
-  #    "use_bridge": true or false
-  #    "conduit":    "1g0,1g1", // or whatever you want to use as a conduit for this network
-  #    "ranges": [
-  #       { "name": "name", "first": "192.168.124.10/24", "last": "192.168.124.245/24" }
-  #    ],
-  #    "router": {
-  #       "pref": 255, // or whatever pref you want.  Lowest on a host will win.
-  #       "address": "192.168.124.1/24"
-  #    }
-  # }
+  add_help(:show,[:deployment_id, :network_id],[:get])
+  def show
+    @network = BarclampNetwork::Network.find_key params[:id]
+    respond_to do |format|
+      format.html { }
+      format.json { render api_show :network, BarclampNetwork::Network, nil, nil, @network }
+    end
+  end
+  
+  def index
+    @networks = BarclampNetwork::Network.all
+    respond_to do |format|
+      format.html {}
+      format.json { render api_index :network, @networks }
+    end
+  end
+
   def create
 
-    Rails.logger.debug("Creating network #{params[:name]}");
+    # cleanup inputs
+    params[:use_vlan] = true if params[:vlan].to_int > 0 rescue false 
+    params[:vlan] ||= 0
+    params[:use_team] = true if params[:team].to_int > 0 rescue false
+    params[:team_mode] ||= 5
+    params[:use_bridge] = true if params[:use_bridge].to_int > 0 rescue false
+    params[:deployment_id] = Deployment.find_key(params[:deployment]).id if params.has_key? :deployment
 
-    @network = BarclampNetwork::Network.make_network(
-                                                     :name => params[:name],
-                                                     :deployment_id => Deployment.find_key(params[:deployment] || "system").id,
-                                                     :vlan => params[:vlan] || 0,
-                                                     :use_vlan => params[:use_vlan] || false,
-                                                     :use_bridge => params[:use_bridge] || false,
-                                                     :team_mode => params[:team_mode] || 5,
-                                                     :use_team => params[:use_team] || false,
-                                                     :conduit => params[:conduit],
-                                                     :ranges => params[:ranges],
-                                                     :router => params[:router],
-                                                     :v6prefix => params[:v6prefix])
-    respond_with(@network) do |format|
-      format.html do
-        render
+    BarclampNetwork::Network.transaction do
+
+      @network = BarclampNetwork::Network.create! params
+
+      # make it easier to batch create
+      if params.key? :ranges
+        params[:ranges].each do |range|
+          range[:network_id] = @network.id
+          BarclampNetwork::Range.create! range
+        end
+        params.delete :ranges
       end
-      format.json do
-        render :json => @network.to_template
+
+      # make it easier to batch create
+      if params.key? :router
+        router = params[:router]
+        router[:network_id] = @network.id
+        BarclampNetwork::Router.create! router
+        params.delete :router
       end
+
     end
+
+    respond_to do |format|
+      format.html { }
+      format.json { render api_show :network, BarclampNetwork::Network, @network.id.to_s, nil, @network }
+    end
+
   end
 
   # Allocations for a node in a network.
@@ -74,19 +87,29 @@ class BarclampNetwork::NetworksController < ::ApplicationController
   end
   
   add_help(:update,[:id, :conduit,:team_mode, :use_team],[:put])
-
   def update
     @network = BarclampNetwork::Network.find_key(params[:id])
+    params.delete :name if params.key? :name   # not allowed to update name!!
     # Only allow teaming and conduit stuff to be updated for now.
     @network.team_mode = params[:team_mode] if params.has_key?(:team_mode)
     @network.conduit = params[:conduit] if params.has_key?(:conduit)
     @network.use_team = params[:use_team] if params.has_key?(:use_team)
-    @network.save!
-    format.json { render api_show :network, BarclampNetwork::Network, nil, nil, @network }
+    @network.description = params[:description] if params.has_key?(:description)
+    @network.order = params[:order] if params.has_key?(:order)
+    @network.conduit = params[:conduit] if params.has_key?(:conduit)
+    @network.save
+    respond_with(@network) do |format|
+      format.html { render :action=>:show } 
+      format.json { render api_show :network, BarclampNetwork::Network, nil, nil, @network }
+    end
   end
 
   def destroy
-    raise ArgumentError.new("Cannot destroy networks for now")
+    if Rails.env.development?
+      render api_delete BarclampNetwork::Network
+    else
+      render api_not_supported("delete", "BarclampNetwork::Network")
+    end
   end
 
   def ip
@@ -127,40 +150,10 @@ class BarclampNetwork::NetworksController < ::ApplicationController
     render :json => ret[1]
   end
 
-  add_help(:show,[:deployment_id, :network_id],[:get])
-  def show
-    @network = BarclampNetwork::Network.find_key(params[:id])
-    respond_with(@network) do |format|
-      format.html do
-        render
-      end
-      format.json do
-        render :json => @network.to_template
-      end
-    end
-  end
-  
-  def index
-    Rails.logger.debug("NetworksController.index");
-    @networks = BarclampNetwork::Network.all
-    respond_with(@networks) do |format|
-      format.html do
-        render
-      end
-      format.json do
-        render :json => "[ #{@networks.map{|n|n.to_template}.join(", ")} ]"
-      end
-    end
-  end
-
   def edit
-    Rails.logger.debug("NetworksController.edit");
-    @network = BarclampNetwork::Network.find(params[:id]) unless params[:id].nil?
-    @conduits = BarclampNetwork::Conduit.all
+    @network = BarclampNetwork::Network.find_key params[:id]
     respond_to do |format|
-      format.html {
-        Rails.logger.debug("NetworksController.edit Format HTML: #{@network.inspect}");
-      }
+      format.html {  }
     end
   end
 

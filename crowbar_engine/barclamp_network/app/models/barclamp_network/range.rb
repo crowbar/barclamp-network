@@ -17,8 +17,11 @@ class BarclampNetwork::Range < ActiveRecord::Base
   validate :sanity_check_range
   
   attr_protected :id
-  belongs_to :network, :class_name => "BarclampNetwork::Network"
-  has_many :allocations, :class_name => "BarclampNetwork::Allocation"
+  attr_accessible :name, :first, :last, :network_id
+
+  belongs_to :network,    :class_name => "BarclampNetwork::Network"
+  has_many :allocations,  :class_name => "BarclampNetwork::Allocation"
+  has_many :nodes,        :through=>:allocations
 
   def first
     IP.coerce(read_attribute("first"))
@@ -104,16 +107,16 @@ class BarclampNetwork::Range < ActiveRecord::Base
 
     # Now, verify that this range does not overlap with any other range
 
-    BarclampNetwork::Range.transaction do
-      BarclampNetwork::Range.all.each do |other|
-        if other === first
-          errors.add("Range #{fullname}: first address #{first.to_s} overlaps with range #{other.fullname}")
-        end
-        if other === last
-          errors.add("Range #{fullname}: last address #{last.to_s} overlaps with range #{other.fullname}")
-        end
-      end
-    end
+#    BarclampNetwork::Range.transaction do
+#      BarclampNetwork::Range.all.each do |other|
+#        if other === first
+#          errors.add("Range #{fullname}: first address #{first.to_s} overlaps with range #{other.fullname}")
+#        end
+#        if other === last
+#          errors.add("Range #{fullname}: last address #{last.to_s} overlaps with range #{other.fullname}")
+#        end
+#      end
+#    end
   end
 
 end
