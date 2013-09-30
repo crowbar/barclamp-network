@@ -18,6 +18,27 @@ Lists the current networks.
 </table>
 
 
+> There are helpers on the POST method that allow you to create ranges and routers when you create the network. 
+
+Sample:
+    {
+      "name":       "networkname",
+      "deployment": "deploymentname",
+      "vlan":       your_vlan,
+      "use_vlan":   true or false,
+      "team_mode":  teaming mode,
+      "use_team":   true or false,
+      "use_bridge": true or false
+      "conduit":    "1g0,1g1", // or whatever you want to use as a conduit for this network
+      "ranges": [
+         { "name": "name", "first": "192.168.124.10/24", "last": "192.168.124.245/24" }
+      ],
+      "router": {
+         "pref": 255, // or whatever pref you want.  Lowest on a host will win.
+         "address": "192.168.124.1/24"
+      }
+    }
+
 #### Network Actions: IP Allocate
 
 Allocates a free IP address in a network.

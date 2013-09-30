@@ -38,12 +38,19 @@ class BarclampNetwork::Role < Role
     true
   end
 
+  def on_node_delete(node)
+    # remove IP allocations from nodes
+    BarclampNetwork::Allocation.where(:node_id=>node.id).destroy_all
+    # TODO do we need to do additional cleanup???
+  end
+
   def on_proposed(nr)
     NodeRole.transaction do
       d = nr.sysdata
       addresses = (d["crowbar"]["network"][network.name]["addresses"] rescue nil)
       return if addresses && !addresses.empty?
-      addr_range = nr.role.network.ranges.where(:name => nr.node.admin ? "admin" : "host").first
+      # if the node is an admin node, then use the admin range, otherwise use the host range
+      addr_range = nr.role.network.ranges.where(:name => nr.node.is_admin? ? "admin" : "host").first
       addr_range.allocate(nr.node)
     end
   end

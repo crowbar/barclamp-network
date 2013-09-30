@@ -72,8 +72,14 @@ class BarclampNetwork::Network < ActiveRecord::Base
   def make_node_role(node)
     nr = nil
     NodeRole.transaction do
-      nr = NodeRole.where(:node_id => node.id, :role_id => role.id).first ||
-        role.add_to_node_in_snapshot(node,snap)
+      # do we have an existing NR?
+      nr = NodeRole.where(:node_id => node.id, :role_id => role.id).first
+      # if not, we have to create one
+      if nr.nil?
+        # we need to find a reasonable snapshot - use the current system head
+        snap = Deployment.system_root.first.head
+        nr = role.add_to_node_in_snapshot(node,snap)
+      end
       nr.sysdata = { "crowbar" => {
           "network" => {
             name => {"addresses" => node_allocations(node).map{|a|a.to_s}
@@ -81,6 +87,7 @@ class BarclampNetwork::Network < ActiveRecord::Base
           }
         }
       }
+      nr.save!
     end
     nr
   end
