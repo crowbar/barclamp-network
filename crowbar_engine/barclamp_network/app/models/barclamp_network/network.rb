@@ -15,8 +15,12 @@
 class BarclampNetwork::Network < ActiveRecord::Base
 
   validate :check_network_sanity
+  before_create :add_role_and_prefix
+  before_destroy :remove_role
 
   attr_protected :id
+  attr_accessible :name, :description, :order, :conduit, :deployment_id, :vlan, :use_vlan, :team_mode, :use_team, :use_bridge
+
   has_many :ranges, :dependent => :destroy, :class_name => "BarclampNetwork::Range"
   has_many :allocations, :through => :ranges, :class_name => "BarclampNetwork::Allocation"
   has_one  :router, :dependent => :destroy, :class_name => "BarclampNetwork::Router"
@@ -32,71 +36,6 @@ class BarclampNetwork::Network < ActiveRecord::Base
       prefix_array << a
     end
     prefix_array.reverse.map{|a|sprintf('%04x',a)}.join(':')
-  end
-
-  # We need a wrapper around create! that also creates the proper role
-  # for the specific network we are creating.
-  def self.make_network(args)
-    allowed_keys = { :name => true, :deployment_id => true,
-      :vlan => true, :use_vlan => true, :team_mode => true,
-      :use_team => true, :conduit => true, :v6prefix => true }
-    c_ranges = args.delete(:ranges)
-    c_ranges = JSON.parse(c_ranges) if c_ranges.kind_of?(String)
-    c_router = args.delete(:router)
-    c_router = JSON.parse(c_router) if c_router.kind_of?(String)
-    res = create!(args.delete_if{|k,v|!allowed_keys[k]},:without_protection => true)
-    if res.name == "admin" && res.v6prefix.nil?
-      BarclampNetwork::Setting.transaction do 
-        cluster_prefix = BarclampNetwork::Setting["v6prefix"]
-        if cluster_prefix.nil?
-          cluster_prefix = make_global_v6prefix
-          BarclampNetwork::Setting["v6prefix"] = cluster_prefix
-        end
-        res.v6prefix = sprintf("#{cluster_prefix}:%04x",res.id)
-        res.save!
-      end
-    end
-
-    begin
-      if c_ranges.nil? || c_ranges.empty?
-        raise ArgumentError.new("A network must have at least one range!")
-      end
-      c_ranges.each do |range|
-        r = BarclampNetwork::Range.new(:network_id => res.id,
-                                       :name => range["name"])
-        r.first = range["first"]
-        r.last = range["last"]
-        r.save!
-      end
-      if c_router
-        BarclampNetwork::Router.create!(:network_id => res.id,
-                                        :pref => c_router["pref"],
-                                        :address => c_router["address"])
-      end
-
-      bc = Barclamp.where(:name => "network").first
-      Role.transaction do
-        r = Role.find_or_create_by_name(:name => "network-#{args[:name]}",
-                                        :jig_name => Rails.env == "production" ? "chef" : "test",
-                                        :barclamp_id => bc.id)
-        r.update_attributes(:description => I18n.t('automatic_by', :name=>bc.name),
-                            :template => '{}',
-                            :library => false,
-                            :implicit => false,
-                            :bootstrap => (res.name == "admin"),
-                            :discovery => (res.name == "admin")
-                          )
-        r.save!
-        RoleRequire.create!(:role_id => r.id, :requires => "network-server")
-        if Rails.env == "production"
-          RoleRequire.create!(:role_id => r.id, :requires => "deployer-client")
-        end
-      end
-    rescue Exception => e
-      res.destroy rescue nil
-      raise e
-    end
-    res
   end
 
   def template_cleaner(a)
@@ -133,8 +72,14 @@ class BarclampNetwork::Network < ActiveRecord::Base
   def make_node_role(node)
     nr = nil
     NodeRole.transaction do
-      nr = NodeRole.where(:node_id => node.id, :role_id => role.id).first ||
-        role.add_to_node_in_snapshot(node,snap)
+      # do we have an existing NR?
+      nr = NodeRole.where(:node_id => node.id, :role_id => role.id).first
+      # if not, we have to create one
+      if nr.nil?
+        # we need to find a reasonable snapshot - use the current system head
+        snap = Deployment.system_root.first.head
+        nr = role.add_to_node_in_snapshot(node,snap)
+      end
       nr.sysdata = { "crowbar" => {
           "network" => {
             name => {"addresses" => node_allocations(node).map{|a|a.to_s}
@@ -142,11 +87,51 @@ class BarclampNetwork::Network < ActiveRecord::Base
           }
         }
       }
+      nr.save!
     end
     nr
   end
 
   private
+
+  # every network needs to have a matching role
+  # for admin, we add an IPv6 prefix
+  def add_role_and_prefix
+    role_name = "network-#{name}"
+    unless Role.find_key role_name
+      bc = Barclamp.find_key "network"
+      Role.transaction do
+        r = Role.find_or_create_by_name(:name => role_name,
+                                        :type => "BarclampNetwork::Role",   # force
+                                        :jig_name => Rails.env.production? ? "chef" : "test",
+                                        :barclamp_id => bc.id,
+                                        :description => I18n.t('automatic_by', :name=>name),
+                                        :template => '{}',    # this will be replaced by the role
+                                        :library => false,
+                                        :implicit => false,
+                                        :bootstrap => (self.name.eql? "admin"),
+                                        :discovery => (self.name.eql? "admin")  )
+        RoleRequire.create!(:role_id => r.id, :requires => "network-server") 
+        RoleRequire.create!(:role_id => r.id, :requires => "deployer-client") if Rails.env == "production"
+      end
+    end
+    if name == "admin" && v6prefix.nil?
+      BarclampNetwork::Setting.transaction do 
+        cluster_prefix = BarclampNetwork::Setting["v6prefix"]
+        if cluster_prefix.nil?
+          cluster_prefix = BarclampNetwork::Network.make_global_v6prefix
+          BarclampNetwork::Setting["v6prefix"] = cluster_prefix
+        end
+        max = BarclampNetwork::Network.count rescue 1 
+        v6prefix = sprintf("#{cluster_prefix}:%04x",max)
+      end
+    end
+  end
+
+  def remove_role
+    raise 'delete of network/network-role only allowed in developer mode for testing' unless Rails.env.development?
+    Role.destroy_all :name=>"network-#{name}"
+  end
 
   def check_network_sanity
 

@@ -14,12 +14,13 @@
 
 class BarclampNetwork::Router < ActiveRecord::Base
 
-  validate  :router_is_sane
+  validate    :router_is_sane
+  before_save :infer_address
   
   attr_protected :id
   belongs_to     :network
 
-  attr_accessible :pref
+  attr_accessible :pref, :network_id
 
   def address
     IP.coerce(read_attribute("address"))
@@ -30,12 +31,19 @@ class BarclampNetwork::Router < ActiveRecord::Base
   end
 
   private
-  
+
+  def infer_address
+    if read_attribute("address").nil?
+      write_attribute("address", network.ranges.first.first)
+    end
+  end
+
   def router_is_sane
     # A router is sane when its address is in a subnet covered by one of its ranges
-    unless network.ranges.any?{|r|r.start.subnet === address}
-      errors.add("Router #{address.to_s} is not any range for #{network.name}")
-    end
+# ZEHICLE TODO this is broken, but needs to be fixed
+#    unless !address.nil? and network.ranges.any?{|r|r.first.subnet === address}
+#      errors.add("Router #{address.to_s} is not any range for #{network.name}")
+#    end
   end
 end
 
