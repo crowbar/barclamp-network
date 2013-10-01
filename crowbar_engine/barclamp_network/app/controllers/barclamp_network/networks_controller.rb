@@ -41,14 +41,27 @@ class BarclampNetwork::NetworksController < ::ApplicationController
     params[:team_mode] ||= 5
     params[:use_bridge] = true if params[:use_bridge].to_int > 0 rescue false
     params[:deployment_id] = Deployment.find_key(params[:deployment]).id if params.has_key? :deployment
-
     BarclampNetwork::Network.transaction do
 
       @network = BarclampNetwork::Network.create! params
+      # Add our IPv6 prefix.
+      if (params[:v6prefix] == "auto") || (@network.name == "admin" && !params.key?("v6prefix"))
+        BarclampNetwork::Setting.transaction do
+          cluster_prefix = BarclampNetwork::Setting["v6prefix"]
+          if cluster_prefix.nil?
+            cluster_prefix = BarclampNetwork::Network.make_global_v6prefix
+            BarclampNetwork::Setting["v6prefix"] = cluster_prefix
+          end
+          max = BarclampNetwork::Network.count rescue 1
+          @network.v6prefix = sprintf("#{cluster_prefix}:%04x",max)
+          @network.save!
+        end
+      end
 
       # make it easier to batch create
       if params.key? :ranges
-        params[:ranges].each do |range|
+        ranges = params[:ranges].is_a?(String) ? JSON.parse(params[:ranges]) : params[:ranges]
+        ranges.each do |range|
           range[:network_id] = @network.id
           BarclampNetwork::Range.create! range
         end
@@ -57,7 +70,7 @@ class BarclampNetwork::NetworksController < ::ApplicationController
 
       # make it easier to batch create
       if params.key? :router
-        router = params[:router]
+        router = router.is_a?(String) ? JSON.parse(params[:router]) : params[:router]
         router[:network_id] = @network.id
         BarclampNetwork::Router.create! router
         params.delete :router

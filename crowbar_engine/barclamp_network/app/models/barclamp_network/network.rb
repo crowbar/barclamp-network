@@ -115,17 +115,6 @@ class BarclampNetwork::Network < ActiveRecord::Base
         RoleRequire.create!(:role_id => r.id, :requires => "deployer-client") if Rails.env == "production"
       end
     end
-    if name == "admin" && v6prefix.nil?
-      BarclampNetwork::Setting.transaction do 
-        cluster_prefix = BarclampNetwork::Setting["v6prefix"]
-        if cluster_prefix.nil?
-          cluster_prefix = BarclampNetwork::Network.make_global_v6prefix
-          BarclampNetwork::Setting["v6prefix"] = cluster_prefix
-        end
-        max = BarclampNetwork::Network.count rescue 1 
-        v6prefix = sprintf("#{cluster_prefix}:%04x",max)
-      end
-    end
   end
 
   def remove_role
