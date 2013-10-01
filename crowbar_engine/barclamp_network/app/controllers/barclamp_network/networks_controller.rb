@@ -79,7 +79,7 @@ class BarclampNetwork::NetworksController < ::ApplicationController
     end
 
     respond_to do |format|
-      format.html { }
+      format.html { redirect_to :action=>:index }
       format.json { render api_show :network, BarclampNetwork::Network, @network.id.to_s, nil, @network }
     end
 
