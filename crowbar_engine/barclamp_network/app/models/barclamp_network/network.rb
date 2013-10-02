@@ -108,7 +108,7 @@ class BarclampNetwork::Network < ActiveRecord::Base
                                         :description => I18n.t('automatic_by', :name=>name),
                                         :template => '{}',    # this will be replaced by the role
                                         :library => false,
-                                        :implicit => false,
+                                        :implicit => true,
                                         :bootstrap => (self.name.eql? "admin"),
                                         :discovery => (self.name.eql? "admin")  )
         RoleRequire.create!(:role_id => r.id, :requires => "network-server") 
