@@ -24,7 +24,7 @@ class BarclampNetwork::Network < ActiveRecord::Base
   has_many :ranges, :dependent => :destroy, :class_name => "BarclampNetwork::Range"
   has_many :allocations, :through => :ranges, :class_name => "BarclampNetwork::Allocation"
   has_one  :router, :dependent => :destroy, :class_name => "BarclampNetwork::Router"
-  
+
   belongs_to :deployment
 
   def self.make_global_v6prefix
@@ -111,7 +111,7 @@ class BarclampNetwork::Network < ActiveRecord::Base
                                         :implicit => true,
                                         :bootstrap => (self.name.eql? "admin"),
                                         :discovery => (self.name.eql? "admin")  )
-        RoleRequire.create!(:role_id => r.id, :requires => "network-server") 
+        RoleRequire.create!(:role_id => r.id, :requires => "network-server")
         RoleRequire.create!(:role_id => r.id, :requires => "deployer-client") if Rails.env == "production"
       end
     end

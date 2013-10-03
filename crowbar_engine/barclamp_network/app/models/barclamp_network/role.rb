@@ -14,7 +14,6 @@
 
 class BarclampNetwork::Role < Role
 
-
   def network
     BarclampNetwork::Network.where(:name => "#{name.split('-',2)[-1]}").first
   end
