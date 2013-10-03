@@ -33,8 +33,8 @@ Feature: Networks
     Finally REST removes the {object:network} "foo2"
 
   Scenario: Admin Node Allocated Correct IP (matches control.sh API call)
-    Given parameter "node" is {apply:crowbar.g.node_name}
-    When I am on page "networks/api/v2/networks/admin/allocations" with parameter "node"
+    Given parameter "node" is {lookup:crowbar.node_name}
+    When REST requests the "network/api/v2/networks/admin/allocations" page with parameter "node"
     Then Array contains "192.168.124.10/24" 
 
   Scenario: Network List
