@@ -34,6 +34,7 @@ roles:
     jig: noop
     flags:
       - bootstrap
+      - server
 rpms:
   redhat-6.2:
     pkgs:
