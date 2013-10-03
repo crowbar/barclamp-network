@@ -96,7 +96,7 @@ class BarclampNetwork::NetworksController < ::ApplicationController
     else
       node = Node.find_key nodename
     end
-    render :json => network.node_allocations(node).map{|a|a.to_s}
+    render :json => network.node_allocations(node).map{|a|a.to_s}, :content_type=>cb_content_type(:allocations, "array")
   end
   
   add_help(:update,[:id, :conduit,:team_mode, :use_team],[:put])

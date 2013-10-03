@@ -32,6 +32,11 @@ Feature: Networks
       And the {object:range} is properly formatted
     Finally REST removes the {object:network} "foo2"
 
+  Scenario: Admin Node Allocated Correct IP (matches control.sh API call)
+    Given parameter "node" is {apply:crowbar.g.node_name}
+    When I am on page "networks/api/v2/networks/admin/allocations" with parameter "node"
+    Then Array contains "192.168.124.10/24" 
+
   Scenario: Network List
     Given I use the Network API to create "bdd_network" with range "bdd1" from "10.10.11.100/24" to "10.10.11.200/24"
     When I go to the "network/networks" page
