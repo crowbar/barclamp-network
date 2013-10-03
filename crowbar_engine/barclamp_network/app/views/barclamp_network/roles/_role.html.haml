@@ -1,9 +1,9 @@
+- network = role.network
+
 %h2
   = t 'title', :scope=>'barclamp_network.networks.index'
-  = t 'admin', :scope=>'barclamp_network.nets'
-  = link_to t('edit'), barclamp_network.network_path('admin'), :class=>:button
-
-- network = BarclampNetwork::Network.find_key 'admin'
+  = t network.name, :scope=>'barclamp_network.nets', :default=>network.name
+  = link_to t('edit'), barclamp_network.network_path(network.id), :class=>:button
 
 .box
   %dl
