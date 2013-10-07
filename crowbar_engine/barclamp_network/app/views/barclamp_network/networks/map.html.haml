@@ -1,0 +1,24 @@
+%h1= t '.title'
+
+%table.data.box
+  %thead
+    %tr
+      %th= t '.node'
+      - @networks.each do |net|
+        %th
+          %span= link_to net.name, network_path(net.id), :title=>net.description
+          %span{:title=>"#{t '.vlan'}: #{(net.use_vlan ? net.vlan : t('not_set'))}"}
+            = net.conduit
+  %tbody
+    - @nodes.each do |node|
+      - allocations = BarclampNetwork::Allocation.node(node)
+      %tr
+        %td= link_to node.alias, main_app.node_path(node.id), :title=>node.description
+        - @networks.each do |net|
+          - nr = NodeRole.peers_by_node_and_role(node.deployment.head, node, net.role).first
+          %td
+            - if nr
+              - ip = allocations.detect { |a| a.network.id == net.id }
+              %span
+                %span.led{:class => NodeRole::STATES[nr.state], :title=>nr.state_name}
+                  = link_to "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;".html_safe+ip.address, main_app.node_role_path(nr.id)

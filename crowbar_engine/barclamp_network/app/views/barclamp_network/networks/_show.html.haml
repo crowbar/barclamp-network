@@ -7,13 +7,13 @@
     %dt= t 'deployment', :scope=>'barclamp_network.networks.show'
     %dd= text_field_tag :deployment, network.deployment.name
     %dt= t 'conduit', :scope=>'barclamp_network.networks.show'
-    %dd= text_field_tag :conduit, network.conduit, :size=>5
+    %dd= text_field_tag :conduit, network.conduit, :size=>15
     %dt= t 'vlan', :scope=>'barclamp_network.networks.show'
-    %dd= text_field_tag :conduit, network.vlan, :size=>5
+    %dd= text_field_tag :vlan, network.vlan, :size=>5
     %dt= t 'team', :scope=>'barclamp_network.networks.show'
-    %dd= text_field_tag :conduit, network.team_mode, :size=>5
+    %dd= text_field_tag :team_mode, network.team_mode, :size=>5
     %dt= t 'bridge', :scope=>'barclamp_network.networks.show'
-    %dd= text_field_tag :conduit, network.use_bridge, :size=>5
+    %dd= text_field_tag :bridge, network.use_bridge, :size=>5
     %dt
     %dd
       %input.button{:type => "submit", :value => t('update')}
