@@ -26,6 +26,8 @@ BarclampNetwork::Engine.routes.draw do
     resources :ranges do as_routes end
     resources :allocations do as_routes end
   end
+  # special views
+  get 'map' => "networks#map", :as=> :network_map
 
   #//network/api/v2/...
   scope :defaults => {:format=> 'json'} do

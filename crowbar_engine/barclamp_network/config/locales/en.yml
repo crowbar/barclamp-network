@@ -16,6 +16,8 @@ en:
   nav:
     networks: Networks
     networks_description: "Manage Networks"
+    network_map: "Net-Node Map"
+    network_map_description: "Show defined relationships and status between node and networks"
     interfaces: "Bus Interfaces"
     interfaces_description: "Override default bus order for network interfaces"
     scaffold:
@@ -38,7 +40,7 @@ en:
       vlan: "VLAN"
       bridge: "Bridge"
       team: "Team"
-      conduit: "Conduit"
+      conduit: "Conduit(s)"
       ranges: "Range(s)"
       first: "First IP"
       last: "Last IP"
@@ -50,6 +52,10 @@ en:
         add: "Add Network"
         <<: *network_common
       show:
+        <<: *network_common
+      map:
+        title: "Network-Node Map"
+        node: "Node"
         <<: *network_common
     roles:
       index:
