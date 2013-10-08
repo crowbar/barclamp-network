@@ -85,6 +85,11 @@ class BarclampNetwork::NetworksController < ::ApplicationController
 
   end
 
+  def map
+    @networks = BarclampNetwork::Network.all
+    @nodes = Node.all
+  end
+
   # Allocations for a node in a network.
   # Includes the automatic IPv6 address.
   def allocations
@@ -99,17 +104,26 @@ class BarclampNetwork::NetworksController < ::ApplicationController
     render :json => network.node_allocations(node).map{|a|a.to_s}, :content_type=>cb_content_type(:allocations, "array")
   end
   
-  add_help(:update,[:id, :conduit,:team_mode, :use_team],[:put])
+  add_help(:update,[:id, :conduit,:team_mode, :use_team, :vlan, :use_vlan],[:put])
   def update
     @network = BarclampNetwork::Network.find_key(params[:id])
     params.delete :name if params.key? :name   # not allowed to update name!!
     # Only allow teaming and conduit stuff to be updated for now.
-    @network.team_mode = params[:team_mode] if params.has_key?(:team_mode)
+    @network.use_team = params[:use_team].eql? "true" if params.has_key?(:use_team)
+    if params.has_key?(:team_mode)
+      tm = params[:team_mode].to_i rescue -1
+      @network.team_mode = tm
+      @network.use_team = (tm>=0) unless params.has_key?(:use_team)
+    end
+    @network.use_team = params[:use_vlan].eql? "true" if params.has_key?(:use_vlan)
+    if params.has_key?(:vlan)
+      vl = params[:vlan].to_i rescue -1
+      @network.vlan = vl
+      @network.use_vlan = (vl>0) unless params.has_key?(:use_vlan)
+    end
     @network.conduit = params[:conduit] if params.has_key?(:conduit)
-    @network.use_team = params[:use_team] if params.has_key?(:use_team)
     @network.description = params[:description] if params.has_key?(:description)
     @network.order = params[:order] if params.has_key?(:order)
-    @network.conduit = params[:conduit] if params.has_key?(:conduit)
     @network.save
     respond_with(@network) do |format|
       format.html { render :action=>:show } 
