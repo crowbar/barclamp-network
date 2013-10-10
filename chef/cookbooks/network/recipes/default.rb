@@ -128,8 +128,9 @@ end
 def resolve_conduit(net)
   known_ifs = node["crowbar"]["sorted_ifs"]
   speeds = %w{10m 100m 1g 10g}
+  conduit = node["crowbar"]["network"][net]["conduit"]
   intf_re = /^([-+?]?)(\d{1,3}[mg])(\d+)$/
-  finders = node["crowbar"]["network"][net]["conduit"].split(',').map{|f|f.strip}
+  finders = conduit.split(',').map{|f|f.strip}
   raise "#{conduit} does not want any interfaces!" if finders.nil? || finders.empty?
   finders = finders.map{|i|intf_re.match(i)}
   malformed = finders.find_all{|i|i.length != 4}
