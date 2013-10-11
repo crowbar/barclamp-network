@@ -35,7 +35,7 @@ Feature: Networks
   Scenario: Admin Node Allocated Correct IP (matches control.sh API call)
     Given parameter "node" is {lookup:crowbar.node_name}
     When REST requests the "network/api/v2/networks/admin/allocations" page with parameter "node"
-    Then Array contains "192.168.124.10/24" 
+    Then Array matches "192\.168\.124\.(10|11)/24" 
 
   Scenario: Network List
     Given I use the Network API to create "bdd_network" with range "bdd1" from "10.10.11.100/24" to "10.10.11.200/24"
