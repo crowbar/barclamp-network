@@ -21,4 +21,5 @@
               - ip = allocations.detect { |a| a.network.id == net.id }
               %span
                 %span.led{:class => NodeRole::STATES[nr.state], :title=>nr.state_name}
-                  = link_to "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;".html_safe+ip.address, main_app.node_role_path(nr.id)
+                  - addr = ip.address rescue t('not_set')
+                  = link_to "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;".html_safe+addr, main_app.node_role_path(nr.id)
