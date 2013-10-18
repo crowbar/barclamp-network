@@ -5,14 +5,14 @@
 * router_pref: the lowest number is used to set the default route on the host in quesiton
 
 ### Sections ###
-* Storage
+* storage
  * Used by the Swift System to handle all interactions between Swift nodes and Swift-Proxy.
  * External Access: Ineternal Only.  Highly recommended to not have external connectivity as it has all the storage data on it.
  * Router and  router_pref are optional
  * Ranges - requires section "host"
      * "host" - used to assign IP addresses to each of the Swift nodes.
  * No special rules.
-* Public
+* public
  * Used by nova-compute, nova-controller, admin, and swift-proxy to access the external network
  * External Access - Yes this is how the nodes will talk beyond the Solution
  * router and router_pref - Required.? router_pref must be the lowest number of all.
@@ -20,7 +20,7 @@
      * "host" used to assign an IP to each node
      * "dhcp" reserved but must be defined
  * Rules - router_pref must be the lowest defined
-* Nova_floating
+* nova_floating
  * Used by nova to create the floating network in the nova database
  * External Access - Yes
  * No additional?- router and router_pref must not be defined
@@ -30,21 +30,27 @@
      * Network must be a logical subnet of the public range
      * Subnet is a logical subnet of the public range
      * Example - Public is 192.168.123.0/24 and nova floating then can be 192.168.123.64/26 or 192.168.123.128/26
-* Nova_fixed
+*nova_fixed
  * Used by nova to create the private(backend) network in the nova database
  * External Access - None
  * No additional - router and router_pref should not be defined, but if Public will always win
- * Ranges - requires "host" and? "dhcp"
+ * Ranges - requires "host" and "dhcp"
      * "host" used to assign an IP to each node
      * "dhcp"? is used to create the nova database
  * Rules - No special rules
-* Bmc
+* os_sdn
+ * Used by Openstack to create GRE tunnels between the Controller and Compute Nodes
+ * External Access -None
+ * No Additional - router and router_pref should be defined
+ * Ranges - requires "host" 
+ * Rules - No Special Rules
+* bmc
  * Used by each computer to setup? IPMI configurable device
  * External Access - Possible
  * router and router_pref are optional items 
  * Ranges - requires only "host"
  * Rules - if it is separate from the "admin" network then bmc_vlan must be the same network
-* Bmc_vlan
+* bmc_vlan
  * Used by the admin node to control the IPMI configurable devices
  * External Access - Not required but helpful
  * No additional sections
