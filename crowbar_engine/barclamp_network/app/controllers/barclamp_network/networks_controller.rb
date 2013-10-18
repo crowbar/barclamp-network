@@ -42,9 +42,7 @@ class BarclampNetwork::NetworksController < ::ApplicationController
     params[:use_bridge] = true if params[:use_bridge].to_int > 0 rescue false
     params[:deployment_id] = Deployment.find_key(params[:deployment]).id if params.has_key? :deployment
     BarclampNetwork::Network.transaction do
-
       @network = BarclampNetwork::Network.create! params
-
       # make it easier to batch create
       if params.key? :ranges
         ranges = params[:ranges].is_a?(String) ? JSON.parse(params[:ranges]) : params[:ranges]
