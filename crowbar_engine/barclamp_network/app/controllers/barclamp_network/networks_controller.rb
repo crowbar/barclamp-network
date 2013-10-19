@@ -44,19 +44,6 @@ class BarclampNetwork::NetworksController < ::ApplicationController
     BarclampNetwork::Network.transaction do
 
       @network = BarclampNetwork::Network.create! params
-      # Add our IPv6 prefix.
-      if (params[:v6prefix] == "auto") || (@network.name == "admin" && !params.key?("v6prefix"))
-        BarclampNetwork::Setting.transaction do
-          cluster_prefix = BarclampNetwork::Setting["v6prefix"]
-          if cluster_prefix.nil?
-            cluster_prefix = BarclampNetwork::Network.make_global_v6prefix
-            BarclampNetwork::Setting["v6prefix"] = cluster_prefix
-          end
-          max = BarclampNetwork::Network.count rescue 1
-          @network.v6prefix = sprintf("#{cluster_prefix}:%04x",max)
-          @network.save!
-        end
-      end
 
       # make it easier to batch create
       if params.key? :ranges
@@ -124,6 +111,7 @@ class BarclampNetwork::NetworksController < ::ApplicationController
     @network.conduit = params[:conduit] if params.has_key?(:conduit)
     @network.description = params[:description] if params.has_key?(:description)
     @network.order = params[:order] if params.has_key?(:order)
+    @network.v6prefix = params[:v6prefix] if params.has_key?(:v6prefix)
     @network.save
     respond_with(@network) do |format|
       format.html { render :action=>:show } 

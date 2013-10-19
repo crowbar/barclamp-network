@@ -14,12 +14,15 @@
 
 class BarclampNetwork::Network < ActiveRecord::Base
 
-  validate :check_network_sanity
-  before_create :add_role_and_prefix
-  before_destroy :remove_role
+  validate        :check_network_sanity
+  before_create   :add_role
+  before_save     :auto_prefix
+  before_destroy  :remove_role
 
   attr_protected :id
-  attr_accessible :name, :description, :order, :conduit, :deployment_id, :vlan, :use_vlan, :team_mode, :use_team, :use_bridge
+  attr_accessible :name, :v6prefix, :description, :order, :conduit, :deployment_id, :vlan, :use_vlan, :team_mode, :use_team, :use_bridge
+
+  validates_format_of :v6prefix, :with=>/auto|([a-f0-9]){1,4}:([a-f0-9]){1,4}:([a-f0-9]){1,4}:([a-f0-9]){1,4}/, :message => I18n.t("db.v6prefix", :default=>"Invalid IPv6 prefix."), :allow_nil=>true
 
   has_many :ranges, :dependent => :destroy, :class_name => "BarclampNetwork::Range"
   has_many :allocations, :through => :ranges, :class_name => "BarclampNetwork::Allocation"
@@ -94,9 +97,25 @@ class BarclampNetwork::Network < ActiveRecord::Base
 
   private
 
+  # for auto, we add an IPv6 prefix
+  def auto_prefix
+    # Add our IPv6 prefix.
+    if self.v6prefix.nil? or v6prefix.eql? "auto"
+      BarclampNetwork::Setting.transaction do
+        # this config code really needs to move to Crowbar base
+        cluster_prefix = BarclampNetwork::Setting["v6prefix"]
+        if cluster_prefix.nil?
+          cluster_prefix = BarclampNetwork::Network.make_global_v6prefix
+          BarclampNetwork::Setting["v6prefix"] = cluster_prefix
+        end
+        max = BarclampNetwork::Network.count rescue 1
+        self.v6prefix = sprintf("#{cluster_prefix}:%04x",max)
+      end
+    end
+  end
+
   # every network needs to have a matching role
-  # for admin, we add an IPv6 prefix
-  def add_role_and_prefix
+  def add_role
     role_name = "network-#{name}"
     unless Role.find_key role_name
       bc = Barclamp.find_key "network"
