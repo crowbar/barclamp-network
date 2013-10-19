@@ -16,7 +16,7 @@ class BarclampNetwork::Network < ActiveRecord::Base
 
   validate        :check_network_sanity
   before_create   :add_role
-  before_save     :auto_prefix
+  after_save      :auto_prefix
   before_destroy  :remove_role
 
   attr_protected :id
@@ -100,7 +100,7 @@ class BarclampNetwork::Network < ActiveRecord::Base
   # for auto, we add an IPv6 prefix
   def auto_prefix
     # Add our IPv6 prefix.
-    if self.v6prefix.nil? or v6prefix.eql? "auto"
+    if (v6prefix.eql? "auto") or (self.name.eql? "admin" and self.v6prefix.nil?)
       BarclampNetwork::Setting.transaction do
         # this config code really needs to move to Crowbar base
         cluster_prefix = BarclampNetwork::Setting["v6prefix"]
@@ -108,7 +108,7 @@ class BarclampNetwork::Network < ActiveRecord::Base
           cluster_prefix = BarclampNetwork::Network.make_global_v6prefix
           BarclampNetwork::Setting["v6prefix"] = cluster_prefix
         end
-        max = BarclampNetwork::Network.count rescue 1
+        max = (self.id || BarclampNetwork::Network.count) rescue 1
         self.v6prefix = sprintf("#{cluster_prefix}:%04x",max)
       end
     end
