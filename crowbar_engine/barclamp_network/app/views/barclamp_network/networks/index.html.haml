@@ -7,6 +7,7 @@
       %th= t '.description'
       %th= t '.deployment'
       %th= t '.vlan'
+      %th= t '.v6prefix'
       %th= t '.bridge'
       %th= t '.team'
       %th= t '.conduit'
@@ -18,6 +19,7 @@
         %td= n.description
         %td= n.deployment.name
         %td= (n.use_vlan ? n.vlan : t('not_set') )
+        %td= n.v6prefix
         %td= (n.use_bridge ? t('yes') : t('no') )
         %td= (n.use_team ? n.team_mode : t('not_set') )
         %td= n.conduit
@@ -29,6 +31,7 @@
         %td= text_field_tag :deployment, Deployment.first.name, :size=>15
         -#%td= collection_tag :deployments, Deployment.all, :id, :name
         %td= text_field_tag :vlan, "-1", :size=>6
+        %td= text_field_tag :v6prefix, "auto", :size=>20
         %td= text_field_tag :bridge, "-1", :size=>6
         %td= text_field_tag :team_mode, "-1", :size=>6
         %td= text_field_tag :conduit, "10g1", :size=>6
