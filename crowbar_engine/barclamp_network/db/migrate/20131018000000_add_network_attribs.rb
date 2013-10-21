@@ -16,7 +16,7 @@
 # Adds the attributes that we want to generically expose for Nodes
 class AddNetworkAttribs < ActiveRecord::Migration
 
-  def up
+  def self.up
 
     Attrib.create :name=>'nics', :description=>'Ethernet Interface Ports', :map=>'ohai/crowbar_ohai/detected/network'
 
@@ -24,7 +24,7 @@ class AddNetworkAttribs < ActiveRecord::Migration
 
   end
 
-  def down
+  def self.down
     keys = ['nics', 'switches']
     keys.each { |k| Attrib.delete Attrib.find_key(k).id }
   end
