@@ -43,14 +43,23 @@ class BarclampNetwork::Role < Role
     # TODO do we need to do additional cleanup???
   end
 
+  def sysdata(nr)
+    {"crowbar" => {
+        "network" => {
+          network.name => {
+            "addresses" => network.node_allocations(nr.node).map{|a|a.to_s}
+          }
+        }
+      }
+    }
+  end
+
   def on_proposed(nr)
     NodeRole.transaction do
-      d = nr.sysdata
-      addresses = (d["crowbar"]["network"][network.name]["addresses"] rescue nil)
-      return if addresses && !addresses.empty?
-      # if the node is an admin node, then use the admin range, otherwise use the host range
-      addr_range = nr.role.network.ranges.where(:name => nr.node.is_admin? ? "admin" : "host").first
-      addr_range.allocate(nr.node)
+      return if network.allocations.node(nr.node).count != 0
+      addr_range = network.ranges.where(:name => nr.node.is_admin? ? "admin" : "host").first
+      return if addr_range.nil?
+      addr_range.allocate(nr.node) unless addr_range.nil?
     end
   end
 
