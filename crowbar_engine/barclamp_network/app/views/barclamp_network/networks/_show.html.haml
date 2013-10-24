@@ -5,7 +5,7 @@
     %dt= t 'description', :scope=>'barclamp_network.networks.show'
     %dd= text_field_tag :description, network.description, :size=>30
     %dt= t 'deployment', :scope=>'barclamp_network.networks.show'
-    %dd= text_field_tag :deployment, network.deployment.name
+    %dd= f.collection_select :deployment, Deployment.all, :id, :name, :selected=>network.deployment.id
     %dt= t 'conduit', :scope=>'barclamp_network.networks.show'
     %dd= text_field_tag :conduit, network.conduit, :size=>15
     %dt= t 'vlan', :scope=>'barclamp_network.networks.show'
