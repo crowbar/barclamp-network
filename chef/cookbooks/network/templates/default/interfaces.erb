@@ -22,6 +22,8 @@ iface <%= name %> inet manual
 <% unless addr.nil? -%>
     address <%= addr.to_s.split('/')[0] %>
     netmask <%= addr.to_s.split('/')[1] %>
+<% else  -%>
+      post-up ip link set <%= name %> up || true
 <% end -%>
 <% addrs.each do |a| -%>
     post-up ip addr add <%= a %> dev <%= name %> || true
