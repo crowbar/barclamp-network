@@ -106,6 +106,8 @@ class BarclampNetwork::NetworksController < ::ApplicationController
       @network.vlan = vl
       @network.use_vlan = (vl>0) unless params.has_key?(:use_vlan)
     end
+    params[:deployment_id] = Deployment.find_key params[:deployment] if params.has_key?(:deployment)
+    @network.deployment_id = params[:deployment_id] if params.has_key?(:deployment_id)
     @network.conduit = params[:conduit] if params.has_key?(:conduit)
     @network.description = params[:description] if params.has_key?(:description)
     @network.order = params[:order] if params.has_key?(:order)

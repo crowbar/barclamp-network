@@ -28,7 +28,7 @@
       %tr
         %td= text_field_tag :name, t('default'), :size=>6
         %td= text_field_tag :description, "", :size=>20
-        %td= f.collection_select :deployment, Deployment.all, :id, :name
+        %td= select_tag :deployment_id, options_from_collection_for_select(Deployment.all, :id, :name)
         %td= text_field_tag :vlan, "-1", :size=>4
         %td= text_field_tag :v6prefix, "auto", :size=>4
         %td= text_field_tag :bridge, "-1", :size=>4
