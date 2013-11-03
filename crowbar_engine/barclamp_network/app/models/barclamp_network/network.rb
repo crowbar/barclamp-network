@@ -133,6 +133,7 @@ class BarclampNetwork::Network < ActiveRecord::Base
                                         :discovery => (self.name.eql? "admin")  )
         RoleRequire.create!(:role_id => r.id, :requires => "network-server")
         RoleRequire.create!(:role_id => r.id, :requires => "deployer-client") if Rails.env == "production"
+        RoleRequire.create!(:role_id => r.id, :requires => "crowbar-installed-node") unless name == "admin"
       end
     end
   end
