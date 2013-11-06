@@ -242,6 +242,7 @@ Nic.nics.each do |nic|
   next unless ifs[nic.name]
   iface = ifs[nic.name]
   old_iface = old_ifs[nic.name]
+  enslaved = false
   # If we are a member of a bond or a bridge, then the bond or bridge
   # gets our config instead of us. The order in which Nic.nics returns
   # interfaces ensures that this will always function properly.
@@ -261,26 +262,29 @@ Nic.nics.each do |nic|
       # We have been enslaved to an interface not managed by Crowbar.
       # Skip any further configuration of this nic.
       Chef::Log.info("#{nic.name} is enslaved to #{master.name}, which was not created by Crowbar")
-      Chef::Log.info("Refusing to change #{nic} configuration.")
-      next
+      enslaved = true
     else
       # We no longer want to be a slave.
       Chef::Log.info("#{nic.name} no longer wants to be a slave of #{master.name}")
       master.remove_slave nic
     end
   end
-  nic.up
-  Chef::Log.info("#{nic.name}: current addresses: #{nic.addresses.map{|a|a.to_s}.sort.inspect}") unless nic.addresses.empty?
-  Chef::Log.info("#{nic.name}: required addresses: #{iface["addresses"].map{|a|a.to_s}.sort.inspect}") unless iface["addresses"].empty?
-  # Ditch old addresses, add new ones.
-  old_iface["addresses"].reject{|i|iface["addresses"].member?(i)}.each do |addr|
-    Chef::Log.info("#{nic.name}: Removing #{addr.to_s}")
-    nic.remove_address addr
-  end if old_iface
-  iface["addresses"].reject{|i|nic.addresses.member?(i)}.each do |addr|
-    Chef::Log.info("#{nic.name}: Adding #{addr.to_s}")
-    nic.add_address addr
+
+  if !enslaved
+    nic.up
+    Chef::Log.info("#{nic.name}: current addresses: #{nic.addresses.map{|a|a.to_s}.sort.inspect}") unless nic.addresses.empty?
+    Chef::Log.info("#{nic.name}: required addresses: #{iface["addresses"].map{|a|a.to_s}.sort.inspect}") unless iface["addresses"].empty?
+    # Ditch old addresses, add new ones.
+    old_iface["addresses"].reject{|i|iface["addresses"].member?(i)}.each do |addr|
+      Chef::Log.info("#{nic.name}: Removing #{addr.to_s}")
+      nic.remove_address addr
+    end if old_iface
+    iface["addresses"].reject{|i|nic.addresses.member?(i)}.each do |addr|
+      Chef::Log.info("#{nic.name}: Adding #{addr.to_s}")
+      nic.add_address addr
+    end
   end
+
   # Make sure we are using the proper default route.
   if ::Kernel.system("ip route show dev #{nic.name} |grep -q default") &&
       (default_route[:nic] != nic.name)
