@@ -10,7 +10,7 @@ Feature: Networks
     When REST gets the {object:network} "admin"
     Then the {object:network} is properly formatted
       And key "v6prefix" should not be "auto"
-      And key "v6prefix" should be "null"
+      And key "v6prefix" should not be "null"
       And key "v6prefix" should match "null|([a-f0-9]){1,4}:([a-f0-9]){1,4}:([a-f0-9]){1,4}:([a-f0-9]){1,4}"
   
   Scenario: REST JSON check
