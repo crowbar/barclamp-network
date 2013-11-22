@@ -28,13 +28,12 @@ class BarclampNetwork::Role < Role
     "{\"crowbar\": {\"network\": {\"#{network.name}\": #{network.to_template} } } }"
   end
 
-  def jig_role(name)
-    chef_role = Chef::Role.new
-    chef_role.name(name)
-    chef_role.description("#{name}: Automatically created by Crowbar")
-    chef_role.run_list(Chef::RunList.new("recipe[network]"))
-    chef_role.save
-    true
+  def jig_role(nr)
+    { "name" => nr.role.name,
+      "chef_type" => "role",
+      "json_class" => "Chef::Role",
+      "description" => "#{nr.role.name}: Automatically created by Crowbar",
+      "run_list" => ["recipe[network]"]}
   end
 
   def on_node_delete(node)
@@ -44,14 +43,21 @@ class BarclampNetwork::Role < Role
   end
 
   def sysdata(nr)
-    {"crowbar" => {
+    our_addrs = network.node_allocations(nr.node).map{|a|a.to_s}
+    res = {"crowbar" => {
         "network" => {
           network.name => {
-            "addresses" => network.node_allocations(nr.node).map{|a|a.to_s}
+            "addresses" => our_addrs
           }
         }
       }
     }
+    # Pick targets for ping testing.
+    target = node_roles.partition{|tnr|tnr.id != nr.id}.flatten.detect{|tnr|tnr.active?}
+    if target
+      res["crowbar"]["network"][network.name]["targets"] = network.node_allocations(target.node).map{|a|a.to_s}
+    end
+    res
   end
 
   def on_proposed(nr)

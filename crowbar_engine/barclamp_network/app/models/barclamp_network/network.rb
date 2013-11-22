@@ -123,7 +123,7 @@ class BarclampNetwork::Network < ActiveRecord::Base
       Role.transaction do
         r = Role.find_or_create_by_name(:name => role_name,
                                         :type => "BarclampNetwork::Role",   # force
-                                        :jig_name => Rails.env.production? ? "chef" : "test",
+                                        :jig_name => Rails.env.production? ? "chef-solo" : "test",
                                         :barclamp_id => bc.id,
                                         :description => I18n.t('automatic_by', :name=>name),
                                         :template => '{}',    # this will be replaced by the role
