@@ -35,20 +35,21 @@ roles:
     flags:
       - server
 rpms:
-  redhat-6.2:
+  redhat-6.4:
     pkgs:
-      - rpcbind
-  centos-6.2:
+      - vconfig
+      - iptables-ipv6
+  centos-6.4:
     pkgs:
-      - rpcbind
+      - vconfig
+      - iptables-ipv6
+  opensuse-12.3:
+    pkgs:
+      - vlan
   pkgs:
     - bridge-utils
-    - vconfig
     - dhcp
-    - tftp-server
-    - nfs-utils
     - iptables
-    - iptables-ipv6
 debs:
   ubuntu-12.04:
     pkgs:
@@ -58,6 +59,3 @@ debs:
     - vlan
     - ifenslave-2.6
     - isc-dhcp-client
-    - tftpd-hpa
-    - nfs-common
-    - nfs-kernel-server
