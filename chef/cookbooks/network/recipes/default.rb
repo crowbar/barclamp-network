@@ -99,7 +99,6 @@ end
   ::Kernel.system("echo 'ACTION==\"add\", SUBSYSTEM==\"net\", RUN+=\"/bin/true\"' >/etc/udev/rules.d/#{rule}")
 end
 
-provisioner = search(:node, "roles:provisioner-server")[0]
 route_pref = 10000
 ifs = Mash.new
 old_ifs = node["crowbar_wall"]["network"]["interfaces"] || Mash.new rescue Mash.new
@@ -404,12 +403,42 @@ if ["delete","reset"].member?(node["state"])
   }
 end
 
-# Wait for the administrative network to come back up.
-Chef::Log.info("Waiting up to 60 seconds for the net to come back")
-60.times do
-  break if provisioner.address.reachable?
-  sleep 1
-end if provisioner
+# Wait for the networks to come back
+node["crowbar"]["network"].each do |netname,net|
+  unless net["targets"]
+    Chef::Log.info("Network #{netname} does not have any targets to ping.")
+    next
+  end
+  reachable = false
+  src_4, src_6 = net["addresses"].map{|a|IP.coerce(a)}.partition{|a|a.v4?}
+  tgt_4, tgt_6 = net["targets"].map{|a|IP.coerce(a)}.partition{|a|a.v4?}
+  # Figure out what address to try and ping.
+  target = nil
+  if !tgt_6.empty? && !src_6.empty?
+    # If our target and us nave an ipv6 address, try that.
+    target = tgt_6.first
+  elsif !tgt_4.empty? && !src_4.empty?
+    # Otherwise, try ipv4 if we both have one of those.
+    target = tgt_4.first
+  end
+  # We do not have compatible connectivity.
+  unless target
+    Chef::Log.info("No target addresses are in the same address family.")
+    next
+  end
+  60.times do
+    if target.reachable?
+      reachable = true
+      break
+    end
+    sleep 1
+  end
+  if reachable
+    Chef::Log.info("Network #{netname} is alive.")
+  else
+    Chef::Log.error("Network #{netname} is not alive.")
+  end
+end
 
 node.set["crowbar_wall"] ||= Mash.new
 node.set["crowbar_wall"]["network"] ||= Mash.new
@@ -424,7 +453,6 @@ Chef::Log.info("Saving interfaces to crowbar_wall: #{saved_ifs.inspect}")
 node.set["crowbar_wall"]["network"]["interfaces"] = saved_ifs
 node.set["crowbar_wall"]["network"]["nets"] = if_mapping
 node.set["crowbar_wall"]["network"]["addrs"] = addr_mapping
-node.save
 
 case node["platform"]
 when "debian","ubuntu"
