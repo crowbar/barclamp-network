@@ -46,6 +46,9 @@ rpms:
   opensuse-12.3:
     pkgs:
       - vlan
+  opensuse-13.1:
+    pkgs:
+      - vlan
   pkgs:
     - bridge-utils
     - dhcp
