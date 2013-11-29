@@ -65,7 +65,11 @@ class BarclampNetwork::Role < Role
       return if network.allocations.node(nr.node).count != 0
       addr_range = network.ranges.where(:name => nr.node.is_admin? ? "admin" : "host").first
       return if addr_range.nil?
-      addr_range.allocate(nr.node) unless addr_range.nil?
+      # get the node for the hint directly (do not use cached version)
+      node = nr.node(true)
+      # get the suggested ip address (if any) - nil = automatically assign
+      suggestion = node.get_hint[nr.role.name]["ip_v4address"] if node && node.hint[nr.role.name]
+      addr_range.allocate(nr.node, suggestion) unless addr_range.nil?
     end
   end
 
