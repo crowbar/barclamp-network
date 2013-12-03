@@ -13,10 +13,10 @@
 # limitations under the License.
 #
 
-class BarclampNetwork::AttribSwitches < Attrib
+class BarclampNetwork::Attrib::Switches < Attrib
 
-  # number_of_drives has to calculate info from the data, not just look it up
-  def value(data)
+  # switches has to calculate info from the data, not just look it up
+  def data(data)
 
     raw = super(data)
     switches = {}

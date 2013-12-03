@@ -34,6 +34,14 @@ roles:
     jig: noop
     flags:
       - server
+attribs:
+  - name: 'nics'
+    description: 'Ethernet Interface Ports'
+    map: 'ohai/crowbar_ohai/detected/network'
+  - name: 'switches'
+    description: 'Connected Networking Switches'
+    map: 'ohai/crowbar_ohai/switch_config'
+
 rpms:
   redhat-6.4:
     pkgs:
