@@ -84,14 +84,6 @@ class BarclampNetwork::Network < ActiveRecord::Base
         snap = Deployment.system_root.first.head
         nr = role.add_to_node_in_snapshot(node,snap)
       end
-      nr.sysdata = { "crowbar" => {
-          "network" => {
-            name => {"addresses" => node_allocations(node).map{|a|a.to_s}
-            }
-          }
-        }
-      }
-      nr.save!
     end
     nr
   end
@@ -134,13 +126,60 @@ class BarclampNetwork::Network < ActiveRecord::Base
         RoleRequire.create!(:role_id => r.id, :requires => "network-server")
         RoleRequire.create!(:role_id => r.id, :requires => "deployer-client") if Rails.env == "production"
         RoleRequire.create!(:role_id => r.id, :requires => "crowbar-installed-node") unless name == "admin"
+        ::Attrib.create!(:role_id => r.id,
+                         :barclamp_id => bc.id,
+                         :name => "#{role_name}_addresses",
+                         :description => "#{name} network addresses assigned to a node",
+                         :map => "crowbar/network/#{name}/addresses")
+        ::Attrib.create!(:role_id => r.id,
+                         :barclamp_id => bc.id,
+                         :name => "#{role_name}_targets",
+                         :description => "#{name} network addresses to be used as ping test targets",
+                         :map => "crowbar/network/#{name}/targets")
+        ::Attrib.create!(:role_id => r.id,
+                         :barclamp_id => bc.id,
+                         :name => "#{role_name}_conduit",
+                         :description => "#{name} network conduit map for this node",
+                         :map => "crowbar/network/#{name}/conduit")
+        ::Attrib.create!(:role_id => r.id,
+                         :barclamp_id => bc.id,
+                         :name => "#{role_name}_resolved_conduit",
+                         :description => "#{name} network interfaces used on this node",
+                         :map => "crowbar/network/#{name}/resolved_interfaces")
+        ::Attrib.create!(:role_id => r.id,
+                         :barclamp_id => bc.id,
+                         :name => "#{role_name}_vlan",
+                         :description => "#{name} network vlan tag",
+                         :map => "crowbar/network/#{name}/vlan")
+        ::Attrib.create!(:role_id => r.id,
+                         :barclamp_id => bc.id,
+                         :name => "#{role_name}_team_mode",
+                         :description => "#{name} network bonding mode",
+                         :map => "crowbar/network/#{name}/team_mode")
+        ::Attrib.create!(:role_id => r.id,
+                         :barclamp_id => bc.id,
+                         :name => "#{role_name}_use_vlan",
+                         :description => "Whether the #{name} network should use a tagged VLAN interface",
+                         :map => "crowbar/network/#{name}/use_vlan")
+        ::Attrib.create!(:role_id => r.id,
+                         :barclamp_id => bc.id,
+                         :name => "#{role_name}_use_team",
+                         :description => "Whether the #{name} network should bond its interfaces",
+                         :map => "crowbar/network/#{name}/use_team")
+        ::Attrib.create!(:role_id => r.id,
+                         :barclamp_id => bc.id,
+                         :name => "#{role_name}_use_bridge",
+                         :description => "Whether #{name} network should create a bridge for other barclamps to use",
+                         :map => "crowbar/network/#{name}/use_bridge")
       end
     end
   end
 
   def remove_role
     raise 'delete of network/network-role only allowed in developer mode for testing' unless Rails.env.development?
+    rid = self.id
     Role.destroy_all :name=>"network-#{name}"
+    Attrib.destroy_all :role_id => rid
   end
 
   def check_network_sanity
