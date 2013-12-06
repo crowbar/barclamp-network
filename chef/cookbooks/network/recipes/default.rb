@@ -38,6 +38,7 @@ Dir.foreach(net_sysfs) do |ent|
   symlink = File.readlink(ent)
   matches = net_re.match(symlink)
   next unless matches && matches.length == 3
+  Chef::Log.info("Found #{matches[1]} => #{matches[2]}")
   nics[split_pci(matches[1])] = matches[2]
 end
 
@@ -53,6 +54,7 @@ node["crowbar"]["interface_map"].each do |ent|
 end if (node["crowbar"]["interface_map"] rescue nil)
 
 bus_ents = nics.keys.sort
+Chef::Log.info("Found nics: #{nics.inspect}")
 
 # Bucketize the nics we found. This sorts the nics into at most
 # forcing_ents.length + 1 buckets.
@@ -62,7 +64,7 @@ nics.keys.each do |nic|
   forcing_ents.each_index do |fi|
     # Check to see if the PCI address of this nic is one that
     # is covered by one of our interface maps.
-    f = forcing_ents[i]
+    f = forcing_ents[fi]
     next unless nic[0,f.length] == f
     # It is.  Put it in the right bucket.
     sorted_keys[fi] ||= Array.new
