@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 class BarclampNetwork::InterfacesController < ::ApplicationController
-  respond_to :html
+  respond_to :html, :json
 
   def create
     pattern = params[:pattern]
