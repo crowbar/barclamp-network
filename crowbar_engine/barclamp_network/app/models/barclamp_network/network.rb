@@ -126,6 +126,7 @@ class BarclampNetwork::Network < ActiveRecord::Base
         RoleRequire.create!(:role_id => r.id, :requires => "network-server")
         RoleRequire.create!(:role_id => r.id, :requires => "deployer-client") if Rails.env == "production"
         RoleRequire.create!(:role_id => r.id, :requires => "crowbar-installed-node") unless name == "admin"
+        # attributes for jig configuraiton
         ::Attrib.create!(:role_id => r.id,
                          :barclamp_id => bc.id,
                          :name => "#{role_name}_addresses",
@@ -171,6 +172,12 @@ class BarclampNetwork::Network < ActiveRecord::Base
                          :name => "#{role_name}_use_bridge",
                          :description => "Whether #{name} network should create a bridge for other barclamps to use",
                          :map => "crowbar/network/#{name}/use_bridge")
+        # attributes for hint
+        ::Attrib.create!(:role_id => r.id,
+           :barclamp_id => bc.id,
+           :name => "hint_#{role_name}_v4address",
+           :description => "Hint for #{name} network to assign v4 IP address",
+           :map => "v4address")
       end
     end
   end

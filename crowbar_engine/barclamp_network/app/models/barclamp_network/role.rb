@@ -68,7 +68,9 @@ class BarclampNetwork::Role < Role
       # get the node for the hint directly (do not use cached version)
       node = nr.node(true)
       # get the suggested ip address (if any) - nil = automatically assign
-      suggestion = node.get_hint[nr.role.name]["ip_v4address"] if node && node.hint[nr.role.name]
+      hint = Attrib.find_key "hint_#{nr.role.name}_v4address"
+      suggestion = hint(node, :hint)
+      # allocate
       addr_range.allocate(nr.node, suggestion) unless addr_range.nil?
     end
   end
