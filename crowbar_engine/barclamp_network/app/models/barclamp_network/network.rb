@@ -175,9 +175,9 @@ class BarclampNetwork::Network < ActiveRecord::Base
         # attributes for hint
         ::Attrib.create!(:role_id => r.id,
            :barclamp_id => bc.id,
-           :name => "hint_#{role_name}_v4address",
+           :name => "hint-#{role_name}-v4addr",
            :description => "Hint for #{name} network to assign v4 IP address",
-           :map => "v4address")
+           :map => "v4addr")
       end
     end
   end
