@@ -57,7 +57,7 @@ class BarclampNetwork::Network < ActiveRecord::Base
     if router
       res[:router] = template_cleaner(n.router.attributes)
     end
-    res.to_json
+    res
   end
 
   def role

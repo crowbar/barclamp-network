@@ -25,7 +25,7 @@ class BarclampNetwork::Role < Role
   # Our template == the template that our matching network definition has.
   # For now, just hashify the stuff we care about[:ranges]
   def template
-    "{\"crowbar\": {\"network\": {\"#{network.name}\": #{network.to_template} } } }"
+    { "crowbar" => { "network" => { network.name => network.to_template } }  }
   end
 
   def jig_role(nr)
