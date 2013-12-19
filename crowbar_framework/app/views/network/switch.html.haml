@@ -1,84 +1,38 @@
-%p{:style => 'float:right'}
-  -if params[:node]
-    = link_to t('.all'), switch_path, :class => 'button'
-%h1= t('.title')
+- register_stylesheets "barclamps/network/switch"
 
-- @switches.sort.each do |switch, sw_details|
-  - max_port = (sw_details[:max_port]<25 ? 24 : 48)
-  %table.data.switch.box{ :id=>switch }
-    %thead
-      %tr
-        %th{ :style=>'width:10px' }
-          .inline_piechart= [sw_details[:status]["ready"], sw_details[:status]["failed"], sw_details[:status]["unknown"], sw_details[:status]["unready"]+sw_details[:status]["pending"]] * ","
-        %th{:colspan=>"#{max_port}" }
-          %a.toggle.with_label{:href => "#", :id => "#{switch.parameterize}_toggle", :rel => "#{switch.parameterize}_details1, #{switch.parameterize}_details25"}
-            = t('.switch') + " : " + switch
-        %th{ :style=>'width:10px' }
-    %tbody
-      %tr
-        %td
-        - (@port_start).step(max_port-1, 2) do |port|
-          =render :partial => 'dense', :locals => { :switch=> switch, :sw_details=>sw_details, :port=>port, :max_port=>max_port } 
-        %td
-      %tr
-        %td
-        - (@port_start+1).step(max_port, 2) do |port|
-          =render :partial => 'dense', :locals => { :switch=> switch, :sw_details=>sw_details, :port=>port, :max_port=>max_port } 
-        %td
+.row
+  .col-xs-12
+    %h1.page-header
+      = t(".title")
 
-  %table.data.switch.box{ :id=>"#{switch.parameterize}_details1", :style=>"display:none" }
-    %thead
-      %tr
-        %th{ :style=>'width:10px' }
-        %th{:colspan=>"24" }
-          = t('.switch_details') + " : " + switch
-        %th{ :style=>'width:10px' }
-    %tbody
-      %tr
-        %td
-        - (@port_start).step((@port_start+22), 2) do |port|
-          =render :partial => 'switch', :locals => { :switch=> switch, :sw_details=>sw_details, :port=>port } 
-        %td
-      %tr
-        %td
-        - (@port_start+1).step((@port_start+23), 2) do |port|
-          =render :partial => 'switch', :locals => { :switch=> switch, :sw_details=>sw_details, :port=>port } 
-        %td
-  -if max_port>24
-    %table.data.switch.box{ :id=>"#{switch.parameterize}_details25", :style=>"display:none" }
-      %thead
-        %tr
-          %th{ :style=>'width:10px' }
-          %th{:colspan=>"24" }
-            = t('.switch_details') + " : " + switch
-          %th{ :style=>'width:10px' }
-      %tbody
-        %tr
-          %td
-          - (@port_start+24).step(max_port-1, 2) do |port|
-            =render :partial => 'switch', :locals => { :switch=> switch, :sw_details=>sw_details, :port=>port } 
-          %td
-        %tr
-          %td
-          - (@port_start+25).step(max_port, 2) do |port|
-            =render :partial => 'switch', :locals => { :switch=> switch, :sw_details=>sw_details, :port=>port } 
-          %td
+      - if params[:node]
+        .btn-group.pull-right
+          = link_to t(".all"), switch_path, :class => "btn btn-default"
 
-.clear
+.panel.panel-default
+  - if @switches.empty?
+    .panel-body
+      .alert.alert-danger.last
+        = t("error.no_nodes_found")
+  - else
+    - @switches.sort.each do |switch, details|
+      .panel-heading
+        %h2
+          = piechart_for(details)
+          = switch
 
-:javascript
-
-   // set highlights on hover
-  $('div.port')
-    .hover( 
-      //hover in
-      function(ev) {
-        var node = $(this).attr('node');
-        $('div.port[node='+node+']').addClass('edge');
-      },
-      //hover out 
-      function(ev) {
-        var node = $(this).attr('node');
-        $('div.port[node='+node+']').removeClass('edge');      
-      }
-    );
+      %table.table.table-bordered.switch-list
+        %tbody
+          %tr
+            - (@port_start).step(@port_start + 22, 2) do |port|
+              = render :partial => 'switch', :locals => { :switch => switch, :details => details, :port => port }
+          %tr
+            - (@port_start + 1).step(@port_start + 23, 2) do |port|
+              = render :partial => 'switch', :locals => { :switch => switch, :details => details, :port => port }
+          - if details[:max_port] > 24
+            %tr
+              - (@port_start + 24).step(details[:max_port] - 1, 2) do |port|
+                = render :partial => 'switch', :locals => { :switch => switch, :details => details, :port => port }
+            %tr
+              - (@port_start + 25).step(details[:max_port], 2) do |port|
+                = render :partial => 'switch', :locals => { :switch => switch, :details => details, :port => port }

@@ -1,63 +1,57 @@
 en:
-  barclamp:
-    network:
-      edit_attributes:
-        attributes: Attributes
-      edit_deployment:
-        deployment: Deployment
   nav:
-    switch: Switches
-    vlan: VLANs
+    switch: 'Switches'
+    vlan: 'VLANs'
   network:
-    vlan_names:
-      admin: Admin
-      bmc: Mgmt (BMC)
-      bmc_vlan: Mgmt Connect
-      nova_fixed: Nova Fixed
-      nova_floating: Nova Floating
-      public: Public
-      private: Private
-      storage: Storage
-    controller:
-      virtual: Virtual
-    switch:
-      title: Network Switches
-      switch_details: Switch Expanded Details
-      switch: Switch
-      port: Port
-      node: Node
-      nc: N/C
-      no_connection: No Connection
-      all: Show All
-    dense:
-      no_connection: No Connection
     vlan:
-      title: Available Networks
-      name: Name
-      id: VLAN ID
-      conduit: Conduit
-      inuse: Active VLAN
-      not_inuse: Untagged
-      nodes: Nodes
+      title: 'Available Networks'
+      name: 'Name'
+      id: 'VLAN ID'
+      conduit: 'Conduit'
+      inuse: 'Active VLAN'
+      not_inuse: 'Untagged'
+      nodes: 'Nodes'
+    switch:
+      title: 'Network Switches'
+      all: 'All'
+      port: 'Port'
+      node: 'Node'
+      nc: 'N/C'
+      na: 'N/A'
+      no_connection: 'No connection available'
+      no_mac: 'No MAC address available'
+      status_pie:
+        total: 'Total %{count}'
+        ready: '%{count} Ready'
+        unknown: '%{count} Unknown'
+        unready: '%{count} Not Ready'
+        pending: '%{count} Pending'
+    vlan_names:
+      admin: 'Admin'
+      bmc: 'Mgmt (BMC)'
+      bmc_vlan: 'Mgmt Connect'
+      nova_fixed: 'Nova Fixed'
+      nova_floating: 'Nova Floating'
+      public: 'Public'
+      private: 'Private'
+      storage: 'Storage'
+    controller:
+      virtual: 'Virtual'
+
     nodes:
-      title: Interface and Conduit Maps
-      interface_map: Interface Map for Network Attributes
-      node: Node
-      model: Model
-      mode: Network Mapping Mode
-      default_bus_order: Using Default Interface (Bus) Ordering
-      bus_order: Interface (Bus) Order Map
-      conduit_mgmt: Management
+      title: 'Interface and Conduit Maps'
+      mode: 'Network Mapping Mode: %{mode}'
+      interface_map: 'Interface Map for Network Attributes'
+      node: 'Node'
+      model: 'Model'
+      default_bus_order: 'Using Default Interface (Bus) Ordering'
+      bus_order: 'Interface (Bus) Order Map: %{order}'
+      team: 'Team Mode %{order}'
+      conduit_mgmt: 'Management'
       conduit_bmc: 'BMC/IMPI'
-      conduit_prod: Production
+      conduit_prod: 'Production'
       conduit_public: 'Public/Guest'
-      conduit_intf0: Default
-      conduit_intf1: First Interface
-      conduit_intf2: Second Interface
-      conduit_intf3: Third Interface
-      team_1: Team Mode 1
-      team_2: Team Mode 2
-      team_3: Team Mode 3
-      team_4: Team Mode 4
-      team_5: Team Mode 5
-      team_6: Team Mode 6
+      conduit_intf0: 'Default'
+      conduit_intf1: 'First Interface'
+      conduit_intf2: 'Second Interface'
+      conduit_intf3: 'Third Interface'

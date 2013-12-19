@@ -1,0 +1,11 @@
+body {
+  &.network {
+    table.switch-list {
+      tbody {
+        p {
+          margin-bottom: 0;
+        }
+      }
+    }
+  }
+}
