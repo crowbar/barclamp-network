@@ -25,7 +25,7 @@ class BarclampNetwork::Role < Role
   # Our template == the template that our matching network definition has.
   # For now, just hashify the stuff we care about[:ranges]
   def template
-    "{\"crowbar\": {\"network\": {\"#{network.name}\": #{network.to_template} } } }"
+    { "crowbar" => { "network" => { network.name => network.to_template } }  }
   end
 
   def jig_role(nr)
@@ -68,7 +68,9 @@ class BarclampNetwork::Role < Role
       # get the node for the hint directly (do not use cached version)
       node = nr.node(true)
       # get the suggested ip address (if any) - nil = automatically assign
-      suggestion = node.get_hint[nr.role.name]["ip_v4address"] if node && node.hint[nr.role.name]
+      hint = ::Attrib.find_key "hint-#{nr.role.name}-v4addr"
+      suggestion = hint.get(node, :hint) if hint
+      # allocate
       addr_range.allocate(nr.node, suggestion) unless addr_range.nil?
     end
   end

@@ -57,7 +57,7 @@ class BarclampNetwork::Network < ActiveRecord::Base
     if router
       res[:router] = template_cleaner(n.router.attributes)
     end
-    res.to_json
+    res
   end
 
   def role
@@ -126,6 +126,7 @@ class BarclampNetwork::Network < ActiveRecord::Base
         RoleRequire.create!(:role_id => r.id, :requires => "network-server")
         RoleRequire.create!(:role_id => r.id, :requires => "deployer-client") if Rails.env == "production"
         RoleRequire.create!(:role_id => r.id, :requires => "crowbar-installed-node") unless name == "admin"
+        # attributes for jig configuraiton
         ::Attrib.create!(:role_id => r.id,
                          :barclamp_id => bc.id,
                          :name => "#{role_name}_addresses",
@@ -171,6 +172,12 @@ class BarclampNetwork::Network < ActiveRecord::Base
                          :name => "#{role_name}_use_bridge",
                          :description => "Whether #{name} network should create a bridge for other barclamps to use",
                          :map => "crowbar/network/#{name}/use_bridge")
+        # attributes for hint
+        ::Attrib.create!(:role_id => r.id,
+           :barclamp_id => bc.id,
+           :name => "hint-#{role_name}-v4addr",
+           :description => "Hint for #{name} network to assign v4 IP address",
+           :map => "v4addr")
       end
     end
   end

@@ -23,14 +23,14 @@ class BarclampNetwork::Server < Role
   def interfaces
     o = {}
     if name.eql? 'network-server'
-      raw = JSON.parse(read_attribute("template"))
+      raw = template
       raw["crowbar"]["interface_map"].each { |im| o[im["pattern"]] = im["bus_order"] }
     end
     o
   end
 
   def update_interface(pattern, bus_order)
-    data = JSON.parse(read_attribute("template"))
+    data = self.template
     found = false
     data["crowbar"]["interface_map"].each_with_index do |item, index|
       if pattern.eql? item["pattern"]
@@ -38,9 +38,11 @@ class BarclampNetwork::Server < Role
         found = true
       end
     end
-    data["crowbar"]["interface_map"] << { "pattern"=>pattern, "bus_order"=>bus_order } unless found
-    write_attribute("template",JSON.generate(data))
-    self.save!
+    unless found
+      iface = { "crowbar" => { "interface_map" => { "pattern"=>pattern, "bus_order"=>bus_order } } }
+      template_update(iface)
+      self.save!
+    end
   end
 
 end
