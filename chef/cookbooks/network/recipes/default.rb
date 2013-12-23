@@ -49,6 +49,28 @@ end
   ::Kernel.system("echo 'ACTION==\"add\", SUBSYSTEM==\"net\", RUN+=\"/bin/true\"' >/etc/udev/rules.d/#{rule}")
 end
 
+if %w(suse).include? node.platform
+  # Make sure netfilter is disabled for bridges
+  cookbook_file "modprobe-bridge.conf" do
+    source "modprobe-bridge.conf"
+    path "/etc/modprobe.d/10-bridge-disable-netfilter.conf"
+    mode "0644"
+  end
+
+  # If the module is already loaded when we create the modprobe config file,
+  # then we need to act and manually change the settings
+  execute "disable netfilter for bridges" do
+    command <<-EOF
+      echo 0 > /proc/sys/net/bridge/bridge-nf-call-ip6tables;
+      echo 0 > /proc/sys/net/bridge/bridge-nf-call-iptables;
+      echo 0 > /proc/sys/net/bridge/bridge-nf-call-arptables
+    EOF
+    only_if "lsmod | grep -q '^bridge '"
+    action :nothing
+    subscribes :run, resources(:cookbook_file => "modprobe-bridge.conf"), :delayed
+  end
+end
+
 provisioner = search(:node, "roles:provisioner-server")[0]
 conduit_map = Barclamp::Inventory.build_node_map(node)
 Chef::Log.debug("Conduit mapping for this node:  #{conduit_map.inspect}")
