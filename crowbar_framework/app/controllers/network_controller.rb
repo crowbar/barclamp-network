@@ -91,40 +91,76 @@ class NetworkController < BarclampController
   end
 
   def switch
-    @vports = {}
+    @port_start = 1
     @sum = 0
+    @vports = {}
     @groups = {}
     @switches = {}
     @nodes = {}
-    @port_start = 1
-    nodes = (params[:node] ? NodeObject.find_nodes_by_name(params[:node]) : NodeObject.all)
+
+    nodes = if params[:node]
+      NodeObject.find_nodes_by_name params[:node]
+    else
+      NodeObject.all
+    end
+
     nodes.each do |node|
       @sum = @sum + node.name.hash
-      @nodes[node.handle] = { :alias=>node.alias, :description=>node.description(false, true), :status=>node.status }
-      #build groups
-      group = node.group
-      @groups[group] = { :automatic=>!node.display_set?('group'), :status=>{"ready"=>0, "failed"=>0, "unknown"=>0, "unready"=>0, "pending"=>0}, :nodes=>{} } unless @groups.key? group
-      @groups[group][:nodes][node.group_order] = node.handle
-      @groups[group][:status][node.status] = (@groups[group][:status][node.status] || 0).to_i + 1
-      #build switches
+
+      @nodes[node.handle] = {
+        :alias => node.alias,
+        :description => node.description(false, true),
+        :status => node.status
+      }
+
+      @groups[node.group] = {
+        :automatic => !node.display_set?('group'),
+        :nodes => {},
+        :status => {
+          "ready" => 0,
+          "failed" => 0,
+          "unknown" => 0,
+          "unready" => 0,
+          "pending" => 0
+        }
+      } unless @groups.key? node.group
+
+      @groups[node.group][:nodes][node.group_order] = node.handle
+      @groups[node.group][:status][node.status] = (@groups[node.group][:status][node.status] || 0).to_i + 1
+
       node_nics(node).each do |switch|
-        key = switch[:switch]
-        if key
-          @switches[key] = { :status=>{"ready"=>0, "failed"=>0, "unknown"=>0, "unready"=>0, "pending"=>0}, :nodes=>{}, :max_port=>(23+@port_start)} unless @switches.key? key
+        if switch[:switch]
+          @switches[switch[:switch]] = {
+            :nodes => {},
+            :max_port => (23 + @port_start),
+            :status => {
+              "ready" => 0,
+              "failed" => 0,
+              "unknown" => 0,
+              "unready" => 0,
+              "pending" => 0
+            }
+          } unless @switches.key? switch[:switch]
+
           port = if switch['switch_port'] == -1 or switch['switch_port'] == "-1"
-          @vports[key] = 1 + (@vports[key] || 0)
-        else
-          switch[:port]
-        end
+            @vports[switch[:switch]] = 1 + (@vports[switch[:switch]] || 0)
+          else
+            switch[:port]
+          end
+
           @port_start = 0 if port == 0
-          @switches[key][:max_port] = port if port>@switches[key][:max_port]
-          @switches[key][:nodes][port] = { :handle=>node.handle, :intf=>switch[:intf], :mac=>switch[:mac] }
-          @switches[key][:status][node.status] = (@switches[key][:status][node.status] || 0).to_i + 1
+          @switches[switch[:switch]][:max_port] = port if port > @switches[switch[:switch]][:max_port]
+
+          @switches[switch[:switch]][:nodes][port] = {
+            :handle => node.handle,
+            :intf => switch[:intf],
+            :mac => switch[:mac]
+          }
+
+          @switches[switch[:switch]][:status][node.status] = (@switches[switch[:switch]][:status][node.status] || 0).to_i + 1
         end
       end
     end
-    #make sure port max is even
-    flash[:notice] = "<b>#{I18n.t :warning, :scope => :error}:</b> #{I18n.t :no_nodes_found, :scope => :error}" if @nodes.empty? #.html_safe if @nodes.empty?
   end
 
   def vlan
