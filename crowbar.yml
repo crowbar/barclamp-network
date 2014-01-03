@@ -32,8 +32,6 @@ roles:
   # network-server exists to hold interface maps right now.
   - name: network-server
     jig: noop
-    flags:
-      - server
     attribs:
       - name: network_interface_maps
         description: 'The global set of interface maps that should be used to figure out nic ordering.'
