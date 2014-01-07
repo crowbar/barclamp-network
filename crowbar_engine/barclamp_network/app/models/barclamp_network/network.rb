@@ -126,7 +126,13 @@ class BarclampNetwork::Network < ActiveRecord::Base
         RoleRequire.create!(:role_id => r.id, :requires => "network-server")
         RoleRequire.create!(:role_id => r.id, :requires => "deployer-client") if Rails.env == "production"
         RoleRequire.create!(:role_id => r.id, :requires => "crowbar-installed-node") unless name == "admin"
+        RoleRequireAttrib.create!(:role_id => r.id, :attrib_name => "network_interface_maps")
         # attributes for jig configuraiton
+        ::Attrib.create!(:role_id => r.id,
+                         :barclamp_id => bc.id,
+                         :name => "#{role_name}",
+                         :description => "All data for #{name} network",
+                         :map => "crowbar/network/#{name}")
         ::Attrib.create!(:role_id => r.id,
                          :barclamp_id => bc.id,
                          :name => "#{role_name}_addresses",
