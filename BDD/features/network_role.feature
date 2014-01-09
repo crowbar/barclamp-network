@@ -3,6 +3,7 @@ Feature: Network Role
   wants to be able to handle network configuration activities
 
   Scenario: Node set IP address from hint
+    Skip Broken until OpenCrowbar Migration Complete
     Given there is a {object:node} "bdd-hint-ip2.data.edu" hinted "ip" as "192.168.124.126"
       And parameter "node" is "bdd-hint-ip2.data.edu"
       And there are no pending Crowbar runs for {o:node} "bdd-hint-ip2.data.edu"
