@@ -13,7 +13,7 @@ en:
       nodes: 'Nodes'
     switch:
       title: 'Network Switches'
-      all: 'All'
+      all: 'Show all'
       port: 'Port'
       node: 'Node'
       nc: 'N/C'
