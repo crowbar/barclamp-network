@@ -16,8 +16,8 @@
 class NetworkService < ServiceObject
 
   def initialize(thelogger)
+    super(thelogger)
     @bc_name = "network"
-    @logger = thelogger
   end
 
   def acquire_ip_lock
