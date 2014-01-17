@@ -55,3 +55,8 @@ en:
       conduit_intf1: 'First Interface'
       conduit_intf2: 'Second Interface'
       conduit_intf3: 'Third Interface'
+
+  barclamp:
+    network:
+      edit_attributes:
+        warning_not_supported: 'Changing network settings after initial setup is not supported. If you wish to proceed, please use the raw view.'
