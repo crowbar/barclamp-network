@@ -113,7 +113,13 @@ rpms:
   redhat-6.4:
     pkgs:
       - rpcbind
+  redhat-6.5:
+    pkgs:
+      - rpcbind
   centos-6.4:
+    pkgs:
+      - rpcbind
+  centos-6.5:
     pkgs:
       - rpcbind
   pkgs:
