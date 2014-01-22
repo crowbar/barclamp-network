@@ -1,0 +1,12 @@
+{
+    "crowbar": {
+        "network" : {
+            "bmc" : {
+                "address" : "0.0.0.0",
+                "netmask" : "0.0.0.0",
+                "router"  : "0.0.0.0",
+                "use_vlan": false
+            }
+        }
+    }
+}
