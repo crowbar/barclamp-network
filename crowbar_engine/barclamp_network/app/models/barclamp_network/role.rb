@@ -18,6 +18,10 @@ class BarclampNetwork::Role < Role
     BarclampNetwork::Network.where(:name => "#{name.split('-',2)[-1]}").first
   end
 
+  def range_name(nr)
+    nr.node.is_admin? ? "admin" : "host"
+  end
+
   def conduit?
     true
   end
@@ -63,7 +67,7 @@ class BarclampNetwork::Role < Role
   def on_proposed(nr)
     NodeRole.transaction do
       return if network.allocations.node(nr.node).count != 0
-      addr_range = network.ranges.where(:name => nr.node.is_admin? ? "admin" : "host").first
+      addr_range = network.ranges.where(:name => range_name(nr)).first
       return if addr_range.nil?
       # get the node for the hint directly (do not use cached version)
       node = nr.node(true)
@@ -71,6 +75,7 @@ class BarclampNetwork::Role < Role
       hint = ::Attrib.find_key "hint-#{nr.role.name}-v4addr"
       suggestion = hint.get(node, :hint) if hint
       # allocate
+      Rails.logger.info("Allocating address in #{range_name(nr)} for #{nr.node.name}")
       addr_range.allocate(nr.node, suggestion) unless addr_range.nil?
     end
   end

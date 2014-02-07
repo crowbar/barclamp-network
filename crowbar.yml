@@ -36,6 +36,29 @@ roles:
       - name: network_interface_maps
         description: 'The global set of interface maps that should be used to figure out nic ordering.'
         map: 'crowbar/interface_map'
+  - name: network-bmc
+    jig: noop
+    attribs:
+      - name: network-bmc-address
+        description: 'ip address of the bmc interface'
+        map: 'crowbar/network/bmc/address'
+      - name: network-bmc-netmask
+        description: 'ip netmask of the bmc interface'
+        map: 'crowbar/network/bmc/netmask'
+      - name: network-bmc-router
+        description: 'ip address of the bmc router'
+        map: 'crowbar/network/bmc/router'
+      - name: network-bmc-use-vlan
+        description: 'vlan flag'
+        map: 'crowbar/network/bmc/use_vlan'
+      - name: network-bmc-vlan
+        description: 'vlan number'
+        map: 'crowbar/network/bmc/vlan'
+    flags:
+      - implicit
+    requires:
+      - network-server
+
 attribs:
   - name: 'nics'
     description: 'Ethernet Interface Ports'
