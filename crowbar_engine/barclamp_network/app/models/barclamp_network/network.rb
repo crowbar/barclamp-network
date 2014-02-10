@@ -14,6 +14,8 @@
 
 class BarclampNetwork::Network < ActiveRecord::Base
 
+  BMC_CONDUIT = "bmc"
+
   validate        :check_network_sanity
   after_create    :add_role
   after_save      :auto_prefix
@@ -30,6 +32,8 @@ class BarclampNetwork::Network < ActiveRecord::Base
   has_one  :router, :dependent => :destroy, :class_name => "BarclampNetwork::Router"
 
   belongs_to :deployment
+
+
 
   def self.make_global_v6prefix
     prefix_array = []
@@ -204,6 +208,7 @@ class BarclampNetwork::Network < ActiveRecord::Base
     end
     intfs = conduit.split(",").map{|intf|intf.strip}
     ok_intfs, failed_intfs = intfs.partition{|intf|intf_re.match(intf)}
+    failed_intfs = failed_intfs.reject{|intf| intf == BMC_CONDUIT}
     unless failed_intfs.empty?
       errors.add("Network #{name}: Invalid abstract interface names in conduit: #{failed_intfs.join(", ")}")
     end
