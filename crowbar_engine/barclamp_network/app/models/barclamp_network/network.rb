@@ -207,16 +207,18 @@ class BarclampNetwork::Network < ActiveRecord::Base
       errors.add("Network #{name}: Conduit definition cannot be empty")
     end
     intfs = conduit.split(",").map{|intf|intf.strip}
-    ok_intfs, failed_intfs = intfs.partition{|intf|intf_re.match(intf)}
-    failed_intfs = failed_intfs.reject{|intf| intf == BMC_CONDUIT}
-    unless failed_intfs.empty?
-      errors.add("Network #{name}: Invalid abstract interface names in conduit: #{failed_intfs.join(", ")}")
+    if !intfs.include?(BMC_CONDUIT)
+      ok_intfs, failed_intfs = intfs.partition{|intf|intf_re.match(intf)}
+      unless failed_intfs.empty?
+        errors.add("Network #{name}: Invalid abstract interface names in conduit: #{failed_intfs.join(", ")}")
+      end
+      matches = intfs.map{|intf|intf_re.match(intf)}
+      tmpl = matches[0]
+      if ! matches.all?{|i|(i[1] == tmpl[1]) && (i[2] == tmpl[2])}
+        errors.add("Network #{name}: Not all abstract interface names have the same speed and flags: #{conduit}")
+      end
     end
-    matches = intfs.map{|intf|intf_re.match(intf)}
-    tmpl = matches[0]
-    if ! matches.all?{|i|(i[1] == tmpl[1]) && (i[2] == tmpl[2])}
-      errors.add("Network #{name}: Not all abstract interface names have the same speed and flags: #{conduit}")
-    end
+
 
     # Conduit is sane, check to see that it satisfies the overlap constraints for interacting
     # with other networks.
