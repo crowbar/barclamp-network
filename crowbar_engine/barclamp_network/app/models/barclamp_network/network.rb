@@ -31,8 +31,6 @@ class BarclampNetwork::Network < ActiveRecord::Base
 
   belongs_to :deployment
 
-
-
   def self.make_global_v6prefix
     prefix_array = []
     raw_prefix_array = (["fc".hex] + IO.read("/dev/random",5).unpack("C5"))
