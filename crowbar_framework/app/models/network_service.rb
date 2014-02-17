@@ -273,7 +273,7 @@ class NetworkService < ServiceObject
       result = add_role_to_instance_and_node("network", inst, name, db, role, "network")
 
       @logger.debug("Network transition: Exiting #{name} for #{state} discovered path")
-      return [200, NodeObject.find_node_by_name(name).to_hash] if result
+      return [200, { :name => name } ] if result
       return [400, "Failed to add role to node"] unless result
     end
 
@@ -291,7 +291,7 @@ class NetworkService < ServiceObject
     end
 
     @logger.debug("Network transition: Exiting #{name} for #{state}")
-    [200, NodeObject.find_node_by_name(name).to_hash]
+    [200, { :name => name }]
   end
 
   def enable_interface(bc_instance, network, name)
