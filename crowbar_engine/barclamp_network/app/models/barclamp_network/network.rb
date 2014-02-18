@@ -125,7 +125,7 @@ class BarclampNetwork::Network < ActiveRecord::Base
                                         :discovery => (self.name.eql? "admin")  )
         RoleRequire.create!(:role_id => r.id, :requires => "network-server")
         RoleRequire.create!(:role_id => r.id, :requires => "deployer-client") if Rails.env == "production"
-        RoleRequire.create!(:role_id => r.id, :requires => "crowbar-installed-node") unless name == "admin"
+        RoleRequire.create!(:role_id => r.id, :requires => "crowbar-installed-node") unless name == "admin" || name == "bmc"
         RoleRequireAttrib.create!(:role_id => r.id, :attrib_name => "network_interface_maps")
         # attributes for jig configuraiton
         ::Attrib.create!(:role_id => r.id,
@@ -203,15 +203,18 @@ class BarclampNetwork::Network < ActiveRecord::Base
       errors.add("Network #{name}: Conduit definition cannot be empty")
     end
     intfs = conduit.split(",").map{|intf|intf.strip}
-    ok_intfs, failed_intfs = intfs.partition{|intf|intf_re.match(intf)}
-    unless failed_intfs.empty?
-      errors.add("Network #{name}: Invalid abstract interface names in conduit: #{failed_intfs.join(", ")}")
+    if !intfs.include?("bmc")
+      ok_intfs, failed_intfs = intfs.partition{|intf|intf_re.match(intf)}
+      unless failed_intfs.empty?
+        errors.add("Network #{name}: Invalid abstract interface names in conduit: #{failed_intfs.join(", ")}")
+      end
+      matches = intfs.map{|intf|intf_re.match(intf)}
+      tmpl = matches[0]
+      if ! matches.all?{|i|(i[1] == tmpl[1]) && (i[2] == tmpl[2])}
+        errors.add("Network #{name}: Not all abstract interface names have the same speed and flags: #{conduit}")
+      end
     end
-    matches = intfs.map{|intf|intf_re.match(intf)}
-    tmpl = matches[0]
-    if ! matches.all?{|i|(i[1] == tmpl[1]) && (i[2] == tmpl[2])}
-      errors.add("Network #{name}: Not all abstract interface names have the same speed and flags: #{conduit}")
-    end
+
 
     # Conduit is sane, check to see that it satisfies the overlap constraints for interacting
     # with other networks.

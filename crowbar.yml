@@ -36,6 +36,7 @@ roles:
       - name: network_interface_maps
         description: 'The global set of interface maps that should be used to figure out nic ordering.'
         map: 'crowbar/interface_map'
+
 attribs:
   - name: 'nics'
     description: 'Ethernet Interface Ports'
