@@ -42,6 +42,7 @@ BarclampNetwork::Engine.routes.draw do
               match 'ip'
               post 'allocate_ip'
               get 'allocations'
+              get 'role_allocations'
             end
           end
         end
