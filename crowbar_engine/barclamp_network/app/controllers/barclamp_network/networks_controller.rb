@@ -88,7 +88,20 @@ class BarclampNetwork::NetworksController < ::ApplicationController
     end
     render :json => network.node_allocations(node).map{|a|a.to_s}, :content_type=>cb_content_type(:allocations, "array")
   end
-  
+
+  # Allocations for a role in a network, via node roles
+  def role_allocations
+    network = BarclampNetwork::Network.find_key params[:id]
+    raise "Network #{params[:id]} does not exist" unless network
+
+    r = Role.find_key params[:role]
+    raise "Role #{params[:role]} does not exist" unless r
+    nr = NodeRole.where(:role_id => r.id)
+    addrs = {}
+    nr.map{|nr| addrs[nr.node.name] = network.allocations.node(nr.node).first.address.to_s} unless nr.nil?
+    render :json => addrs, :content_type=>cb_content_type(:allocations, "hash")
+  end
+
   add_help(:update,[:id, :conduit,:team_mode, :use_team, :vlan, :use_vlan],[:put])
   def update
     @network = BarclampNetwork::Network.find_key(params[:id])
