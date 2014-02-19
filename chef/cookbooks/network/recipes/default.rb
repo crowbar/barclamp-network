@@ -61,9 +61,9 @@ if %w(suse).include? node.platform
   # then we need to act and manually change the settings
   execute "disable netfilter for bridges" do
     command <<-EOF
-      echo 0 > /proc/sys/net/bridge/bridge-nf-call-ip6tables;
-      echo 0 > /proc/sys/net/bridge/bridge-nf-call-iptables;
-      echo 0 > /proc/sys/net/bridge/bridge-nf-call-arptables
+      echo 1 > /proc/sys/net/bridge/bridge-nf-call-ip6tables;
+      echo 1 > /proc/sys/net/bridge/bridge-nf-call-iptables;
+      echo 1 > /proc/sys/net/bridge/bridge-nf-call-arptables
     EOF
     only_if "lsmod | grep -q '^bridge '"
     action :nothing
