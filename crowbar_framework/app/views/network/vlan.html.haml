@@ -11,18 +11,18 @@
           = t(".nodes")
 
         - @vlans.sort.each do |vlan, vlan_details|
-          %th{ :title => vlan_details["vlan"] }
-            = t(vlan, :scope => "network.vlan_names", :default => vlan.titlecase)
+          %th{ title: vlan_details["vlan"] }
+            = t(vlan, scope: "network.vlan_names", default: vlan.titlecase)
 
     %tbody
       - @nodes.sort.each do |node, node_details|
         %tr
-          %td{ :title => node_details[:description] }
+          %td{ title: node_details[:description] }
             = link_to node_details[:alias], node_path(node)
 
           - @vlans.sort.each do |vlan, vlan_details|
             - if node_details[:vlans].has_key? vlan
-              %td{ :title => node_details[:vlans][vlan][:address] }
+              %td{ title: node_details[:vlans][vlan][:address] }
                 - if node_details[:vlans][vlan][:active]
                   = t(".inuse")
                 - else
