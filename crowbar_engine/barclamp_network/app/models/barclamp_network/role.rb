@@ -19,7 +19,7 @@ class BarclampNetwork::Role < Role
   end
 
   def range_name(nr)
-    nr.node.is_admin? ? "admin" : "host"
+    nr.node.is_admin? && name == "admin" ? "admin" : network.ranges.first.name
   end
 
   def conduit?
