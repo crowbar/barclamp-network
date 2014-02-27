@@ -1,3 +1,4 @@
+# -*- encoding : utf-8 -*-
 
 name "switch_config"
 description "Switch configuration - Generates switch configuration"
