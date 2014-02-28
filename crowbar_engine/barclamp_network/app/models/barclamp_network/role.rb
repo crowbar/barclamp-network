@@ -19,7 +19,10 @@ class BarclampNetwork::Role < Role
   end
 
   def range_name(nr)
-    nr.node.is_admin? && name == "admin" ? "admin" : network.ranges.first.name
+    # when node and network are both "admin", force allocation from the "admin" range
+    # otherwise select first range for the network that is *not* an admin range
+    # TODO: we need to add logic to support networks with multiple ranges
+    nr.node.is_admin? && name == "admin" ? "admin" : network.ranges.reject{|r| r.name == "admin"}.first.name
   end
 
   def conduit?
