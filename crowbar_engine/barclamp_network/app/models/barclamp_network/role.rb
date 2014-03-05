@@ -19,7 +19,10 @@ class BarclampNetwork::Role < Role
   end
 
   def range_name(nr)
-    nr.node.is_admin? ? "admin" : "host"
+    # when node and network are both "admin", force allocation from the "admin" range
+    # otherwise select first range for the network that is *not* an admin range
+    # TODO: we need to add logic to support networks with multiple ranges
+    nr.node.is_admin? && name == "admin" ? "admin" : network.ranges.reject{|r| r.name == "admin"}.first.name
   end
 
   def conduit?
@@ -66,16 +69,23 @@ class BarclampNetwork::Role < Role
 
   def on_proposed(nr)
     NodeRole.transaction do
-      return if network.allocations.node(nr.node).count != 0
+      num_allocations = network.allocations.node(nr.node).count
       addr_range = network.ranges.where(:name => range_name(nr)).first
-      return if addr_range.nil?
+      Rails.logger.info("Allocating address in #{name}:#{range_name(nr)} range for #{nr.node.name} - #{num_allocations} previous allocations")
+      if num_allocations != 0
+        Rails.logger.info("Allocation already for #{name}:#{range_name(nr)} range on this node - no allocation made")
+        return
+      end
+      if addr_range.nil?
+        Rails.logger.info("No range found for #{name}:#{range_name(nr)} - no allocation made")
+        return
+      end
       # get the node for the hint directly (do not use cached version)
       node = nr.node(true)
       # get the suggested ip address (if any) - nil = automatically assign
       hint = ::Attrib.find_key "hint-#{nr.role.name}-v4addr"
       suggestion = hint.get(node, :hint) if hint
       # allocate
-      Rails.logger.info("Allocating address in #{range_name(nr)} for #{nr.node.name}")
       addr_range.allocate(nr.node, suggestion) unless addr_range.nil?
     end
   end
