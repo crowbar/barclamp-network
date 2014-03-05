@@ -28,7 +28,6 @@ class NetworkService < ServiceObject
     release_lock f
   end
 
-
   def allocate_ip_by_type(bc_instance, network, range, object, type, suggestion = nil)
     @logger.debug("Network allocate ip for #{type}: entering #{object} #{network} #{range}")
     return [404, "No network specified"] if network.nil?
@@ -226,6 +225,13 @@ class NetworkService < ServiceObject
 
   def deallocate_ip(bc_instance, network, name)
     deallocate_ip_by_type(bc_instance, network, name, :node)
+  end
+
+  def virtual_ip_assigned?(bc_instance, network, range, name)
+    db = ProposalObject.find_data_bag_item "crowbar/#{network}_network"
+    !db["allocated_by_name"][name].nil?
+  rescue
+    false
   end
 
   def create_proposal
