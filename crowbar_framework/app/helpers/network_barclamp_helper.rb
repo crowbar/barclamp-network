@@ -18,13 +18,4 @@
 #
 
 module NetworkBarclampHelper
-  def network_role_contraints
-    {
-      "network" => {
-        "unique" => false,
-        "count" => -1,
-        "admin" => true
-      }
-    }
-  end
 end

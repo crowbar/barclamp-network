@@ -20,6 +20,20 @@ class NetworkService < ServiceObject
     @bc_name = "network"
   end
 
+  class << self
+    def role_constraints
+      @role_constraints ||= begin
+        {
+          "network" => {
+            "unique" => false,
+            "count" => -1,
+            "admin" => true
+          }
+        }
+      end
+    end
+  end
+
   def acquire_ip_lock
     acquire_lock "ip"
   end
