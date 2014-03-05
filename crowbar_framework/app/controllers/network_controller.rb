@@ -18,8 +18,11 @@
 
 class NetworkController < BarclampController
   def initialize
+    super()
     @service_object = NetworkService.new logger
   end
+
+
 
   add_help(:allocate_ip,[:id,:network,:range,:name],[:post])
   def allocate_ip
@@ -91,6 +94,8 @@ class NetworkController < BarclampController
     render :json => ret[1]
   end
 
+
+
   def switch
     @port_start = 1
     @sum = 0
@@ -99,10 +104,10 @@ class NetworkController < BarclampController
     @switches = {}
     @nodes = {}
 
-    nodes = if params[:node]
-      NodeObject.find_nodes_by_name params[:node]
-    else
+    nodes = if ["default", nil].include? params[:id]
       NodeObject.all
+    else
+      NodeObject.find_nodes_by_name params[:id]
     end
 
     nodes.each do |node|
@@ -162,19 +167,28 @@ class NetworkController < BarclampController
         end
       end
     end
+
+    respond_to do |format|
+      format.html
+    end
   end
 
   def vlan
     net_bc = RoleObject.find_role_by_name 'network-config-default'
+
     if net_bc.barclamp == 'network'
       @vlans = net_bc.default_attributes['network']['networks']
     end
+
     @nodes = {}
     NodeObject.all.each do |node|
       @nodes[node.handle] = { :alias=>node.alias, :description=>node.description(false, true), :vlans=>{} }
       @nodes[node.handle][:vlans] = node_vlans(node)
     end
 
+    respond_to do |format|
+      format.html
+    end
   end
 
   def nodes
