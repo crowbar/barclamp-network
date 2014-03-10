@@ -22,15 +22,13 @@ class NetworkService < ServiceObject
 
   class << self
     def role_constraints
-      @role_constraints ||= begin
-        {
-          "network" => {
-            "unique" => false,
-            "count" => -1,
-            "admin" => true
-          }
+      {
+        "network" => {
+          "unique" => false,
+          "count" => -1,
+          "admin" => true
         }
-      end
+      }
     end
   end
 
