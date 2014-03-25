@@ -43,6 +43,7 @@ iface <%= name %> inet manual
     pre-up test -f /sys/class/net/bonding_masters || modprobe bonding
     pre-up grep -qw <%=name%> /sys/class/net/bonding_masters || echo +<%=name%> >/sys/class/net/bonding_masters || true
     pre-up echo <%=i["mode"] %> >/sys/class/net/<%=name%>/bonding/mode || true
+    pre-up echo 100 >/sys/class/net/<%=name%>/bonding/miimon || true
        <% i["slaves"].each do |slave| -%>
     up ip link set <%=slave%> down
     up echo +<%=slave%> > /sys/class/net/<%=name%>/bonding/slaves || true
