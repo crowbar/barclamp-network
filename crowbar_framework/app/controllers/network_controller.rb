@@ -17,13 +17,6 @@
 #
 
 class NetworkController < BarclampController
-  def initialize
-    super()
-    @service_object = NetworkService.new logger
-  end
-
-
-
   add_help(:allocate_ip,[:id,:network,:range,:name],[:post])
   def allocate_ip
     id = params[:id]       # Network id
@@ -217,7 +210,7 @@ class NetworkController < BarclampController
 
   end
 
-  private
+  protected
 
   def node_vlans(node)
     nv = {}
@@ -254,5 +247,9 @@ class NetworkController < BarclampController
       Rails.logger.debug("could not build interface/switch list for #{node.name} due to #{e.message}")
     end
     switches
+  end
+
+  def initialize_service
+    @service_object = NetworkService.new logger
   end
 end
