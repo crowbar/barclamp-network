@@ -334,6 +334,7 @@ end
 if ["delete","reset"].member?(node["state"])
   # We just had the rug pulled out from under us.
   # Do our darndest to get an IP address we can use.
+  Chef::Log.info("Node state is #{node["state"]}; ensuring network up")
   Nic.refresh_all
   Nic.nics.each{|n|
     next if n.name =~ /^lo/
@@ -343,7 +344,8 @@ if ["delete","reset"].member?(node["state"])
 end
 
 # Wait for the administrative network to come back up.
-Chef::Log.info("Waiting up to 60 seconds for the net to come back")
+Chef::Log.info("Checking we can ping #{provisioner.address.addr}; " +
+               "will wait up to 60 seconds")
 60.times do
   break if ::Kernel.system("ping -c 1 -w 1 -q #{provisioner.address.addr} > /dev/null")
   sleep 1
