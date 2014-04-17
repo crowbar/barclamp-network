@@ -17,6 +17,11 @@
 #
 
 class NetworkController < BarclampController
+
+
+
+
+
   add_help(:allocate_ip,[:id,:network,:range,:name],[:post])
   def allocate_ip
     id = params[:id]       # Network id
@@ -26,6 +31,17 @@ class NetworkController < BarclampController
     suggestion = params[:suggestion]
 
     ret = @service_object.allocate_ip(id, network, range, name, suggestion)
+    return render :text => ret[1], :status => ret[0] if ret[0] != 200
+    render :json => ret[1]
+  end
+
+  add_help(:deallocate_ip,[:id,:network,:name],[:post])
+  def deallocate_ip
+    id = params[:id]       # Network id
+    network = params[:network]
+    name = params[:name]
+
+    ret = @service_object.deallocate_ip(id, network, name)
     return render :text => ret[1], :status => ret[0] if ret[0] != 200
     render :json => ret[1]
   end
@@ -54,17 +70,6 @@ class NetworkController < BarclampController
     render :json => ret[1]
   end
 
-  add_help(:deallocate_ip,[:id,:network,:name],[:post])
-  def deallocate_ip
-    id = params[:id]       # Network id
-    network = params[:network]
-    name = params[:name]
-
-    ret = @service_object.deallocate_ip(id, network, name)
-    return render :text => ret[1], :status => ret[0] if ret[0] != 200
-    render :json => ret[1]
-  end
-
   add_help(:enable_interface,[:id,:network,:name],[:post])
   def enable_interface
     id = params[:id]       # Network id
@@ -86,6 +91,8 @@ class NetworkController < BarclampController
     return render :text => ret[1], :status => ret[0] if ret[0] != 200
     render :json => ret[1]
   end
+
+
 
 
 
@@ -175,7 +182,12 @@ class NetworkController < BarclampController
 
     @nodes = {}
     NodeObject.all.each do |node|
-      @nodes[node.handle] = { :alias=>node.alias, :description=>node.description(false, true), :vlans=>{} }
+      @nodes[node.handle] = { 
+        :alias => node.alias, 
+        :description => node.description(false, true), 
+        :vlans => {} 
+      }
+
       @nodes[node.handle][:vlans] = node_vlans(node)
     end
 
@@ -185,7 +197,6 @@ class NetworkController < BarclampController
   end
 
   def nodes
-
     net_bc = RoleObject.find_role_by_name 'network-config-default'
     @modes = []
     @active_mode = @mode = net_bc.default_attributes['network']['mode']
@@ -207,7 +218,6 @@ class NetworkController < BarclampController
       @nodes[node.handle] = {:alias=>node.alias, :description=>node.description, :model=>node.hardware, :bus=>node.get_bus_order, :conduits=>node.build_node_map }
     end
     @conduits = @conduits.sort
-
   end
 
   protected
