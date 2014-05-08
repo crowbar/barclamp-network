@@ -14,15 +14,3 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-body {
-  &.network {
-    table.switch-list {
-      tbody {
-        p {
-          margin-bottom: 0;
-        }
-      }
-    }
-  }
-}

@@ -92,10 +92,6 @@ class NetworkController < BarclampController
     render :json => ret[1]
   end
 
-
-
-
-
   def switch
     @port_start = 1
     @sum = 0
@@ -258,6 +254,10 @@ class NetworkController < BarclampController
     end
     switches
   end
+
+
+
+
 
   def initialize_service
     @service_object = NetworkService.new logger
