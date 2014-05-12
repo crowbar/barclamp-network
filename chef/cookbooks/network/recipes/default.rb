@@ -154,12 +154,13 @@ node["crowbar"]["network"].keys.sort{|a,b|
   else
     # We want a bond.  Figure out what mode it should be.  Default to 5
     team_mode = conduit_map[conduit]["team_mode"] ||
-      (network["teaming"] && network["teaming"]["mode"]) || 5
+      (node["network"]["teaming"] && node["network"]["teaming"]["mode"]) || 5
     # See if a bond that matches our specifications has already been created,
     # or if there is an empty bond lying around.
     bond = Nic::Bond.find(base_ifs)
     if bond
       Chef::Log.info("Using bond #{bond.name} for network #{name}")
+      bond.mode = team_mode if bond.mode != team_mode
     else
       bond = Nic::Bond.create("bond#{Nic.nics.select{|i| Nic::bond?(i)}.length}",
                        team_mode)
