@@ -6,7 +6,7 @@
       "start_up_delay": 30,
       "mode": "single",
       "teaming": {
-        "mode": 5
+        "mode": 1
       },
       "interface_map": [
         {
