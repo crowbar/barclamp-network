@@ -262,4 +262,8 @@ class NetworkController < BarclampController
   def initialize_service
     @service_object = NetworkService.new logger
   end
+
+  def permitted_params
+    params.require(:network)
+  end
 end
