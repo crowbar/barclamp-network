@@ -5,7 +5,7 @@
 
       .pull-right
         %span.badge
-          = t(".mode", :mode => @mode)
+          = t(".mode", mode: @mode)
 
 - if @active_mode != @mode
   .alert.alert-danger
@@ -21,24 +21,24 @@
       %thead
         %tr
           %th
-            = t('.node')
+            = t(".node")
           %th
-            = t('.model')
+            = t(".model")
           - @conduits.each do |conduit|
-            %th{ :title => conduit }
-              = t('.conduit_#{conduit}', :default => conduit.humanize)
+            %th{ title: conduit }
+              = t(".conduit_#{conduit}", default: conduit.humanize)
 
       %tbody
         - @nodes.sort_by{ |handle, node| node[:alias] }.each do |handle, node|
           %tr
-            %td{ :title=>node[:description] }
-              = link_to node[:alias], node_path(:name => handle)
+            %td{ title: node[:description] }
+              = link_to node[:alias], node_path(name: handle)
 
             - if node[:bus]
-              %td{ :title=> t('.bus_order', :order => node[:bus].join(', ')) }
+              %td{ title:  t(".bus_order", order: node[:bus].join(", ")) }
                 = node[:model]
             - else
-              %td{ :title => t('.default_bus_order') }
+              %td{ title: t(".default_bus_order") }
                 = node[:model]
             - @conduits.each do |conduit|
               %td
@@ -46,6 +46,6 @@
                   - intf = node[:conduits][conduit]
                   - if intf and intf["if_list"]
                     - if intf["team_mode"]
-                      = t('.team', :default => 'Team #{intf["team_mode"]} %{order}', :order => intf["if_list"].join(', '))
+                      = t(".team", default: "Team #{intf["team_mode"]} %{order}", order: intf["if_list"].join(", "))
                     - else
-                      = intf["if_list"].join(', ')
+                      = intf["if_list"].join(", ")

@@ -1,10 +1,12 @@
-# Copyright 2011, Dell
+#
+# Copyright 2011-2013, Dell
+# Copyright 2013-2014, SUSE LINUX Products GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#   http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -12,16 +14,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Author: RobHirschfeld
-#
 
 barclamp:
-  name: network
-  display: Network
+  name: 'network'
+  display: 'Network'
+  description: 'Network configuration for Crowbar'
   version: 0
-  online_help: 'https://github.com/crowbar/crowbar/wiki/Network--barclamp'
   member:
-    - crowbar
+    - 'crowbar'
 
 crowbar:
   layout: 1
@@ -32,52 +32,58 @@ crowbar:
 
 nav:
   network:
-    switch: switch_path
-    vlan: vlan_path
+    switch:
+      route: 'switch_network_path'
+      params:
+        id: 'default'
+    vlan:
+      route: 'vlan_network_path'
+      params:
+        id: 'default'
 
 rpms:
   redhat-5.6:
     pkgs:
-      - portmap
+      - 'portmap'
   redhat-5.7:
     pkgs:
-      - portmap
+      - 'portmap'
   centos-5.7:
     pkgs:
-      - portmap
+      - 'portmap'
   redhat-6.4:
     pkgs:
-      - rpcbind
+      - 'rpcbind'
   centos-6.4:
     pkgs:
-      - rpcbind
+      - 'rpcbind'
   pkgs:
-    - bridge-utils
-    - vconfig
-    - dhcp
-    - tftp-server
-    - nfs-utils
-    - iptables
-    - iptables-ipv6
+    - 'bridge-utils'
+    - 'vconfig'
+    - 'dhcp'
+    - 'tftp-server'
+    - 'nfs-utils'
+    - 'iptables'
+    - 'iptables-ipv6'
 
 debs:
   ubuntu-10.10:
     pkgs:
-      - portmap
+      - 'portmap'
   ubuntu-11.04:
     pkgs:
-      - portmap
+      - 'portmap'
   ubuntu-11.10:
     pkgs:
-      - rpcbind
+      - 'rpcbind'
   ubuntu-12.04:
     pkgs:
-      - rpcbind
+      - 'rpcbind'
   pkgs:
-    - bridge-utils
-    - vlan
-    - ifenslave-2.6
-    - dhcp3-server
-    - tftpd-hpa
-    - nfs-common
-    - nfs-kernel-server
+    - 'bridge-utils'
+    - 'vlan'
+    - 'ifenslave-2.6'
+    - 'dhcp3-server'
+    - 'tftpd-hpa'
+    - 'nfs-common'
+    - 'nfs-kernel-server'

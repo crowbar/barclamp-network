@@ -6,10 +6,10 @@
     %p.col-lg-6
       %span.led.unknown
 
-    %p.node{ :title=>t(".no_connection") }
+    %p.node{ title: t(".no_connection") }
       = t(".nc")
 
-    %p.mac{ :title=>t(".no_mac") }
+    %p.mac{ title: t(".no_mac") }
       = t(".na")
   - else
     - node = details[:nodes][port][:handle]
@@ -18,10 +18,10 @@
       = "#{port}-#{details[:nodes][port][:intf]}"
 
     %p.col-lg-6
-      %span.led{ :id => node, :class => @nodes[node][:status], :title => t(@nodes[node][:status], :scope => "state") }
+      %span.led{ id: node, class: @nodes[node][:status], title: t(@nodes[node][:status], scope: "state") }
 
     %p.node
-      %a{:href => "/nodes/#{node}"}
+      %a{ href: "/nodes/#{node}" }
         = (@nodes[node][:alias] || t(".nc"))
 
     %p.mac

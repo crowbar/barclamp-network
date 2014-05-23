@@ -1,24 +1,26 @@
-# Copyright 2011, Dell 
-# 
-# Licensed under the Apache License, Version 2.0 (the "License"); 
-# you may not use this file except in compliance with the License. 
-# You may obtain a copy of the License at 
-# 
-#  http://www.apache.org/licenses/LICENSE-2.0 
-# 
-# Unless required by applicable law or agreed to in writing, software 
-# distributed under the License is distributed on an "AS IS" BASIS, 
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
-# See the License for the specific language governing permissions and 
-# limitations under the License. 
-# 
+# -*- encoding : utf-8 -*-
+#
+# Copyright 2011-2013, Dell
+# Copyright 2013-2014, SUSE LINUX Products GmbH
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 
 class NetworkController < BarclampController
-  # Make a copy of the barclamp controller help
-  self.help_contents = Array.new(superclass.help_contents)
-  def initialize
-    @service_object = NetworkService.new logger
-  end
+
+
+
+
 
   add_help(:allocate_ip,[:id,:network,:range,:name],[:post])
   def allocate_ip
@@ -29,6 +31,17 @@ class NetworkController < BarclampController
     suggestion = params[:suggestion]
 
     ret = @service_object.allocate_ip(id, network, range, name, suggestion)
+    return render :text => ret[1], :status => ret[0] if ret[0] != 200
+    render :json => ret[1]
+  end
+
+  add_help(:deallocate_ip,[:id,:network,:name],[:post])
+  def deallocate_ip
+    id = params[:id]       # Network id
+    network = params[:network]
+    name = params[:name]
+
+    ret = @service_object.deallocate_ip(id, network, name)
     return render :text => ret[1], :status => ret[0] if ret[0] != 200
     render :json => ret[1]
   end
@@ -53,17 +66,6 @@ class NetworkController < BarclampController
     name = params[:name]
 
     ret = @service_object.deallocate_virtual_ip(id, network, name)
-    return render :text => ret[1], :status => ret[0] if ret[0] != 200
-    render :json => ret[1]
-  end
-
-  add_help(:deallocate_ip,[:id,:network,:name],[:post])
-  def deallocate_ip
-    id = params[:id]       # Network id
-    network = params[:network]
-    name = params[:name]
-
-    ret = @service_object.deallocate_ip(id, network, name)
     return render :text => ret[1], :status => ret[0] if ret[0] != 200
     render :json => ret[1]
   end
@@ -98,10 +100,10 @@ class NetworkController < BarclampController
     @switches = {}
     @nodes = {}
 
-    nodes = if params[:node]
-      NodeObject.find_nodes_by_name params[:node]
-    else
+    nodes = if ["default", nil].include? params[:id]
       NodeObject.all
+    else
+      NodeObject.find_nodes_by_name params[:id]
     end
 
     nodes.each do |node|
@@ -161,23 +163,36 @@ class NetworkController < BarclampController
         end
       end
     end
+
+    respond_to do |format|
+      format.html
+    end
   end
 
   def vlan
     net_bc = RoleObject.find_role_by_name 'network-config-default'
+
     if net_bc.barclamp == 'network'
       @vlans = net_bc.default_attributes['network']['networks']
     end
+
     @nodes = {}
     NodeObject.all.each do |node|
-      @nodes[node.handle] = { :alias=>node.alias, :description=>node.description(false, true), :vlans=>{} }
+      @nodes[node.handle] = { 
+        :alias => node.alias, 
+        :description => node.description(false, true), 
+        :vlans => {} 
+      }
+
       @nodes[node.handle][:vlans] = node_vlans(node)
     end
 
+    respond_to do |format|
+      format.html
+    end
   end
 
   def nodes
-
     net_bc = RoleObject.find_role_by_name 'network-config-default'
     @modes = []
     @active_mode = @mode = net_bc.default_attributes['network']['mode']
@@ -199,10 +214,9 @@ class NetworkController < BarclampController
       @nodes[node.handle] = {:alias=>node.alias, :description=>node.description, :model=>node.hardware, :bus=>node.get_bus_order, :conduits=>node.build_node_map }
     end
     @conduits = @conduits.sort
-
   end
 
-  private
+  protected
 
   def node_vlans(node)
     nv = {}
@@ -241,4 +255,15 @@ class NetworkController < BarclampController
     switches
   end
 
+
+
+
+
+  def initialize_service
+    @service_object = NetworkService.new logger
+  end
+
+  def permitted_params
+    params.require(:network)
+  end
 end
