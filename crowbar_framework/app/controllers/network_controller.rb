@@ -16,9 +16,6 @@
 class NetworkController < BarclampController
   # Make a copy of the barclamp controller help
   self.help_contents = Array.new(superclass.help_contents)
-  def initialize
-    @service_object = NetworkService.new logger
-  end
 
   add_help(:allocate_ip,[:id,:network,:range,:name],[:post])
   def allocate_ip
@@ -241,4 +238,9 @@ class NetworkController < BarclampController
     switches
   end
 
+  protected
+
+  def initialize_service
+    @service_object = NetworkService.new logger
+  end
 end
