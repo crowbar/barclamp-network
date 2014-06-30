@@ -248,6 +248,7 @@
   "deployment": {
     "network": {
       "crowbar-revision": 0,
+      "crowbar-applied": false,
       "element_states": {
         "network": [ "readying", "ready", "applying" ]
       },
