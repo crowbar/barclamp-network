@@ -133,9 +133,9 @@ node["crowbar"]["network"].keys.sort{|a,b|
          end
   conduit = network["conduit"]
   base_ifs = conduit_map[conduit]["if_list"]
-  # Freak out in an appropriate fashion if we were handed a bogus conduit mapping.
+  # Error out if we were handed an invalid conduit mapping.
   unless base_ifs.all?{|i|i.is_a?(String) && ::Nic.exists?(i)}
-    raise ::ArgumentError.new("Conduit mapping #{conduit} for #{network} is not sane: #{base_ifs.inspect}")
+    raise ::ArgumentError.new("Conduit mapping \"#{conduit}\" for network \"#{name}\" is not sane: #{base_ifs.inspect}")
   end
   base_ifs = base_ifs.map{|i| ::Nic.new(i)}
   Chef::Log.info("Using base interfaces #{base_ifs.map{|i|i.name}.inspect} for network #{name}")
