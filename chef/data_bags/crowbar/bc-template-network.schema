@@ -13,6 +13,7 @@
           "required": true,
           "mapping": {
             "start_up_delay": { "type": "int", "required": true },
+            "enable_tx_offloading": { "type": "bool" },
             "mode": { "type": "str", "required": true, "pattern": "/^single$|^dual$|^team$/" },
             "teaming": {
               "type": "map",
