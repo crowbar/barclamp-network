@@ -19,6 +19,13 @@ STARTMODE=auto
 BOOTPROTO=none
 <% else -%>
 BOOTPROTO=static
+  <% unless @nic.kind_of?(Nic::Vlan) or @nic.kind_of?(Nic::Bond) -%>
+    <% if @enable_tx_offloading -%>
+ETHTOOL_OPTIONS="-K iface tx on"
+    <% else -%>
+ETHTOOL_OPTIONS="-K iface tx off"
+    <% end -%>
+  <% end -%>
 <% end -%>
 <% case
    when @nic.kind_of?(Nic::Bridge) -%>

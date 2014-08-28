@@ -303,6 +303,10 @@ Nic.nics.each do |nic|
     end
   end
 
+  unless nic.kind_of?(Nic::Vlan) or nic.kind_of?(Nic::Bond)
+    nic.tx_offloading = node["network"]["enable_tx_offloading"] || false
+  end
+
   if !enslaved
     nic.up
     Chef::Log.info("#{nic.name}: current addresses: #{nic.addresses.map{|a|a.to_s}.sort.inspect}") unless nic.addresses.empty?
@@ -400,9 +404,10 @@ when "suse"
     template "/etc/sysconfig/network/ifcfg-#{nic.name}" do
       source "suse-cfg.erb"
       variables({
-                  :interfaces => ifs,
-                  :nic => nic
-                })
+        :enable_tx_offloading => node["network"]["enable_tx_offloading"] || false,
+        :interfaces => ifs,
+        :nic => nic
+      })
     end
     if ifs[nic.name]["gateway"]
       template "/etc/sysconfig/network/ifroute-#{nic.name}" do
