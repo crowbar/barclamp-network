@@ -67,7 +67,7 @@
       "conduit_map": [
         {
           "pattern": "team/.*/.*",
-          "conduit_list": { 
+          "conduit_list": {
             "intf0": {
               "if_list": [ "1g1", "1g2" ]
             },
@@ -81,7 +81,7 @@
         },
         {
           "pattern": "dual/.*/.*",
-          "conduit_list": { 
+          "conduit_list": {
             "intf0": {
               "if_list": [ "?1g1" ]
             },
@@ -95,7 +95,7 @@
         },
         {
           "pattern": "single/.*/.*",
-          "conduit_list": { 
+          "conduit_list": {
             "intf0": {
               "if_list": [ "?1g1" ]
             },
@@ -109,7 +109,7 @@
         },
         {
           "pattern": ".*/.*/.*",
-          "conduit_list": { 
+          "conduit_list": {
             "intf0": {
               "if_list": [ "?1g1" ]
             },
@@ -123,7 +123,7 @@
         },
         {
           "pattern": "mode/1g_adpt_count/role",
-          "conduit_list": { 
+          "conduit_list": {
             "intf0": {
               "if_list": [ "1g1" ]
             },
@@ -234,7 +234,7 @@
           "netmask": "255.255.255.0",
           "broadcast": "192.168.124.255",
           "router": "192.168.124.1",
-	  "router_pref": 10, 
+	  "router_pref": 10,
           "ranges": {
             "admin": { "start": "192.168.124.10", "end": "192.168.124.11" },
             "dhcp": { "start": "192.168.124.21", "end": "192.168.124.80" },
