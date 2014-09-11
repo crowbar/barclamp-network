@@ -36,17 +36,19 @@ end
 
 require 'fileutils'
 
-if ::File.exists?("/etc/init/network-interface.conf")
-  # Make upstart stop trying to dynamically manage interfaces.
-  ::File.unlink("/etc/init/network-interface.conf")
-  ::Kernel.system("killall -HUP init")
-end
+if node[:platform] == "ubuntu"
+  if ::File.exists?("/etc/init/network-interface.conf")
+    # Make upstart stop trying to dynamically manage interfaces.
+    ::File.unlink("/etc/init/network-interface.conf")
+    ::Kernel.system("killall -HUP init")
+  end
 
-# Stop udev from jacking up our vlans and bridges as we create them.
-["40-bridge-network-interface.rules","40-vlan-network-interface.rules"].each do |rule|
-  next if ::File.exists?("/etc/udev/rules.d/#{rule}")
-  next unless ::File.exists?("/lib/udev/rules.d/#{rule}")
-  ::Kernel.system("echo 'ACTION==\"add\", SUBSYSTEM==\"net\", RUN+=\"/bin/true\"' >/etc/udev/rules.d/#{rule}")
+  # Stop udev from jacking up our vlans and bridges as we create them.
+  ["40-bridge-network-interface.rules","40-vlan-network-interface.rules"].each do |rule|
+    next if ::File.exists?("/etc/udev/rules.d/#{rule}")
+    next unless ::File.exists?("/lib/udev/rules.d/#{rule}")
+    ::Kernel.system("echo 'ACTION==\"add\", SUBSYSTEM==\"net\", RUN+=\"/bin/true\"' >/etc/udev/rules.d/#{rule}")
+  end
 end
 
 if %w(suse).include? node.platform
