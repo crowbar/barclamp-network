@@ -4,6 +4,7 @@
   "attributes": {
     "network": {
       "start_up_delay": 30,
+      "enable_tx_offloading": false,
       "mode": "single",
       "teaming": {
         "mode": 1
