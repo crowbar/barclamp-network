@@ -224,6 +224,7 @@
     "network": {
       "crowbar-revision": 0,
       "crowbar-applied": false,
+      "schema-revision": 1,
       "element_states": {
         "network": [ "readying", "ready", "applying" ]
       },
