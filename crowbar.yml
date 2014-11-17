@@ -32,8 +32,8 @@ crowbar:
 
 nav:
   network:
-    switch: switch_path
-    vlan: vlan_path
+    switch: switch_path(id: "default")
+    vlan: vlan_path(id: "default")
 
 rpms:
   redhat-5.6:
