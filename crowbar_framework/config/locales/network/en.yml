@@ -17,8 +17,10 @@
 
 en:
   nav:
-    switch: 'Switches'
-    vlan: 'VLANs'
+    network:
+      title: 'Network'
+      switch: 'Switches'
+      vlan: 'VLANs'
   network:
     vlan:
       title: 'Available Networks'
