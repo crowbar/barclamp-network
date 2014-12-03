@@ -16,12 +16,13 @@
 #
 
 barclamp:
-  name: network
-  display: Network
+  name: 'network'
+  display: 'Network'
+  description: 'Network Configuration'
   version: 0
-  online_help: 'https://github.com/crowbar/crowbar/wiki/Network--barclamp'
+  user_managed: true
   member:
-    - crowbar
+    - 'crowbar'
 
 crowbar:
   layout: 1
@@ -32,52 +33,11 @@ crowbar:
 
 nav:
   network:
-    switch: switch_path
-    vlan: vlan_path
-
-rpms:
-  redhat-5.6:
-    pkgs:
-      - portmap
-  redhat-5.7:
-    pkgs:
-      - portmap
-  centos-5.7:
-    pkgs:
-      - portmap
-  redhat-6.4:
-    pkgs:
-      - rpcbind
-  centos-6.4:
-    pkgs:
-      - rpcbind
-  pkgs:
-    - bridge-utils
-    - vconfig
-    - dhcp
-    - tftp-server
-    - nfs-utils
-    - iptables
-    - iptables-ipv6
-
-debs:
-  ubuntu-10.10:
-    pkgs:
-      - portmap
-  ubuntu-11.04:
-    pkgs:
-      - portmap
-  ubuntu-11.10:
-    pkgs:
-      - rpcbind
-  ubuntu-12.04:
-    pkgs:
-      - rpcbind
-  pkgs:
-    - bridge-utils
-    - vlan
-    - ifenslave-2.6
-    - dhcp3-server
-    - tftpd-hpa
-    - nfs-common
-    - nfs-kernel-server
+    order: 30
+    route: 'network_path'
+    switch:
+      order: 10
+      route: 'switch_path'
+    vlan:
+      order: 20
+      route: 'vlan_path'
