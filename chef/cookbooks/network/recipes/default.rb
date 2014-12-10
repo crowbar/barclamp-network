@@ -36,30 +36,37 @@ end
 
 require 'fileutils'
 
-if ::File.exists?("/etc/init/network-interface.conf")
-  # Make upstart stop trying to dynamically manage interfaces.
-  ::File.unlink("/etc/init/network-interface.conf")
-  ::Kernel.system("killall -HUP init")
-end
+if node[:platform] == "ubuntu"
+  if ::File.exists?("/etc/init/network-interface.conf")
+    # Make upstart stop trying to dynamically manage interfaces.
+    ::File.unlink("/etc/init/network-interface.conf")
+    ::Kernel.system("killall -HUP init")
+  end
 
-# Stop udev from jacking up our vlans and bridges as we create them.
-["40-bridge-network-interface.rules","40-vlan-network-interface.rules"].each do |rule|
-  next if ::File.exists?("/etc/udev/rules.d/#{rule}")
-  next unless ::File.exists?("/lib/udev/rules.d/#{rule}")
-  ::Kernel.system("echo 'ACTION==\"add\", SUBSYSTEM==\"net\", RUN+=\"/bin/true\"' >/etc/udev/rules.d/#{rule}")
+  # Stop udev from jacking up our vlans and bridges as we create them.
+  ["40-bridge-network-interface.rules","40-vlan-network-interface.rules"].each do |rule|
+    next if ::File.exists?("/etc/udev/rules.d/#{rule}")
+    next unless ::File.exists?("/lib/udev/rules.d/#{rule}")
+    ::Kernel.system("echo 'ACTION==\"add\", SUBSYSTEM==\"net\", RUN+=\"/bin/true\"' >/etc/udev/rules.d/#{rule}")
+  end
 end
 
 if %w(suse).include? node.platform
-  # Make sure netfilter is disabled for bridges
+  # We used to create this file. Clean it up
+  file "/etc/modprobe.d/10-bridge-disable-netfilter.conf" do
+    action :delete
+  end
+
+  # Make sure netfilter is enabled for bridges
   cookbook_file "modprobe-bridge.conf" do
     source "modprobe-bridge.conf"
-    path "/etc/modprobe.d/10-bridge-disable-netfilter.conf"
+    path "/etc/modprobe.d/10-bridge-netfilter.conf"
     mode "0644"
   end
 
   # If the module is already loaded when we create the modprobe config file,
   # then we need to act and manually change the settings
-  execute "disable netfilter for bridges" do
+  execute "enable netfilter for bridges" do
     command <<-EOF
       echo 1 > /proc/sys/net/bridge/bridge-nf-call-ip6tables;
       echo 1 > /proc/sys/net/bridge/bridge-nf-call-iptables;
