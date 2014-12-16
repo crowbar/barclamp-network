@@ -4,6 +4,7 @@
   "attributes": {
     "network": {
       "start_up_delay": 30,
+      "enable_rx_offloading": false,
       "enable_tx_offloading": false,
       "mode": "single",
       "teaming": {
@@ -250,6 +251,7 @@
     "network": {
       "crowbar-revision": 0,
       "crowbar-applied": false,
+      "schema-revision": 10,
       "element_states": {
         "network": [ "readying", "ready", "applying" ]
       },

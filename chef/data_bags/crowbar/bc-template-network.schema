@@ -13,6 +13,7 @@
           "required": true,
           "mapping": {
             "start_up_delay": { "type": "int", "required": true },
+            "enable_rx_offloading": { "type": "bool" },
             "enable_tx_offloading": { "type": "bool" },
             "mode": { "type": "str", "required": true, "pattern": "/^single$|^dual$|^team$/" },
             "teaming": {
@@ -122,6 +123,7 @@
             "crowbar-status": { "type": "str" },
             "crowbar-failed": { "type": "str" },
             "crowbar-queued": { "type": "bool" },
+            "schema-revision": { "type": "int" },
             "element_states": {
               "type": "map",
               "mapping": {

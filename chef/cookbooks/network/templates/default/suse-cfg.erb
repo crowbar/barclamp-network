@@ -20,8 +20,8 @@ BOOTPROTO=none
 <% else -%>
 BOOTPROTO=static
   <% unless @nic.kind_of?(Nic::Vlan) or @nic.kind_of?(Nic::Bond) -%>
-    <% unless @enable_tx_offloading -%>
-ETHTOOL_OPTIONS="-K iface tx off"
+    <% unless @ethtool_options.empty? -%>
+ETHTOOL_OPTIONS="-K iface <%= @ethtool_options -%>"
     <% end -%>
   <% end -%>
 <% end -%>
