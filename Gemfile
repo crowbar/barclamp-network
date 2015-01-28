@@ -15,34 +15,11 @@
 # limitations under the License.
 #
 
-begin
-  require 'sprockets/standalone'
+source 'https://rubygems.org'
 
-  Sprockets::Standalone::RakeTask.new(:assets) do |task, sprockets|
-    task.assets = [
-      '**/application.js'
-    ]
-
-    task.sources = [
-      'crowbar_framework/app/assets/javascripts'
-    ]
-
-    task.output = 'crowbar_framework/public/assets'
-
-    task.compress = true
-    task.digest = false
-
-    sprockets.js_compressor = :uglifier
-    sprockets.css_compressor = :sass
-  end
-rescue
+group :development do
+  gem 'uglifier', '~> 2.2.1'
+  gem 'sass', '~> 3.2.19'
+  gem 'sprockets-standalone', '~> 1.2.1'
+  gem 'sprockets', '~> 2.11.0'
 end
-
-task :syntaxcheck do
-  system('for f in `find -name \*.rb`; do echo -n "Syntaxcheck $f: "; ruby -c $f || exit $? ; done')
-  exit $?.exitstatus
-end
-
-task :default => [
-  :syntaxcheck
-]
