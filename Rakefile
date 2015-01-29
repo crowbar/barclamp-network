@@ -32,7 +32,7 @@ begin
     task.compress = true
     task.digest = false
 
-    sprockets.js_compressor = :uglifier
+    sprockets.js_compressor = :closure
     sprockets.css_compressor = :sass
   end
 rescue
