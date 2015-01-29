@@ -30,9 +30,9 @@ begin
     task.output = 'crowbar_framework/public/assets'
 
     task.compress = true
-    task.digest = false
+    task.digest = true
 
-    sprockets.js_compressor = :uglifier
+    sprockets.js_compressor = :closure
     sprockets.css_compressor = :sass
   end
 rescue

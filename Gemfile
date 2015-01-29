@@ -18,7 +18,7 @@
 source 'https://rubygems.org'
 
 group :development do
-  gem 'uglifier', '~> 2.2.1'
+  gem 'closure-compiler', '~> 1.1.10'
   gem 'sass', '~> 3.2.19'
   gem 'sprockets-standalone', '~> 1.2.1'
   gem 'sprockets', '~> 2.11.0'
