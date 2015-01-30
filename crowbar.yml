@@ -19,7 +19,7 @@ barclamp:
   name: 'network'
   display: 'Network'
   description: 'Network Configuration'
-  version: 0
+  version: 1
   user_managed: true
   member:
     - 'crowbar'
