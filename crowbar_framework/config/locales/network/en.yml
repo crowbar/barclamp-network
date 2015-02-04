@@ -49,8 +49,6 @@ en:
       admin: 'Admin'
       bmc: 'Mgmt (BMC)'
       bmc_vlan: 'Mgmt Connect'
-      nova_fixed: 'Nova Fixed'
-      nova_floating: 'Nova Floating'
       public: 'Public'
       private: 'Private'
       storage: 'Storage'
