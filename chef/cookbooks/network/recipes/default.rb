@@ -311,6 +311,7 @@ Nic.nics.each do |nic|
   end
 
   unless nic.kind_of?(Nic::Vlan) or nic.kind_of?(Nic::Bond)
+    nic.rx_offloading = node["network"]["enable_rx_offloading"] || false
     nic.tx_offloading = node["network"]["enable_tx_offloading"] || false
   end
 
@@ -406,12 +407,18 @@ when "centos","redhat"
     end
   end
 when "suse"
+
+  ethtool_options = []
+  ethtool_options << "rx off" unless node["network"]["enable_rx_offloading"] || false
+  ethtool_options << "tx off" unless node["network"]["enable_tx_offloading"] || false
+  ethtool_options = ethtool_options.join(" ")
+
   Nic.nics.each do |nic|
     next unless ifs[nic.name]
     template "/etc/sysconfig/network/ifcfg-#{nic.name}" do
       source "suse-cfg.erb"
       variables({
-        :enable_tx_offloading => node["network"]["enable_tx_offloading"] || false,
+        :ethtool_options => ethtool_options,
         :interfaces => ifs,
         :nic => nic
       })
