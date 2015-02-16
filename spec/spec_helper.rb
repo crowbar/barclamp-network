@@ -15,21 +15,31 @@
 # limitations under the License.
 #
 
-source 'https://rubygems.org'
+require "simplecov"
 
-group :development do
-  gem 'closure-compiler', '~> 1.1.10'
-  gem 'sass', '~> 3.2.19'
-  gem 'sprockets-standalone', '~> 1.2.1'
-  gem 'sprockets', '~> 2.11.0'
-  gem 'rspec', '~> 3.1.0'
+if ENV["CODECLIMATE_REPO_TOKEN"]
+  require "coveralls"
+  require "codeclimate-test-reporter"
+
+  Coveralls.wear!
+  CodeClimate::TestReporter.start
+
+  SimpleCov.start do
+    add_filter "/spec"
+
+    formatter SimpleCov::Formatter::MultiFormatter[
+      SimpleCov::Formatter::HTMLFormatter,
+      CodeClimate::TestReporter::Formatter
+    ]
+  end
+else
+  SimpleCov.start do
+    add_filter "/spec"
+  end
 end
 
-group :test do
-  gem 'simplecov', require: false
+require "rspec"
 
-  if ENV['CODECLIMATE_REPO_TOKEN']
-    gem 'coveralls', require: false
-    gem 'codeclimate-test-reporter', require: false
-  end
+RSpec.configure do |config|
+  config.mock_with :rspec
 end
