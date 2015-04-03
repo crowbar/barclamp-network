@@ -169,8 +169,11 @@ node["crowbar"]["network"].keys.sort{|a,b|
       Chef::Log.info("Using bond #{bond.name} for network #{name}")
       bond.mode = team_mode if bond.mode != team_mode
     else
-      bond = Nic::Bond.create("bond#{Nic.nics.select{|i| Nic::bond?(i)}.length}",
-                       team_mode)
+      existing_bond_names = Nic.nics.select{|i| Nic::bond?(i)}.map{|i| i.name}
+      bond_names = (0..existing_bond_names.length).to_a.map{|i| "bond#{i}"}
+      new_bond_name = (bond_names - existing_bond_names).first
+
+      bond = Nic::Bond.create(new_bond_name, team_mode)
       Chef::Log.info("Creating bond #{bond.name} for network #{name}")
     end
     ifs[bond.name] ||= Hash.new
