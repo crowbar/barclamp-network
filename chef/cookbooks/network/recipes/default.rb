@@ -100,27 +100,29 @@ def net_weight(net)
   res
 end
 
-def kill_nic(name)
-  raise "Cannot kill #{name} because it does not exist!" unless Nic.exists?(name)
-  iface = Nic.new(name)
+def kill_nic(nic)
+  raise "Cannot kill #{nic.name} because it does not exist!" unless Nic.exists?(nic.name)
+
   # Ignore loopback interfaces for now.
-  return if iface.loopback?
-  Chef::Log.info("Interface #{name} is no longer being used, deconfiguring it.")
-  iface.destroy
+  return if nic.loopback?
+
+  Chef::Log.info("Interface #{nic.name} is no longer being used, deconfiguring it.")
+  nic.destroy
+
   case node["platform"]
   when "centos","redhat"
     # Redhat and Centos have lots of small files definining interfaces.
     # Delete the ones we no longer care about here.
-    if ::File.exists?("/etc/sysconfig/network-scripts/ifcfg-#{name}")
-      ::File.delete("/etc/sysconfig/network-scripts/ifcfg-#{name}")
+    if ::File.exists?("/etc/sysconfig/network-scripts/ifcfg-#{nic.name}")
+      ::File.delete("/etc/sysconfig/network-scripts/ifcfg-#{nic.name}")
     end
   when "suse"
     # SuSE also has lots of small files, but in slightly different locations.
-    if ::File.exists?("/etc/sysconfig/network/ifcfg-#{name}")
-      ::File.delete("/etc/sysconfig/network/ifcfg-#{name}")
+    if ::File.exists?("/etc/sysconfig/network/ifcfg-#{nic.name}")
+      ::File.delete("/etc/sysconfig/network/ifcfg-#{nic.name}")
     end
-    if ::File.exists?("/etc/sysconfig/network/ifroute-#{name}")
-      ::File.delete("/etc/sysconfig/network/ifroute-#{name}")
+    if ::File.exists?("/etc/sysconfig/network/ifroute-#{nic.name}")
+      ::File.delete("/etc/sysconfig/network/ifroute-#{nic.name}")
     end
   end
 end
@@ -210,7 +212,7 @@ node["crowbar"]["network"].keys.sort{|a,b|
       next if have_vlan_iface && n == our_iface
       next unless n.parent == our_iface.name
       next unless n.vlan == network["vlan"].to_i
-      kill_nic(n.name)
+      kill_nic(n)
     end
     unless have_vlan_iface
       Chef::Log.info("Creating vlan #{vlan} for network #{name}")
@@ -271,7 +273,7 @@ Nic.nics.each do |nic|
   # If we are bringing this node under management, kill any nics we did not
   # configure, except for loopback interfaces.
   if old_ifs[nic.name] || !::File.exist?("/var/cache/crowbar/network/managed")
-    kill_nic(nic.name)
+    kill_nic(nic)
   end
 end
 
