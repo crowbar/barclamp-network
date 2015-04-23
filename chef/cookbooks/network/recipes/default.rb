@@ -268,7 +268,7 @@ end
 Nic.refresh_all
 
 # Kill any nics that we don't want hanging around anymore.
-Nic.nics.each do |nic|
+Nic.nics.reverse_each do |nic|
   next if ifs[nic.name]
   # If we are bringing this node under management, kill any nics we did not
   # configure, except for loopback interfaces.
