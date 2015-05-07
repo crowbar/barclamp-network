@@ -66,7 +66,7 @@ class NetworkService < ServiceObject
     found = false
     begin
       f = acquire_ip_lock
-      db = Chef::DataBag.load "crowbar/#{network}_network"
+      db = Chef::DataBag.load("crowbar/#{network}_network") rescue nil
       net_info = build_net_info(network, name, db)
 
       rangeH = db["network"]["ranges"][range]
@@ -164,7 +164,7 @@ class NetworkService < ServiceObject
     @logger.error("Network deallocate ip from #{type}: No network data found: #{object} #{network}") if role.nil?
     return [404, "No network data found"] if role.nil?
 
-    db = Chef::DataBag.load "crowbar/#{network}_network"
+    db = Chef::DataBag.load("crowbar/#{network}_network") rescue nil
 
     if type == :node
       # If we already have on allocated, return success
@@ -242,7 +242,7 @@ class NetworkService < ServiceObject
   end
 
   def virtual_ip_assigned?(bc_instance, network, range, name)
-    db = Chef::DataBag.load "crowbar/#{network}_network"
+    db = Chef::DataBag.load("crowbar/#{network}_network") rescue nil
     !db["allocated_by_name"][name].nil?
   rescue
     false
@@ -260,7 +260,7 @@ class NetworkService < ServiceObject
     @logger.debug("Network apply_role_pre_chef_call: entering #{all_nodes.inspect}")
 
     role.default_attributes["network"]["networks"].each do |k,net|
-      db = Chef::DataBag.load "crowbar/#{k}_network"
+      db = Chef::DataBag.load("crowbar/#{k}_network") rescue nil
       if db.nil?
         @logger.debug("Network: creating #{k} in the network")
         db = Chef::DataBagItem.new
@@ -354,7 +354,9 @@ class NetworkService < ServiceObject
 
 
   def build_net_info(network, name, db = nil)
-    db = Chef::DataBag.load "crowbar/#{network}_network" unless db
+    unless db
+      db = Chef::DataBag.load("crowbar/#{network}_network") rescue nil
+    end
 
     net_info = {}
     db["network"].each { |k,v|
