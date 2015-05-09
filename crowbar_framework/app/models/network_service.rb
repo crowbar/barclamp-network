@@ -66,7 +66,7 @@ class NetworkService < ServiceObject
     found = false
     begin
       f = acquire_ip_lock
-      db = ProposalObject.find_data_bag_item "crowbar/#{network}_network"
+      db = Chef::DataBag.load("crowbar/#{network}_network") rescue nil
       net_info = build_net_info(network, name, db)
 
       rangeH = db["network"]["ranges"][range]
@@ -164,7 +164,7 @@ class NetworkService < ServiceObject
     @logger.error("Network deallocate ip from #{type}: No network data found: #{object} #{network}") if role.nil?
     return [404, "No network data found"] if role.nil?
 
-    db = ProposalObject.find_data_bag_item "crowbar/#{network}_network"
+    db = Chef::DataBag.load("crowbar/#{network}_network") rescue nil
 
     if type == :node
       # If we already have on allocated, return success
@@ -242,7 +242,7 @@ class NetworkService < ServiceObject
   end
 
   def virtual_ip_assigned?(bc_instance, network, range, name)
-    db = ProposalObject.find_data_bag_item "crowbar/#{network}_network"
+    db = Chef::DataBag.load("crowbar/#{network}_network") rescue nil
     !db["allocated_by_name"][name].nil?
   rescue
     false
@@ -260,16 +260,15 @@ class NetworkService < ServiceObject
     @logger.debug("Network apply_role_pre_chef_call: entering #{all_nodes.inspect}")
 
     role.default_attributes["network"]["networks"].each do |k,net|
-      db = ProposalObject.find_data_bag_item "crowbar/#{k}_network"
+      db = Chef::DataBag.load("crowbar/#{k}_network") rescue nil
       if db.nil?
         @logger.debug("Network: creating #{k} in the network")
-        bc = Chef::DataBagItem.new
-        bc.data_bag "crowbar"
-        bc["id"] = "#{k}_network"
-        bc["network"] = net
-        bc["allocated"] = {}
-        bc["allocated_by_name"] = {}
-        db = ProposalObject.new bc
+        db = Chef::DataBagItem.new
+        db.data_bag "crowbar"
+        db["id"] = "#{k}_network"
+        db["network"] = net
+        db["allocated"] = {}
+        db["allocated_by_name"] = {}
         db.save
       end
     end
@@ -282,7 +281,7 @@ class NetworkService < ServiceObject
 
     if state == "discovered"
 
-      db = ProposalObject.find_proposal "network", inst
+      db = Proposal.where(barclamp: "network", name: inst).first
       role = RoleObject.find_role_by_name "network-config-#{inst}"
       if NodeObject.find_node_by_name(name).try(:[], 'crowbar').try(:[], 'admin_node')
         @logger.info("Admin node transitioning to discovered state.  Adding switch_config role.")
@@ -355,7 +354,9 @@ class NetworkService < ServiceObject
 
 
   def build_net_info(network, name, db = nil)
-    db = ProposalObject.find_data_bag_item "crowbar/#{network}_network" unless db
+    unless db
+      db = Chef::DataBag.load("crowbar/#{network}_network") rescue nil
+    end
 
     net_info = {}
     db["network"].each { |k,v|
