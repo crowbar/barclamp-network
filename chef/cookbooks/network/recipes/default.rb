@@ -249,6 +249,10 @@ node["crowbar"]["network"].keys.sort{|a,b|
     our_iface = br
     net_ifs << our_iface.name
   end
+  if network["mtu"]
+    Chef::Log.info("setting mtu #{network['mtu']} on #{our_iface.name}")
+    ifs[our_iface.name]["mtu"] = network["mtu"]
+  end
   # Make sure our addresses are correct
   if_mapping[name] = net_ifs
   ifs[our_iface.name]["addresses"] ||= Array.new
