@@ -18,8 +18,8 @@
             "0000:00/0000:00:03"
           ]
         },
-      {
-        "pattern": "PowerEdge R620",
+        {
+          "pattern": "PowerEdge R620",
           "bus_order": [
             "0000:00/0000:00:01.1/0000:01:00.0",
             "0000:00/0000:00:01.1/0000.01:00.1",
@@ -160,7 +160,7 @@
           "netmask": "255.255.255.0",
           "broadcast": "192.168.126.255",
           "router": "192.168.126.1",
-	  "router_pref":  5,
+          "router_pref":  5,
           "ranges": {
             "host": { "start": "192.168.126.2", "end": "192.168.126.127" }
           }
@@ -174,7 +174,7 @@
           "netmask": "255.255.255.0",
           "broadcast": "192.168.123.255",
           "router": "192.168.123.1",
-	  "router_pref": 20,
+          "router_pref": 20,
           "ranges": {
             "dhcp": { "start": "192.168.123.1", "end": "192.168.123.254" }
           }
@@ -215,18 +215,18 @@
             "host": { "start": "192.168.124.161", "end": "192.168.124.161" }
           }
         },
-          "os_sdn": {
-              "conduit": "intf1",
-              "vlan": 400,
-              "use_vlan": true,
-              "add_bridge": false,
-              "subnet": "192.168.130.0",
-              "netmask": "255.255.255.0",
-              "broadcast": "192.168.130.255",
-              "ranges": {
-                  "host": { "start": "192.168.130.10", "end": "192.168.130.254"}
-              }
-          },
+        "os_sdn": {
+          "conduit": "intf1",
+          "vlan": 400,
+          "use_vlan": true,
+          "add_bridge": false,
+          "subnet": "192.168.130.0",
+          "netmask": "255.255.255.0",
+          "broadcast": "192.168.130.255",
+          "ranges": {
+            "host": { "start": "192.168.130.10", "end": "192.168.130.254"}
+          }
+        },
         "admin": {
           "conduit": "intf0",
           "vlan": 100,
@@ -236,7 +236,7 @@
           "netmask": "255.255.255.0",
           "broadcast": "192.168.124.255",
           "router": "192.168.124.1",
-	  "router_pref": 10,
+          "router_pref": 10,
           "ranges": {
             "admin": { "start": "192.168.124.10", "end": "192.168.124.11" },
             "dhcp": { "start": "192.168.124.21", "end": "192.168.124.80" },
