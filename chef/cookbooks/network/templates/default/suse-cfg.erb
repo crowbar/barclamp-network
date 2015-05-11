@@ -43,3 +43,6 @@ BONDING_SLAVE_<%=i%>=<%=quote(slave)%>
    v4addrs.each_index do |i| -%>
 IPADDR<%=(i == 0)?'':(i+1).to_s%>=<%=v4addrs[i].to_s%>
 <% end -%>
+<% if iface["mtu"] != 1500 -%>
+MTU=<%=quote(iface["mtu"]) %>
+<% end -%>
