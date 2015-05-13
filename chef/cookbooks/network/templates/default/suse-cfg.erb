@@ -38,6 +38,9 @@ BONDING_MODULE_OPTS=<%=quote("mode=#{@nic.mode} miimon=#{@nic.miimon}")%>
 <% iface["slaves"].each_with_index do |slave,i| -%>
 BONDING_SLAVE_<%=i%>=<%=quote(slave)%>
 <% end -%>
+<% if iface["mtu"] != 1500 -%>
+BONDING_MASTER_UP_ENSLAVE='yes'
+<% end -%>
 <% end -%>
 <% v4addrs, v6addrs = iface["addresses"].map{|a|::IP.coerce(a)}.partition{|a|a.kind_of? IP::IP4}
    v4addrs.each_index do |i| -%>
