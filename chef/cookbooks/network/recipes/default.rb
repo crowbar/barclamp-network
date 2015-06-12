@@ -328,6 +328,10 @@ Nic.nics.each do |nic|
     nic.tx_offloading = node["network"]["enable_tx_offloading"] || false
   end
 
+  if ifs[nic.name]["mtu"]
+    nic.mtu = ifs[nic.name]["mtu"]
+  end
+
   if !enslaved
     nic.up
     Chef::Log.info("#{nic.name}: current addresses: #{nic.addresses.map{|a|a.to_s}.sort.inspect}") unless nic.addresses.empty?
