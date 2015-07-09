@@ -249,6 +249,14 @@ node["crowbar"]["network"].keys.sort{|a,b|
     our_iface = br
     net_ifs << our_iface.name
   end
+  if network["mtu"]
+    if name == "admin" or name == "storage"
+      Chef::Log.info("Setting mtu #{network['mtu']} for #{name} network on #{our_iface.name}")
+      ifs[our_iface.name]["mtu"] = network["mtu"]
+    else
+      Chef::Log.warn("Setting mtu for #{our_iface.name} network is not supported yet, skipping")
+    end
+  end
   # Make sure our addresses are correct
   if_mapping[name] = net_ifs
   ifs[our_iface.name]["addresses"] ||= Array.new
@@ -318,6 +326,10 @@ Nic.nics.each do |nic|
   unless nic.kind_of?(Nic::Vlan) or nic.kind_of?(Nic::Bond)
     nic.rx_offloading = node["network"]["enable_rx_offloading"] || false
     nic.tx_offloading = node["network"]["enable_tx_offloading"] || false
+  end
+
+  if ifs[nic.name]["mtu"]
+    nic.mtu = ifs[nic.name]["mtu"]
   end
 
   if !enslaved

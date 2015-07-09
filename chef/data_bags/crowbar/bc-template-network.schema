@@ -26,7 +26,7 @@
             "interface_map": {
               "type": "seq",
               "required": true,
-              "sequence": [ { 
+              "sequence": [ {
                 "type": "map",
                 "required": true,
                 "mapping": {
@@ -43,7 +43,7 @@
             "conduit_map": {
               "type": "seq",
               "required": true,
-              "sequence": [ { 
+              "sequence": [ {
                 "type": "map",
                 "required": true,
                 "mapping": {
@@ -57,7 +57,7 @@
                         "required": true,
                         "mapping": {
                           "team_mode": { "type": "int" },
-                          "if_list": {  
+                          "if_list": {
                             "type": "seq",
                             "required": true,
                             "sequence": [ { "type": "str" } ]
@@ -77,7 +77,7 @@
                   "type": "map",
                   "required": true,
                   "mapping": {
-		    "mtu": { "type": "int", "required": false },
+                    "mtu": { "type": "int", "required": false },
                     "conduit": { "type": "str", "required": true },
                     "vlan": { "type": "int", "required": true },
                     "use_vlan": { "type": "bool", "required": true },
