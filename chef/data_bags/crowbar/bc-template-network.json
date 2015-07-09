@@ -188,6 +188,8 @@
           "subnet": "192.168.126.128",
           "netmask": "255.255.255.128",
           "broadcast": "192.168.126.255",
+          "router": "192.168.126.1",
+          "router_pref": 15,
           "ranges": {
             "host": { "start": "192.168.126.129", "end": "192.168.126.254" }
           }
@@ -253,7 +255,7 @@
     "network": {
       "crowbar-revision": 0,
       "crowbar-applied": false,
-      "schema-revision": 10,
+      "schema-revision": 20,
       "element_states": {
         "network": [ "readying", "ready", "applying" ]
       },
