@@ -11,6 +11,9 @@ def quote(s)
   # Using to_s for nils and numbers.
   "'" + s.to_s.gsub(/'/, "'\\\\''") + "'"
 end
+if @nic.nil? && @nic_name
+  @nic = ::Nic.new(@nic_name)
+end
 iface=@interfaces[@nic.name]
 -%>
 NAME=<%=quote(@nic.name)%>
