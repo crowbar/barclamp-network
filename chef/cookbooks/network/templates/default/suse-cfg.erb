@@ -19,10 +19,10 @@ STARTMODE=auto
 BOOTPROTO=none
 <% else -%>
 BOOTPROTO=static
-  <% unless @nic.kind_of?(Nic::Vlan) or @nic.kind_of?(Nic::Bond) -%>
-    <% unless @ethtool_options.empty? -%>
+<% end -%>
+<% unless @nic.kind_of?(Nic::Vlan) or @nic.kind_of?(Nic::Bond) -%>
+  <% unless @ethtool_options.empty? -%>
 ETHTOOL_OPTIONS="-K iface <%= @ethtool_options -%>"
-    <% end -%>
   <% end -%>
 <% end -%>
 <% case
