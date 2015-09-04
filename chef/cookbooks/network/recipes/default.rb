@@ -17,21 +17,11 @@
 return if node[:platform] == "windows"
 
 # Make sure packages we need will be present
-case node[:platform]
-when "ubuntu","debian","suse"
-  %w{bridge-utils vlan}.each do |pkg|
-    p = package pkg do
-      action :nothing
-    end
-    p.run_action :install
+node[:network][:base_pkgs].each do |pkg|
+  p = package pkg do
+    action :nothing
   end
-when "centos","redhat"
-  %w{bridge-utils vconfig}.each do |pkg|
-    p = package pkg do
-      action :nothing
-    end
-    p.run_action :install
-  end
+  p.run_action :install
 end
 
 require 'fileutils'
