@@ -239,6 +239,51 @@ node["crowbar"]["network"].keys.sort{|a,b|
     our_iface = br
     net_ifs << our_iface.name
   end
+  if network["add_ovs_bridge"]
+    bridge = node[:network][:networks][name][:bridge_name] || "br-#{name}"
+
+    node[:network][:ovs_pkgs].each do |pkg|
+      p = package pkg do
+        action :nothing
+      end
+      p.run_action :install
+    end
+
+    unless ::File.exists?("/sys/module/#{node[:network][:ovs_module]}")
+      ::Kernel.system("modprobe #{node[:network][:ovs_module]}")
+    end
+
+    s = service node[:network][:ovs_service] do
+      service_name node[:network][:ovs_service]
+      supports status: true, restart: true
+      action [:nothing]
+    end
+    s.run_action :enable
+    s.run_action :start
+
+    br = if Nic.exists?(bridge) && Nic.ovs_bridge?(bridge)
+           Chef::Log.info("Using OVS bridge #{bridge} for network #{name}")
+           Nic.new bridge
+         else
+           Chef::Log.info("Creating OVS bridge #{bridge} for network #{name}")
+           Nic::OvsBridge.create(bridge)
+         end
+    unless ifs.has_key? "ovs-system"
+      ifs["ovs-system"] ||= Hash.new
+      ifs["ovs-system"]["addresses"] ||= Array.new
+      ifs["ovs-system"]["ovs_master"] = true
+    end
+    ifs[br.name] ||= Hash.new
+    ifs[br.name]["addresses"] ||= Array.new
+    ifs[our_iface.name]["slave"] = true
+    ifs[our_iface.name]["ovs_slave"] = true
+    ifs[our_iface.name]["master"] = br.name
+    br.add_slave our_iface
+    ifs[br.name]["slaves"] = [our_iface.name]
+    ifs[br.name]["type"] = "ovs_bridge"
+    our_iface = br
+    net_ifs << our_iface.name
+  end
   if network["mtu"]
     if name == "admin" or name == "storage"
       Chef::Log.info("Setting mtu #{network['mtu']} for #{name} network on #{our_iface.name}")

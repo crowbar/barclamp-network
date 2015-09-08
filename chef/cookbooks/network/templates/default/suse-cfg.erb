@@ -20,17 +20,18 @@ NAME=<%=quote(@nic.name)%>
 <% if iface["ovs_slave"] -%>
 STARTMODE=hotplug
 MASTER_DEVICE=ovs-system
-<% elsif @nic.kind_of?(Nic::OvsBridge) -%>
+<% elsif @nic.kind_of?(Nic::OvsBridge) || iface["ovs_master"] -%>
 STARTMODE=hotplug
 <% else -%>
 STARTMODE=auto
 <% end -%>
-<% if iface["slave"] -%>
+<% if iface["slave"] || iface["ovs_master"] -%>
 BOOTPROTO=none
 <% else -%>
 BOOTPROTO=static
 <% end -%>
-<% unless @nic.kind_of?(Nic::Vlan) or @nic.kind_of?(Nic::Bond) or @nic.kind_of?(Nic::OvsBridge) -%>
+<% unless @nic.kind_of?(Nic::Vlan) or @nic.kind_of?(Nic::Bond) or
+       @nic.kind_of?(Nic::OvsBridge)  or iface["ovs_master"] -%>
   <% unless @ethtool_options.empty? -%>
 ETHTOOL_OPTIONS="-K iface <%= @ethtool_options -%>"
   <% end -%>

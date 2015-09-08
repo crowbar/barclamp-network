@@ -171,6 +171,8 @@
           "vlan": 500,
           "use_vlan": true,
           "add_bridge": false,
+          "add_ovs_bridge": false,
+          "bridge_name": "br-fixed",
           "subnet": "192.168.123.0",
           "netmask": "255.255.255.0",
           "broadcast": "192.168.123.255",
@@ -185,6 +187,8 @@
           "vlan": 300,
           "use_vlan": true,
           "add_bridge": false,
+          "add_ovs_bridge": false,
+          "bridge_name": "br-public",
           "subnet": "192.168.126.128",
           "netmask": "255.255.255.128",
           "broadcast": "192.168.126.255",
@@ -253,7 +257,7 @@
     "network": {
       "crowbar-revision": 0,
       "crowbar-applied": false,
-      "schema-revision": 10,
+      "schema-revision": 11,
       "element_states": {
         "network": [ "readying", "ready", "applying" ]
       },

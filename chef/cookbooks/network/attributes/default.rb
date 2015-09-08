@@ -17,10 +17,24 @@ case node["platform"]
 when "suse"
   default[:network][:base_pkgs] = ["bridge-utils",
                                    "vlan"]
+  default[:network][:ovs_pkgs] =  ["openvswitch",
+                                   "openvswitch-switch",
+                                   "openvswitch-kmp-default"]
+  default[:network][:ovs_service] = "openvswitch-switch"
 when "centos", "redhat"
   default[:network][:base_pkgs] = ["bridge-utils",
                                    "vconfig"]
+  default[:network][:ovs_pkgs] = ["openvswitch",
+                                  "openstack-neutron-openvswitch"]
+  default[:network][:ovs_service] = "openvswitch"
+
 else
   default[:network][:base_pkgs] = ["bridge-utils",
                                    "vlan"]
+  default[:network][:ovs_pkgs] = ["linux-headers-#{`uname -r`.strip}",
+                                  "openvswitch-datapath-dkms",
+                                  "openvswitch-switch"]
+  default[:network][:ovs_service] = "openvswitch-service"
 end
+
+default[:network][:ovs_module] = "openvswitch"
