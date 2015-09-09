@@ -1,8 +1,0 @@
-.DS_Store
-*~
-
-.coverage/
-rubydeps.*
-
-Gemfile.lock
-crowbar_framework/public/
