@@ -17,9 +17,9 @@ case node["platform"]
 when "suse"
   default[:network][:base_pkgs] = ["bridge-utils",
                                    "vlan"]
-  default[:network][:ovs_pkgs] =  ["openvswitch",
-                                   "openvswitch-switch",
-                                   "openvswitch-kmp-default"]
+  default[:network][:ovs_pkgs] = ["openvswitch",
+                                  "openvswitch-switch",
+                                  "openvswitch-kmp-default"]
   default[:network][:ovs_service] = "openvswitch-switch"
 when "centos", "redhat"
   default[:network][:base_pkgs] = ["bridge-utils",

@@ -262,12 +262,12 @@ node["crowbar"]["network"].keys.sort{|a,b|
     s.run_action :start
 
     br = if Nic.exists?(bridge) && Nic.ovs_bridge?(bridge)
-           Chef::Log.info("Using OVS bridge #{bridge} for network #{name}")
-           Nic.new bridge
-         else
-           Chef::Log.info("Creating OVS bridge #{bridge} for network #{name}")
-           Nic::OvsBridge.create(bridge)
-         end
+      Chef::Log.info("Using OVS bridge #{bridge} for network #{name}")
+      Nic.new bridge
+    else
+      Chef::Log.info("Creating OVS bridge #{bridge} for network #{name}")
+      Nic::OvsBridge.create(bridge)
+    end
     unless ifs.has_key? "ovs-system"
       ifs["ovs-system"] ||= Hash.new
       ifs["ovs-system"]["addresses"] ||= Array.new
