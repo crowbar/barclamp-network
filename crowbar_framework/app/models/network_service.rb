@@ -38,10 +38,6 @@ class NetworkService < ServiceObject
     acquire_lock "ip"
   end
 
-  def release_ip_lock(f)
-    release_lock f
-  end
-
   def allocate_ip_by_type(bc_instance, network, range, object, type, suggestion = nil)
     @logger.debug("Network allocate ip for #{type}: entering #{object} #{network} #{range}")
     return [404, "No network specified"] if network.nil?
@@ -65,7 +61,7 @@ class NetworkService < ServiceObject
     net_info = {}
     found = false
     begin
-      f = acquire_ip_lock
+      lock = acquire_ip_lock
       db = ProposalObject.find_data_bag_item "crowbar/#{network}_network"
       net_info = build_net_info(network, name, db)
 
@@ -121,7 +117,7 @@ class NetworkService < ServiceObject
     rescue Exception => e
       @logger.error("Error finding address: #{e.message}")
     ensure
-      release_ip_lock(f)
+      lock.release
     end
 
     @logger.info("Network allocate ip for #{type}: no address available: #{name} #{network} #{range}") if !found
@@ -183,7 +179,7 @@ class NetworkService < ServiceObject
 
     save = false
     begin # Rescue block
-      f = acquire_ip_lock
+      lock = acquire_ip_lock
 
       address = type == :node ? net_info["address"] : nil
 
@@ -217,7 +213,7 @@ class NetworkService < ServiceObject
     rescue Exception => e
       @logger.error("Error finding address: #{e.message}")
     ensure
-      release_ip_lock(f)
+      lock.release
     end
 
     if type == :node
