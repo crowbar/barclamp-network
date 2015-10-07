@@ -528,4 +528,29 @@ when "suse"
       end
     end
   end
+
+  # Avoid running the wicked related thing on SLE11 nodes
+  unless node[:platform] == "suse" && node[:platform_version].to_f < 12.0
+    if ovs_setup_once
+      # If we're using an ovs-bridge somewhere, enable wicked-nanny to be started
+      # for the next boot.
+      # Note: There's no need to restart wicked here as all interfaces
+      # should be correctly configure at this point.
+      template "/etc/wicked/local.conf" do
+        source "wicked-local.conf.erb"
+        owner "root"
+        group "root"
+        mode "0644"
+        variables(
+          use_nanny: true
+        )
+      end
+    else
+      # Delete file when we don't need it anymore (to switch back to wicked's
+      # default
+      file "/etc/wicked/local.conf" do
+        action :delete
+      end
+    end
+  end
 end
