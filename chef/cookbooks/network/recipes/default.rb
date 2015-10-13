@@ -508,6 +508,22 @@ when "suse"
         action :delete
       end
     end
-
+    if node[:platform] == "suse" && node[:platform_version].to_f < 12.0
+      template "/etc/init.d/ovs-ifup-#{nic.name}" do
+        source "ovs-ifup.erb"
+        owner "root"
+        group "root"
+        mode "0755"
+        variables({
+          :bridge => nic.name
+        })
+        only_if { nic.kind_of?(Nic::OvsBridge) }
+      end
+      service "ovs-ifup-#{nic.name}" do
+        # Don't start it here. It only needs to be executed during boot.
+        action [:nothing]
+        subscribes :enable, resources("template[/etc/init.d/ovs-ifup-#{nic.name}]")
+      end
+    end
   end
 end
