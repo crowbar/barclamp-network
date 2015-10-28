@@ -20,7 +20,12 @@ when "suse"
   default[:network][:ovs_pkgs] = ["openvswitch",
                                   "openvswitch-switch",
                                   "openvswitch-kmp-default"]
-  default[:network][:ovs_service] = "openvswitch-switch"
+  # SLES11 uses a different service name for openvswitch
+  if node[:platform] == "suse" && node[:platform_version].to_f < 12.0
+    default[:network][:ovs_service] = "openvswitch-switch"
+  else
+    default[:network][:ovs_service] = "openvswitch"
+  end
 when "centos", "redhat"
   default[:network][:base_pkgs] = ["bridge-utils",
                                    "vconfig"]
