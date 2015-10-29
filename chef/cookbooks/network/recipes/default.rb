@@ -24,6 +24,25 @@ node[:network][:base_pkgs].each do |pkg|
   p.run_action :install
 end
 
+if node[:network][:needs_openvswitch]
+  node[:network][:ovs_pkgs].each do |pkg|
+    p = package pkg do
+      action :nothing
+    end
+    p.run_action :install
+  end
+
+  unless ::File.exist?("/sys/module/#{node[:network][:ovs_module]}")
+    ::Kernel.system("modprobe #{node[:network][:ovs_module]}")
+  end
+
+  s = service node[:network][:ovs_service] do
+    action [:nothing]
+  end
+  s.run_action :enable
+  s.run_action :start
+end
+
 require 'fileutils'
 
 if node[:platform] == "ubuntu"
@@ -77,9 +96,8 @@ old_ifs = node["crowbar_wall"]["network"]["interfaces"] || Mash.new rescue Mash.
 if_mapping = Mash.new
 addr_mapping = Mash.new
 default_route = {}
-# flag to avoid creating the chef (service and package) resources for ovs more
-# than once
-ovs_setup_once = false
+# flag to track if we need to enable wicked-nanny on SLES12
+ovs_bridge_created = false
 
 # dhclient running?  Not for long.
 ::Kernel.system("killall -w -q -r '^dhclient'")
@@ -245,29 +263,8 @@ node["crowbar"]["network"].keys.sort{|a,b|
   if network["add_ovs_bridge"]
     bridge = node[:network][:networks][name][:bridge_name] || "br-#{name}"
 
-    # There might be more than one network that needs an ovs-bridge. Make
-    # sure these resources are only created once during the chef-client run.
-    unless ovs_setup_once
-      ovs_setup_once = true
-      node[:network][:ovs_pkgs].each do |pkg|
-        p = package pkg do
-          action :nothing
-        end
-        p.run_action :install
-      end
-
-      unless ::File.exists?("/sys/module/#{node[:network][:ovs_module]}")
-        ::Kernel.system("modprobe #{node[:network][:ovs_module]}")
-      end
-
-      s = service node[:network][:ovs_service] do
-        service_name node[:network][:ovs_service]
-        supports status: true, restart: true
-        action [:nothing]
-      end
-      s.run_action :enable
-      s.run_action :start
-    end
+    # This flag is used later to enable wicked-nanny (on SUSE platforms)
+    ovs_bridge_created = true
 
     br = if Nic.exists?(bridge) && Nic.ovs_bridge?(bridge)
       Chef::Log.info("Using OVS bridge #{bridge} for network #{name}")
@@ -531,7 +528,7 @@ when "suse"
 
   # Avoid running the wicked related thing on SLE11 nodes
   unless node[:platform] == "suse" && node[:platform_version].to_f < 12.0
-    if ovs_setup_once
+    if ovs_bridge_created
       # If we're using an ovs-bridge somewhere, enable wicked-nanny to be started
       # for the next boot.
       # Note: There's no need to restart wicked here as all interfaces

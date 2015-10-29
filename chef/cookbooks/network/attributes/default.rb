@@ -43,3 +43,7 @@ else
 end
 
 default[:network][:ovs_module] = "openvswitch"
+
+# This flag be overridden on the node/role level (e.g. by the neutron
+# barclamp) to indicate that a node needs openvswitch installed and running
+default[:network][:needs_openvswitch] = false
