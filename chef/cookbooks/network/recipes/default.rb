@@ -41,6 +41,16 @@ if node[:network][:needs_openvswitch]
   end
   s.run_action :enable
   s.run_action :start
+
+  # Cleanup on SLE12. Disable (NOT stop) old sysvinit service for ovs to avoid
+  # issues (https://bugzilla.suse.com/show_bug.cgi?id=935912). We use the
+  # (differently named) systemd unit on newer suse platforms now.
+  if node[:platform_family] == "suse" && node[:platform_version].to_f >= 12.0
+    s = service "openvswitch-switch" do
+      action [:nothing]
+    end
+    s.run_action :disable
+  end
 end
 
 require 'fileutils'
