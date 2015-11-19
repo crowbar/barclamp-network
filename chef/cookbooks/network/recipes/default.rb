@@ -283,15 +283,9 @@ node["crowbar"]["network"].keys.sort{|a,b|
       Chef::Log.info("Creating OVS bridge #{bridge} for network #{name}")
       Nic::OvsBridge.create(bridge)
     end
-    unless ifs.has_key? "ovs-system"
-      ifs["ovs-system"] ||= Hash.new
-      ifs["ovs-system"]["addresses"] ||= Array.new
-      ifs["ovs-system"]["ovs_master"] = true
-    end
     ifs[br.name] ||= Hash.new
     ifs[br.name]["addresses"] ||= Array.new
     ifs[our_iface.name]["slave"] = true
-    ifs[our_iface.name]["ovs_slave"] = true
     ifs[our_iface.name]["master"] = br.name
     unless our_iface.ovs_master && our_iface.ovs_master.name == br.name
       br.add_slave our_iface

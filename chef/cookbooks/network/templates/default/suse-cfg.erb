@@ -17,17 +17,14 @@ end
 iface=@interfaces[@nic.name]
 -%>
 NAME=<%=quote(@nic.name)%>
-<% if iface["ovs_slave"] -%>
-MASTER_DEVICE=ovs-system
-<% end -%>
 STARTMODE=auto
-<% if iface["slave"] || iface["ovs_master"] -%>
+<% if iface["slave"] -%>
 BOOTPROTO=none
 <% else -%>
 BOOTPROTO=static
 <% end -%>
 <% unless @nic.kind_of?(Nic::Vlan) or @nic.kind_of?(Nic::Bond) or
-       @nic.kind_of?(Nic::OvsBridge)  or iface["ovs_master"] -%>
+       @nic.kind_of?(Nic::OvsBridge) -%>
   <% unless @ethtool_options.empty? -%>
 ETHTOOL_OPTIONS="-K iface <%= @ethtool_options -%>"
   <% end -%>
