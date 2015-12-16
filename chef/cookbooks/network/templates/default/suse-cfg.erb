@@ -18,7 +18,7 @@ iface=@interfaces[@nic.name]
 -%>
 NAME=<%=quote(@nic.name)%>
 STARTMODE=auto
-<% if iface["slave"] -%>
+<% if iface["slave"] && Nic.bond?(iface["master"]) -%>
 BOOTPROTO=none
 <% else -%>
 BOOTPROTO=static
