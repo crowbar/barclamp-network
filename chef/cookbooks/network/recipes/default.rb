@@ -524,8 +524,8 @@ when "suse"
       end
       service "ovs-ifup-#{nic.name}" do
         # Don't start it here. It only needs to be executed during boot.
-        action [:nothing]
-        subscribes :enable, resources("template[/etc/init.d/ovs-ifup-#{nic.name}]")
+        action [:enable]
+        only_if { nic.kind_of?(Nic::OvsBridge) }
       end
     end
   end
