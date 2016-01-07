@@ -82,6 +82,8 @@
                     "vlan": { "type": "int", "required": true },
                     "use_vlan": { "type": "bool", "required": true },
                     "add_bridge": { "type": "bool", "required": true },
+                    "add_ovs_bridge": { "type": "bool", "required": false },
+                    "bridge_name": { "type": "str", "required": false },
                     "subnet": { "type": "str", "required": true, "name": "IpAddress" },
                     "netmask": { "type": "str", "required": true, "name": "IpAddress" },
                     "broadcast": { "type": "str", "required": true, "name": "IpAddress" },

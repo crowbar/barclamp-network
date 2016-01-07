@@ -1,0 +1,38 @@
+#!/bin/bash
+
+### BEGIN INIT INFO
+# Provides:          ovs-ifup-<%= @bridge %>
+# Required-Start:    $network openvswitch-switch
+# Should-Start:
+# Required-Stop:     $network openvswitch-switch
+# Should-Stop: 
+# Default-Start:     3 5
+# Default-Stop:      0 1 2 6
+# Short-Description: Bring up IP configuration for ovs-bridge <%= @bridge %>
+# Description: Bring up IP configuration for ovs-bridge <%= @bridge %>
+### END INIT INFO
+
+. /etc/rc.status
+# Reset status of this service
+rc_reset
+
+case "$1" in
+    start)
+        ifup <%= @bridge %>
+        ;;
+
+    stop)
+        ;;
+
+    restart|try-restart|force-reload|reload|status|probe)
+        echo "not implemented"
+        rc_failed 3
+        rc_status -v
+        ;;
+
+    *)
+        echo "Usage: $0 {start|stop|status|try-restart|restart|force-reload|reload|probe}"
+        exit 1
+        ;;
+esac
+rc_exit

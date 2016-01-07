@@ -17,20 +17,14 @@ end
 iface=@interfaces[@nic.name]
 -%>
 NAME=<%=quote(@nic.name)%>
-<% if iface["ovs_slave"] -%>
-STARTMODE=hotplug
-MASTER_DEVICE=ovs-system
-<% elsif @nic.kind_of?(Nic::OvsBridge) -%>
-STARTMODE=hotplug
-<% else -%>
 STARTMODE=auto
-<% end -%>
-<% if iface["slave"] -%>
+<% if iface["slave"] && Nic.bond?(iface["master"]) -%>
 BOOTPROTO=none
 <% else -%>
 BOOTPROTO=static
 <% end -%>
-<% unless @nic.kind_of?(Nic::Vlan) or @nic.kind_of?(Nic::Bond) or @nic.kind_of?(Nic::OvsBridge) -%>
+<% unless @nic.kind_of?(Nic::Vlan) or @nic.kind_of?(Nic::Bond) or
+       @nic.kind_of?(Nic::OvsBridge) -%>
   <% unless @ethtool_options.empty? -%>
 ETHTOOL_OPTIONS="-K iface <%= @ethtool_options -%>"
   <% end -%>
@@ -39,6 +33,11 @@ ETHTOOL_OPTIONS="-K iface <%= @ethtool_options -%>"
    when @nic.kind_of?(Nic::Bridge) -%>
 BRIDGE=yes
 BRIDGE_PORTS=<%=quote(iface["slaves"])%>
+<% when @nic.kind_of?(Nic::OvsBridge) -%>
+OVS_BRIDGE=yes
+<%   iface["slaves"].each_with_index do |slave, i| -%>
+OVS_BRIDGE_PORT_DEVICE_<%=i%>=<%=quote(slave)%>
+<%   end -%>
 <% when @nic.kind_of?(Nic::Vlan) -%>
 VLAN_ID=<%=iface["vlan"]%>
 ETHERDEVICE=<%=quote(iface["parent"])%>

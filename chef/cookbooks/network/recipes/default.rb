@@ -17,20 +17,39 @@
 return if node[:platform] == "windows"
 
 # Make sure packages we need will be present
-case node[:platform]
-when "ubuntu","debian","suse"
-  %w{bridge-utils vlan}.each do |pkg|
+node[:network][:base_pkgs].each do |pkg|
+  p = package pkg do
+    action :nothing
+  end
+  p.run_action :install
+end
+
+if node[:network][:needs_openvswitch]
+  node[:network][:ovs_pkgs].each do |pkg|
     p = package pkg do
       action :nothing
     end
     p.run_action :install
   end
-when "centos","redhat"
-  %w{bridge-utils vconfig}.each do |pkg|
-    p = package pkg do
-      action :nothing
+
+  unless ::File.exist?("/sys/module/#{node[:network][:ovs_module]}")
+    ::Kernel.system("modprobe #{node[:network][:ovs_module]}")
+  end
+
+  s = service node[:network][:ovs_service] do
+    action [:nothing]
+  end
+  s.run_action :enable
+  s.run_action :start
+
+  # Cleanup on SLE12. Disable (NOT stop) old sysvinit service for ovs to avoid
+  # issues (https://bugzilla.suse.com/show_bug.cgi?id=935912). We use the
+  # (differently named) systemd unit on newer suse platforms now.
+  if node[:platform_family] == "suse" && node[:platform_version].to_f >= 12.0
+    s = service "openvswitch-switch" do
+      action [:nothing]
     end
-    p.run_action :install
+    s.run_action :disable
   end
 end
 
@@ -87,6 +106,8 @@ old_ifs = node["crowbar_wall"]["network"]["interfaces"] || Mash.new rescue Mash.
 if_mapping = Mash.new
 addr_mapping = Mash.new
 default_route = {}
+# flag to track if we need to enable wicked-nanny on SLES12
+ovs_bridge_created = false
 
 # dhclient running?  Not for long.
 ::Kernel.system("killall -w -q -r '^dhclient'")
@@ -246,6 +267,43 @@ node["crowbar"]["network"].keys.sort{|a,b|
     br.add_slave our_iface
     ifs[br.name]["slaves"] = [our_iface.name]
     ifs[br.name]["type"] = "bridge"
+    our_iface = br
+    net_ifs << our_iface.name
+  end
+  if network["add_ovs_bridge"]
+    bridge = node[:network][:networks][name][:bridge_name] || "br-#{name}"
+
+    # This flag is used later to enable wicked-nanny (on SUSE platforms)
+    ovs_bridge_created = true
+
+    br = if Nic.exists?(bridge) && Nic.ovs_bridge?(bridge)
+      Chef::Log.info("Using OVS bridge #{bridge} for network #{name}")
+      Nic.new bridge
+    else
+      Chef::Log.info("Creating OVS bridge #{bridge} for network #{name}")
+      Nic::OvsBridge.create(bridge)
+    end
+    ifs[br.name] ||= Hash.new
+    ifs[br.name]["addresses"] ||= Array.new
+    ifs[our_iface.name]["slave"] = true
+    ifs[our_iface.name]["master"] = br.name
+    unless our_iface.ovs_master && our_iface.ovs_master.name == br.name
+      br.add_slave our_iface
+      # FIXME: Workaround for https://bugzilla.suse.com/show_bug.cgi?id=945219
+      # Find vlan interface on top of 'our_iface' that are plugged into other
+      # ovs bridges. Replug them.
+      our_kids = our_iface.children
+      our_kids.each do |k|
+        next unless Nic.vlan?(k)
+        ovs_master = k.ovs_master
+        unless ovs_master.nil?
+          Chef::Log.warn("Replugging #{k.name} to #{ovs_master.name} (workaround bnc#945219)")
+          ovs_master.replug(k.name)
+        end
+      end
+    end
+    ifs[br.name]["slaves"] = [our_iface.name]
+    ifs[br.name]["type"] = "ovs_bridge"
     our_iface = br
     net_ifs << our_iface.name
   end
@@ -453,6 +511,47 @@ when "suse"
         action :delete
       end
     end
+    if node[:platform] == "suse" && node[:platform_version].to_f < 12.0
+      template "/etc/init.d/ovs-ifup-#{nic.name}" do
+        source "ovs-ifup.erb"
+        owner "root"
+        group "root"
+        mode "0755"
+        variables({
+          :bridge => nic.name
+        })
+        only_if { nic.kind_of?(Nic::OvsBridge) }
+      end
+      service "ovs-ifup-#{nic.name}" do
+        # Don't start it here. It only needs to be executed during boot.
+        action [:enable]
+        only_if { nic.kind_of?(Nic::OvsBridge) }
+      end
+    end
+  end
 
+  # Avoid running the wicked related thing on SLE11 nodes
+  unless node[:platform] == "suse" && node[:platform_version].to_f < 12.0
+    if ovs_bridge_created
+      # If we're using an ovs-bridge somewhere, enable wicked-nanny to be started
+      # for the next boot.
+      # Note: There's no need to restart wicked here as all interfaces
+      # should be correctly configure at this point.
+      template "/etc/wicked/local.conf" do
+        source "wicked-local.conf.erb"
+        owner "root"
+        group "root"
+        mode "0644"
+        variables(
+          use_nanny: true
+        )
+      end
+    else
+      # Delete file when we don't need it anymore (to switch back to wicked's
+      # default
+      file "/etc/wicked/local.conf" do
+        action :delete
+      end
+    end
   end
 end
